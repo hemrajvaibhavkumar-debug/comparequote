@@ -1,0 +1,109 @@
+-- ==========================================================
+-- QUOTECOMPARE AI - DATABASE CRUD & LINKING GUIDE
+-- ==========================================================
+-- This file contains SQL queries to setup and manage 
+-- Executives (Prepared By) and Plants linked to comparisons.
+
+----------------------------------------------------------
+-- 1. SCHEMA SETUP (Run once to create tables)
+----------------------------------------------------------
+
+-- Table for Prepared By (Executives)
+CREATE TABLE "Executive" (
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(255) UNIQUE NOT NULL,
+    "designation" VARCHAR(100),
+    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table for Plants
+CREATE TABLE "Plant" (
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(255) UNIQUE NOT NULL,
+    "location" TEXT,
+    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Modify existing Comparison table to add links
+-- (Run this if your Comparison table already exists)
+ALTER TABLE "Comparison" 
+ADD COLUMN "executive_id" INTEGER REFERENCES "Executive"("id") ON DELETE SET NULL,
+ADD COLUMN "plant_id" INTEGER REFERENCES "Plant"("id") ON DELETE SET NULL;
+
+
+----------------------------------------------------------
+-- 2. EXECUTIVE MANAGEMENT (Prepared By Options)
+----------------------------------------------------------
+
+-- CREATE: Add a new executive
+INSERT INTO "Executive" ("name", "designation") 
+VALUES ('Vaibhav Sharma', 'Procurement Manager');
+
+-- READ: Fetch all executives for settings dropdown
+SELECT * FROM "Executive" ORDER BY name ASC;
+
+-- UPDATE: Rename or update details
+UPDATE "Executive" SET "name" = 'Vaibhav S.' WHERE "id" = 1;
+
+-- DELETE: Remove an executive
+DELETE FROM "Executive" WHERE "id" = 1;
+
+
+----------------------------------------------------------
+-- 3. PLANT MANAGEMENT (Plant Name Options)
+----------------------------------------------------------
+
+-- CREATE: Add a new plant
+INSERT INTO "Plant" ("name", "location") 
+VALUES ('Nagpur Plant', 'MIDC Area, Nagpur');
+
+-- READ: Fetch all plants for settings dropdown
+SELECT * FROM "Plant" ORDER BY name ASC;
+
+-- UPDATE: Change plant name
+UPDATE "Plant" SET "name" = 'Pune Factory' WHERE "id" = 1;
+
+-- DELETE: Remove a plant
+DELETE FROM "Plant" WHERE "id" = 1;
+
+
+----------------------------------------------------------
+-- 4. LINKING & SAVING COMPARISONS
+----------------------------------------------------------
+
+-- SAVE: Link a table to a specific Executive and Plant
+-- Replace IDs (1, 5) with the actual IDs from your dropdowns
+INSERT INTO "Comparison" ("doc_no", "executive_id", "plant_id", "data")
+VALUES (
+    'QT-2024-V001', 
+    1, -- Executive ID from dropdown
+    5, -- Plant ID from dropdown
+    '{"header": {...}, "items": [...]}' -- Your existing JSON payload
+)
+ON CONFLICT (doc_no) DO UPDATE SET
+    "executive_id" = EXCLUDED.executive_id,
+    "plant_id" = EXCLUDED.plant_id,
+    "data" = EXCLUDED.data,
+    "created_at" = CURRENT_TIMESTAMP;
+
+
+----------------------------------------------------------
+-- 5. LISTING WITH FILTERS (For SavedTables Page)
+----------------------------------------------------------
+
+-- Fetch all saved comparisons with the actual names of Plant and Executive
+-- This avoids parsing JSON for every row, making the list load instantly.
+SELECT 
+    c.id, 
+    c.doc_no, 
+    c.created_at,
+    e.name AS prepared_by,
+    p.name AS plant_name
+FROM "Comparison" c
+LEFT JOIN "Executive" e ON c.executive_id = e.id
+LEFT JOIN "Plant" p ON c.plant_id = p.id
+WHERE 
+    (c.doc_no ILIKE '%search_text%') -- Search filter
+    AND (p.id = 5 OR 5 IS NULL)      -- Plant filter (if selected)
+    AND (e.id = 1 OR 1 IS NULL)      -- Executive filter (if selected)
+ORDER BY c.created_at DESC;

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, FileText, Download, Table as TableIcon, FileOutput, Loader2, Plus, Trash2, Mail, Eye } from 'lucide-react';
+import { Upload, FileText, Download, Table as TableIcon, FileOutput, Loader2, Plus, Trash2, Mail, Eye, Settings as SettingsIcon, X } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { extractQuotations } from './services/gemini';
 import { ComparisonData, HeaderInfo } from './types';
@@ -25,6 +25,18 @@ const Builder: React.FC = () => {
     };
   });
 
+  const [settings, setSettings] = useState<{ preparedByOptions: string[], plantNameOptions: string[] }>(() => {
+    const saved = localStorage.getItem('quote_settings');
+    return saved ? JSON.parse(saved) : {
+      preparedByOptions: [],
+      plantNameOptions: []
+    };
+  });
+
+  const [showSettings, setShowSettings] = useState(false);
+  const [newPreparedBy, setNewPreparedBy] = useState('');
+  const [newPlantName, setNewPlantName] = useState('');
+
   const [data, setData] = useState<ComparisonData>(() => {
     const saved = localStorage.getItem('quote_draft_data');
     return saved ? JSON.parse(saved) : { items: [], vendors: [] };
@@ -46,6 +58,34 @@ const Builder: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('quote_draft_data', JSON.stringify(data));
   }, [data]);
+
+  useEffect(() => {
+    localStorage.setItem('quote_settings', JSON.stringify(settings));
+  }, [settings]);
+
+  const addSettingOption = (type: 'preparedBy' | 'plantName') => {
+    if (type === 'preparedBy' && newPreparedBy.trim()) {
+      setSettings(prev => ({
+        ...prev,
+        preparedByOptions: [...new Set([...prev.preparedByOptions, newPreparedBy.trim()])]
+      }));
+      setNewPreparedBy('');
+    } else if (type === 'plantName' && newPlantName.trim()) {
+      setSettings(prev => ({
+        ...prev,
+        plantNameOptions: [...new Set([...prev.plantNameOptions, newPlantName.trim()])]
+      }));
+      setNewPlantName('');
+    }
+  };
+
+  const removeSettingOption = (type: 'preparedBy' | 'plantName', value: string) => {
+    setSettings(prev => ({
+      ...prev,
+      [type === 'preparedBy' ? 'preparedByOptions' : 'plantNameOptions']: 
+        prev[type === 'preparedBy' ? 'preparedByOptions' : 'plantNameOptions'].filter(opt => opt !== value)
+    }));
+  };
 
   const clearDraft = () => {
     if (window.confirm("Are you sure you want to clear the current draft?")) {
@@ -260,8 +300,68 @@ const Builder: React.FC = () => {
              <button onClick={clearDraft} className="flex items-center gap-2 px-4 py-2.5 border border-red-100 text-red-500 rounded-xl text-sm font-bold hover:bg-red-50 transition-all">
                <Trash2 className="w-4 h-4" /> Clear
              </button>
+             <button onClick={() => setShowSettings(!showSettings)} className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-200 transition-all">
+               <SettingsIcon className="w-4 h-4" /> Settings
+             </button>
           </div>
         </header>
+
+        {showSettings && (
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-indigo-100 space-y-6 animate-in slide-in-from-top-4 duration-300 print-hidden">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                <SettingsIcon className="w-5 h-5 text-indigo-600" /> Predefined Options
+              </h2>
+              <button onClick={() => setShowSettings(false)} className="p-2 hover:bg-slate-100 rounded-lg">
+                <X className="w-5 h-5 text-slate-400" />
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold text-slate-600 uppercase">Prepared By Options</h3>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    value={newPreparedBy} 
+                    onChange={e => setNewPreparedBy(e.target.value)} 
+                    placeholder="Add Name..." 
+                    className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                  />
+                  <button onClick={() => addSettingOption('preparedBy')} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700">Add</button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {settings.preparedByOptions.map(opt => (
+                    <span key={opt} className="px-3 py-1 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium flex items-center gap-2">
+                      {opt} <X className="w-3 h-3 cursor-pointer hover:text-red-500" onClick={() => removeSettingOption('preparedBy', opt)} />
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold text-slate-600 uppercase">Plant Name Options</h3>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    value={newPlantName} 
+                    onChange={e => setNewPlantName(e.target.value)} 
+                    placeholder="Add Plant..." 
+                    className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                  />
+                  <button onClick={() => addSettingOption('plantName')} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700">Add</button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {settings.plantNameOptions.map(opt => (
+                    <span key={opt} className="px-3 py-1 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium flex items-center gap-2">
+                      {opt} <X className="w-3 h-3 cursor-pointer hover:text-red-500" onClick={() => removeSettingOption('plantName', opt)} />
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-12 gap-8 print-hidden">
           <div className="col-span-12 lg:col-span-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
@@ -273,11 +373,29 @@ const Builder: React.FC = () => {
               </div>
               <div>
                 <label className="text-[10px] font-bold text-slate-400 uppercase">Prepared By</label>
-                <input type="text" value={header.preparedBy} onChange={e => setHeader({...header, preparedBy: e.target.value})} className="w-full mt-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" />
+                <input 
+                  type="text" 
+                  list="preparedByList"
+                  value={header.preparedBy} 
+                  onChange={e => setHeader({...header, preparedBy: e.target.value})} 
+                  className="w-full mt-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" 
+                />
+                <datalist id="preparedByList">
+                  {settings.preparedByOptions.map(opt => <option key={opt} value={opt} />)}
+                </datalist>
               </div>
               <div>
                 <label className="text-[10px] font-bold text-slate-400 uppercase">Plant</label>
-                <input type="text" value={header.plantName} onChange={e => setHeader({...header, plantName: e.target.value})} className="w-full mt-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" />
+                <input 
+                  type="text" 
+                  list="plantNameList"
+                  value={header.plantName} 
+                  onChange={e => setHeader({...header, plantName: e.target.value})} 
+                  className="w-full mt-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" 
+                />
+                <datalist id="plantNameList">
+                  {settings.plantNameOptions.map(opt => <option key={opt} value={opt} />)}
+                </datalist>
               </div>
             </div>
           </div>

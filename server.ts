@@ -69,16 +69,21 @@ async function startServer() {
       const { input, files, provider = 'groq' } = req.body;
       
       const prompt = `Extract quotation details from the following information and structure it for a comparison table. 
-      Pay special attention to terms and conditions:
-      - Delivery Period: Time required for delivery (e.g., 2 weeks, immediate).
-      - Freight: Transportation charges (e.g., extra at actuals, included, Rs. 500).
-      - Packing & Forwarding (P&F): CRITICAL. Look for keywords like "PACKING AND FORWARDING", "P&F", "Packaging". Extract the exact percentage or value (e.g., "@2%", "2%", "Extra", "Included"). If not mentioned, leave blank.
-      - Ready Stock: Availability of items in stock (Yes/No).
-      - GST Status: CRITICAL. Identify if the price/MRP is "Inclusive" of GST or "Exclusive" of GST. 
-        Look for keywords like "Including GST", "GST Inclusive", "All Inclusive", "GST Extra", "Plus GST", "GST @ 18%", or "TAXES EXTRA". 
-        If the quote says "GST Extra", "Plus GST", or "TAXES EXTRA", set it to "Exclusive".
-        If the quote says "Inclusive of all taxes", "GST Paid", or "prices are inclusive of GST", set it to "Inclusive".
-      - Other Extra: Any other additional charges or special terms.
+      
+      CRITICAL INSTRUCTION FOR GST STATUS:
+      You must intelligently determine if the quoted prices are "Inclusive" or "Exclusive" of GST.
+      - Set to "Inclusive" if you see: "All Inclusive", "Incl. GST", "GST Paid", "Net Rate", "Inclusive of all taxes", "VAT Included", or if the total amount matches a calculation where GST is already added.
+      - Set to "Exclusive" if you see: "GST Extra", "Taxes Extra", "+ GST", "GST @ 18%", "Plus Taxes", "Excluding GST", or if the quote specifically lists GST as a separate line item to be added.
+      - Default to "Exclusive" if it's ambiguous, but look for contextual clues like "Prices are ex-works" (often implies taxes extra).
+      - If multiple items have different statuses, use the most common one or the one stated in general terms.
+
+      Other fields to extract:
+      - Delivery Period: Time required for delivery.
+      - Freight: Transportation charges.
+      - Packing & Forwarding (P&F): Extract exact % or value.
+      - Ready Stock: Yes/No.
+      - Other Extra: Special terms.
+      
       Format the output as JSON according to the schema.`;
 
       let parsed: any;
@@ -220,7 +225,7 @@ async function startServer() {
     try {
       const comparisons = await prisma.comparison.findMany({
         orderBy: { created_at: "desc" },
-        select: { id: true, doc_no: true, created_at: true },
+        select: { id: true, doc_no: true, created_at: true, data: true },
       });
       res.json(comparisons);
     } catch (err) {
@@ -257,6 +262,18 @@ async function startServer() {
     } catch (err) {
       console.error("PUT Error:", err);
       return res.status(500).json({ error: String(err) });
+    }
+  });
+
+  app.delete("/api/comparisons/:id", authenticateToken, async (req, res) => {
+    try {
+      await prisma.comparison.delete({
+        where: { id: parseInt(req.params.id) },
+      });
+      res.json({ success: true });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: String(err) });
     }
   });
 

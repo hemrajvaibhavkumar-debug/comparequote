@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "start": "node dist/server.js",
+    "start": "node dist/server.cjs",
     "dev": "tsx server.ts",
-    "build": "vite build && npx esbuild server.ts --bundle --platform=node --target=node22 --outfile=dist/server.js --format=cjs --external:express --external:pg",
+    "build": "vite build && npx esbuild server.ts --bundle --platform=node --target=node22 --outfile=dist/server.cjs --format=cjs --external:express --external:pg --external:vite",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit"

@@ -54,16 +54,20 @@ export function setupGmailRoutes(app: Express) {
       // Convert unstructured email texts to our ComparisonData format using Gemini
       const prompt = `
         You are an expert procurement assistant. Extract pricing, quotes, items, vendors, and relevant table details from the following emails. 
-        Pay special attention to terms and conditions:
-        - Delivery Period: Time required for delivery (e.g., 2 weeks, immediate).
-        - Freight: Transportation charges (e.g., extra at actuals, included, Rs. 500).
-        - Packing & Forwarding (P&F): CRITICAL. Look for keywords like "PACKING AND FORWARDING", "P&F", "Packaging". Extract the exact percentage or value (e.g., "@2%", "2%", "Extra", "Included"). If not mentioned, leave blank.
-        - Ready Stock: Availability of items in stock (Yes/No).
-        - GST Status: CRITICAL. Identify if the price/MRP is "Inclusive" of GST or "Exclusive" of GST. 
-          Look for keywords like "Including GST", "GST Inclusive", "All Inclusive", "GST Extra", "Plus GST", "GST @ 18%", or "TAXES EXTRA". 
-          If the quote says "GST Extra", "Plus GST", or "TAXES EXTRA", set it to "Exclusive".
-          If the quote says "Inclusive of all taxes", "GST Paid", or "prices are inclusive of GST", set it to "Inclusive".
-        - Other Extra: Any other additional charges or special terms.
+        
+        CRITICAL INSTRUCTION FOR GST STATUS:
+        You must intelligently determine if the quoted prices are "Inclusive" or "Exclusive" of GST.
+        - Set to "Inclusive" if you see: "All Inclusive", "Incl. GST", "GST Paid", "Net Rate", "Inclusive of all taxes", "VAT Included", or if the total amount matches a calculation where GST is already added.
+        - Set to "Exclusive" if you see: "GST Extra", "Taxes Extra", "+ GST", "GST @ 18%", "Plus Taxes", "Excluding GST", or if the quote specifically lists GST as a separate line item to be added.
+        - Default to "Exclusive" if it's ambiguous, but look for contextual clues.
+        - If multiple items have different statuses, use the most common one or the one stated in general terms.
+
+        Other fields to extract:
+        - Delivery Period: Time required for delivery.
+        - Freight: Transportation charges.
+        - Packing & Forwarding (P&F): Extract exact % or value.
+        - Ready Stock: Yes/No.
+        - Other Extra: Special terms.
 
         Format your response EXACTLY to match the JSON schema. If you don't find enough details, do your best and leave other fields empty.
 

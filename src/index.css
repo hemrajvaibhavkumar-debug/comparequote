@@ -101,7 +101,7 @@ th, td {
   }
 
   /* Force the comparison table to be visible and clear */
-  .p-4, .md:p-8, .p-5, .p-6 {
+  .p-4, .md\:p-8, .p-5, .p-6 {
     padding: 0 !important;
     margin: 0 !important;
   }
