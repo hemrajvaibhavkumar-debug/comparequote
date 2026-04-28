@@ -1,0 +1,6 @@
+{
+  "name": "QuoteCompare AI",
+  "description": "Extract quotations from documents/text and generate comparison tables using AI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

@@ -1,0 +1,20 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Comparison {
+  id         Int      @id @default(autoincrement())
+  doc_no     String   @unique
+  created_at DateTime @default(now())
+  data       Json
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  username String @unique
+  password String // We'll store a hash or simple password for admin
+}
