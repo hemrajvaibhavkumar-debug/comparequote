@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node dist/server.cjs",
     "dev": "tsx server.ts",
-    "build": "vite build && npx esbuild server.ts --bundle --platform=node --target=node22 --outfile=dist/server.cjs --format=cjs --external:express --external:pg --external:vite",
+    "build": "npx prisma generate && vite build && npx esbuild server.ts --bundle --platform=node --target=node22 --outfile=dist/server.cjs --format=cjs --external:express --external:pg --external:vite --external:@prisma/client",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit"
