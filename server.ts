@@ -2,7 +2,6 @@ import "dotenv/config";
 import express, { Request, Response, NextFunction } from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
-import { setupGmailRoutes } from "./serverGmail.js";
 import { GoogleGenAI, Type } from "@google/genai";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -285,9 +284,31 @@ async function startServer() {
     }
   });
 
+  app.get("/api/comparisons/count-year", authenticateToken, async (req, res) => {
+    try {
+      const year = new Date().getFullYear();
+      const startOfYear = new Date(year, 0, 1);
+      const endOfYear = new Date(year, 11, 31, 23, 59, 59);
+
+      const count = await prisma.comparison.count({
+        where: {
+          created_at: {
+            gte: startOfYear,
+            lte: endOfYear
+          }
+        }
+      });
+      res.json({ count });
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
   app.get("/api/comparisons", authenticateToken, async (req, res) => {
     try {
+      const limit = parseInt(req.query.limit as string) || 25;
       const comparisons = await prisma.comparison.findMany({
+        take: limit,
         orderBy: { created_at: "desc" },
         include: {
           executive: true,
@@ -368,3 +389,4 @@ async function startServer() {
 }
 
 startServer().catch(console.error);
+er().catch(console.error);

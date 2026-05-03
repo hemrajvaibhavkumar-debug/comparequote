@@ -31,6 +31,8 @@ model Comparison {
   executive_id Int?
   plant        Plant?     @relation(fields: [plant_id], references: [id])
   plant_id     Int?
+
+  @@index([created_at(sort: Desc)])
 }
 
 model User {

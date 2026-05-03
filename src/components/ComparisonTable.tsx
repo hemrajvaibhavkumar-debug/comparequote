@@ -122,6 +122,20 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
     });
   };
 
+  const removeVendor = (vendorName: string) => {
+    if (readOnly) return;
+    if (!window.confirm(`Are you sure you want to remove vendor "${vendorName}" and all their quotes?`)) return;
+    
+    setData((prev: any) => {
+      const newVendors = prev.vendors.filter((v: string) => v !== vendorName);
+      const newItems = prev.items.map((item: any) => ({
+        ...item,
+        vendorQuotes: (item.vendorQuotes || []).filter((q: any) => q.vendorName !== vendorName)
+      }));
+      return { ...prev, vendors: newVendors, items: newItems };
+    });
+  };
+
   const addItem = () => {
     if (readOnly) return;
     setData((prev: any) => {
@@ -213,7 +227,16 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
             <th rowSpan={2} className="border border-[#000000] p-1 whitespace-nowrap">QTY</th>
             <th colSpan={2} className="border border-[#000000] p-1 whitespace-nowrap">PREVIOUS PRICE</th>
             {vendors.map((v, i) => (
-              <th key={i} colSpan={vendorCols} className="border border-[#000000] p-1 text-base font-black uppercase tracking-widest bg-[#ffffff] whitespace-nowrap">{v}</th>
+              <th key={i} colSpan={vendorCols} className="border border-[#000000] p-1 text-base font-black uppercase tracking-widest bg-[#ffffff] whitespace-nowrap">
+                <div className="flex items-center justify-center gap-2">
+                  {v}
+                  {!readOnly && (
+                    <button onClick={() => removeVendor(v)} className="print-hidden p-1 hover:text-red-600 text-[#000000] cursor-pointer" title={`Remove ${v}`}>
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </th>
             ))}
             <th className="print-hidden border border-[#000000] p-1 uppercase text-[10px] w-10 whitespace-nowrap">Act</th>
           </tr>

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, FileText, Download, Table as TableIcon, FileOutput, Loader2, Plus, Trash2, Mail, Eye, Settings as SettingsIcon, X } from 'lucide-react';
+import { Upload, FileText, Download, Table as TableIcon, FileOutput, Loader2, Plus, Trash2, Eye, Settings as SettingsIcon, X } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { extractQuotations } from './services/gemini';
 import { ComparisonData, HeaderInfo } from './types';
@@ -44,6 +44,28 @@ const Builder: React.FC = () => {
     return saved ? JSON.parse(saved) : { items: [], vendors: [] };
   });
 
+  const generateDocNo = async () => {
+    // Only generate if docNo is empty
+    if (header.docNo) return;
+
+    try {
+      const res = await fetch('/api/comparisons/count-year', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+      });
+      const { count } = await res.json();
+      
+      const now = new Date();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const yy = String(now.getFullYear()).slice(-2);
+      const serial = count + 1;
+      
+      const newDocNo = `C${mm}${yy}-${serial}`;
+      setHeader(prev => ({ ...prev, docNo: newDocNo }));
+    } catch (e) {
+      console.error("Error generating Doc No", e);
+    }
+  };
+
   const [inputText, setInputText] = useState('');
   const [isExtracting, setIsExtracting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -63,6 +85,7 @@ const Builder: React.FC = () => {
 
   useEffect(() => {
     fetchMasters();
+    generateDocNo();
   }, []);
 
   const fetchMasters = async () => {
@@ -140,7 +163,7 @@ const Builder: React.FC = () => {
 
   const clearDraft = () => {
     if (window.confirm("Are you sure you want to clear the current draft?")) {
-      const freshHeader = { docNo: '', preparedBy: '', date: new Date().toLocaleDateString(), indentDate: '', plantName: '' };
+      const freshHeader = { docNo: '', preparedBy: '', date: new Date().toISOString().split('T')[0], indentDate: '', plantName: '' };
       const freshData = { items: [], vendors: [] };
       setHeader(freshHeader);
       setData(freshData);
@@ -148,6 +171,8 @@ const Builder: React.FC = () => {
       setFiles([]);
       localStorage.removeItem('quote_draft_header');
       localStorage.removeItem('quote_draft_data');
+      // Regenerate doc no for the new fresh draft
+      setTimeout(() => generateDocNo(), 100);
     }
   };
 
@@ -184,7 +209,7 @@ const Builder: React.FC = () => {
     }
   };
 
-  const onDrop = async (acceptedFiles: File[]) => {
+  const onDrop = React.useCallback(async (acceptedFiles: File[]) => {
     const newFiles = await Promise.all(acceptedFiles.map(async (file) => {
       return new Promise<{ name: string; mimeType: string; data: string }>((resolve) => {
         const reader = new FileReader();
@@ -196,12 +221,45 @@ const Builder: React.FC = () => {
       });
     }));
     setFiles(prev => [...prev, ...newFiles]);
-  };
+  }, []);
+
+  // Global paste handler
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const activeTag = document.activeElement?.tagName.toLowerCase();
+      const isInput = activeTag === 'input' || activeTag === 'textarea';
+
+      if (!e.clipboardData) return;
+
+      const pastedFiles: File[] = [];
+
+      Array.from(e.clipboardData.items).forEach(item => {
+        if (item.kind === 'file') {
+          const file = item.getAsFile();
+          if (file) pastedFiles.push(file);
+        } else if (item.kind === 'string' && item.type === 'text/plain' && !isInput) {
+          item.getAsString(text => {
+            setInputText(prev => prev ? prev + '\n\n' + text : text);
+          });
+        }
+      });
+
+      if (pastedFiles.length > 0) {
+        e.preventDefault();
+        onDrop(pastedFiles);
+      }
+    };
+
+    window.addEventListener('paste', handlePaste as EventListener);
+    return () => window.removeEventListener('paste', handlePaste as EventListener);
+  }, [onDrop]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
     onDrop,
     accept: { 'application/pdf': ['.pdf'], 'image/*': ['.jpeg', '.jpg', '.png'] },
-    multiple: true
+    multiple: true,
+    noClick: true,
+    noKeyboard: true
   });
 
   const handleExtract = async () => {
@@ -237,50 +295,52 @@ const Builder: React.FC = () => {
             vendorQuotes: processedQuotes
           };
         });
+
+        // MERGE LOGIC
+        setData(prev => {
+          const newVendors = [...new Set([...(prev.vendors || []), ...(extracted.vendors || [])])];
+          
+          const mergedItems = [...(prev.items || [])];
+          
+          extracted.items.forEach((newItem: any) => {
+            const existingItemIndex = mergedItems.findIndex(
+              ei => ei.description?.toLowerCase().trim() === newItem.description?.toLowerCase().trim()
+            );
+            
+            if (existingItemIndex > -1) {
+              // Merge quotes for existing item
+              const existingItem = mergedItems[existingItemIndex];
+              const existingQuotes = existingItem.vendorQuotes || [];
+              const newQuotes = newItem.vendorQuotes || [];
+              
+              // To avoid exact duplicate quotes from same vendor if re-scanned
+              const uniqueNewQuotes = newQuotes.filter((nq: any) => 
+                !existingQuotes.some((eq: any) => eq.vendorName === nq.vendorName)
+              );
+              
+              mergedItems[existingItemIndex] = {
+                ...existingItem,
+                vendorQuotes: [...existingQuotes, ...uniqueNewQuotes]
+              };
+            } else {
+              // Add as new item
+              mergedItems.push(newItem);
+            }
+          });
+          
+          return {
+            ...prev,
+            vendors: newVendors,
+            items: mergedItems
+          };
+        });
       }
-      setData(extracted);
     } catch (error: any) {
       console.error(error);
       alert(error.message || "Failed to extract quotations.");
     } finally {
       setIsExtracting(false);
     }
-  };
-
-  const handleSyncGmail = () => {
-    if (typeof google === 'undefined') {
-       alert("Google Identity Services not loaded.");
-       return;
-    }
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    const client = google.accounts.oauth2.initTokenClient({
-      client_id: clientId,
-      scope: 'https://www.googleapis.com/auth/gmail.readonly',
-      callback: async (response: any) => {
-        if (response.access_token) {
-          setIsExtracting(true);
-          try {
-            const res = await fetch('/api/sync-gmail', {
-               method: 'POST',
-               headers: { 'Content-Type': 'application/json' },
-               body: JSON.stringify({ accessToken: response.access_token, query: 'has:attachment' })
-            });
-            const d = await res.json();
-            if (d.success && d.parsedData) {
-               setData(d.parsedData.data || d.parsedData);
-               if (d.parsedData.header) setHeader(prev => ({...prev, ...d.parsedData.header}));
-            } else {
-               alert(d.message || d.error || "No relevant emails found.");
-            }
-          } catch (e) {
-            alert("Error syncing with Gmail.");
-          } finally {
-            setIsExtracting(false);
-          }
-        }
-      }
-    });
-    client.requestAccessToken();
   };
 
   const exportExcel = async () => {
@@ -330,7 +390,15 @@ const Builder: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans">
+    <div {...getRootProps()} className={`min-h-screen bg-slate-50 p-4 md:p-8 font-sans transition-colors relative ${isDragActive ? 'bg-indigo-50/50' : ''}`}>
+      {isDragActive && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-indigo-600/10 backdrop-blur-sm pointer-events-none border-4 border-indigo-600 border-dashed m-4 rounded-3xl">
+          <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4">
+            <Upload className="w-16 h-16 text-indigo-600 animate-bounce" />
+            <p className="text-xl font-bold text-slate-800">Drop files anywhere to upload</p>
+          </div>
+        </div>
+      )}
       <div className="max-w-7xl mx-auto space-y-8">
         <header className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 print-hidden">
           <div className="flex items-center gap-4">
@@ -493,10 +561,13 @@ const Builder: React.FC = () => {
 
           <div className="col-span-12 lg:col-span-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Extraction Source</h2>
-            <div {...getRootProps()} className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 bg-slate-50'}`}>
+            <div 
+              onClick={() => (document.querySelector('input[type="file"]') as HTMLInputElement)?.click()}
+              className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 bg-slate-50'}`}
+            >
               <input {...getInputProps()} />
               <Upload className="w-10 h-10 text-indigo-500 mx-auto mb-2" />
-              <p className="text-sm text-slate-600 font-medium">Drop PDF/Images here</p>
+              <p className="text-sm text-slate-600 font-medium">Drop PDF/Images anywhere or click to browse</p>
             </div>
             
             {files.length > 0 && (
@@ -531,9 +602,6 @@ const Builder: React.FC = () => {
                   {isExtracting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />} Extract Data
                 </button>
               </div>
-              <button onClick={handleSyncGmail} disabled={isExtracting} className="flex-1 h-[96px] bg-red-50 text-red-600 border border-red-200 rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-red-100 transition-all flex items-center justify-center gap-2">
-                <Mail className="w-5 h-5" /> Gmail Sync
-              </button>
             </div>
           </div>
         </div>
