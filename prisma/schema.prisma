@@ -6,15 +6,35 @@ datasource db {
   provider = "postgresql"
 }
 
+model Executive {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  designation String?
+  created_at  DateTime     @default(now())
+  comparisons Comparison[]
+}
+
+model Plant {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  location    String?
+  created_at  DateTime     @default(now())
+  comparisons Comparison[]
+}
+
 model Comparison {
-  id         Int      @id @default(autoincrement())
-  doc_no     String   @unique
-  created_at DateTime @default(now())
-  data       Json
+  id           Int        @id @default(autoincrement())
+  doc_no       String     @unique
+  created_at   DateTime   @default(now())
+  data         Json
+  executive    Executive? @relation(fields: [executive_id], references: [id])
+  executive_id Int?
+  plant        Plant?     @relation(fields: [plant_id], references: [id])
+  plant_id     Int?
 }
 
 model User {
   id       Int    @id @default(autoincrement())
   username String @unique
-  password String // We'll store a hash or simple password for admin
+  password String
 }

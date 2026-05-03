@@ -12,6 +12,9 @@ import { saveAs } from 'file-saver';
 
 declare const google: any;
 
+interface DBExecutive { id: number; name: string; designation?: string; }
+interface DBPlant { id: number; name: string; location?: string; }
+
 const Builder: React.FC = () => {
   // State with LocalStorage persistence (Auto-save draft)
   const [header, setHeader] = useState<HeaderInfo>(() => {
@@ -19,23 +22,22 @@ const Builder: React.FC = () => {
     return saved ? JSON.parse(saved) : {
       docNo: '',
       preparedBy: '',
-      date: new Date().toLocaleDateString(),
+      date: new Date().toISOString().split('T')[0],
       indentDate: '',
       plantName: ''
     };
   });
 
-  const [settings, setSettings] = useState<{ preparedByOptions: string[], plantNameOptions: string[] }>(() => {
-    const saved = localStorage.getItem('quote_settings');
-    return saved ? JSON.parse(saved) : {
-      preparedByOptions: [],
-      plantNameOptions: []
-    };
-  });
+  const [dbExecutives, setDbExecutives] = useState<DBExecutive[]>([]);
+  const [dbPlants, setDbPlants] = useState<DBPlant[]>([]);
+  const [selectedExecutiveId, setSelectedExecutiveId] = useState<number | null>(null);
+  const [selectedPlantId, setSelectedPlantId] = useState<number | null>(null);
 
   const [showSettings, setShowSettings] = useState(false);
   const [newPreparedBy, setNewPreparedBy] = useState('');
+  const [newPreparedByDesignation, setNewPreparedByDesignation] = useState('');
   const [newPlantName, setNewPlantName] = useState('');
+  const [newPlantLocation, setNewPlantLocation] = useState('');
 
   const [data, setData] = useState<ComparisonData>(() => {
     const saved = localStorage.getItem('quote_draft_data');
@@ -60,31 +62,80 @@ const Builder: React.FC = () => {
   }, [data]);
 
   useEffect(() => {
-    localStorage.setItem('quote_settings', JSON.stringify(settings));
-  }, [settings]);
+    fetchMasters();
+  }, []);
 
-  const addSettingOption = (type: 'preparedBy' | 'plantName') => {
-    if (type === 'preparedBy' && newPreparedBy.trim()) {
-      setSettings(prev => ({
-        ...prev,
-        preparedByOptions: [...new Set([...prev.preparedByOptions, newPreparedBy.trim()])]
-      }));
-      setNewPreparedBy('');
-    } else if (type === 'plantName' && newPlantName.trim()) {
-      setSettings(prev => ({
-        ...prev,
-        plantNameOptions: [...new Set([...prev.plantNameOptions, newPlantName.trim()])]
-      }));
-      setNewPlantName('');
+  const fetchMasters = async () => {
+    try {
+      const res = await fetch('/api/masters', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+      });
+      const d = await res.json();
+      if (d.executives) setDbExecutives(d.executives);
+      if (d.plants) setDbPlants(d.plants);
+    } catch (e) {
+      console.error("Error fetching masters", e);
     }
   };
 
-  const removeSettingOption = (type: 'preparedBy' | 'plantName', value: string) => {
-    setSettings(prev => ({
-      ...prev,
-      [type === 'preparedBy' ? 'preparedByOptions' : 'plantNameOptions']: 
-        prev[type === 'preparedBy' ? 'preparedByOptions' : 'plantNameOptions'].filter(opt => opt !== value)
-    }));
+  const addExecutive = async () => {
+    if (!newPreparedBy.trim()) return;
+    try {
+      const res = await fetch('/api/executives', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+        },
+        body: JSON.stringify({ name: newPreparedBy, designation: newPreparedByDesignation })
+      });
+      if (res.ok) {
+        setNewPreparedBy('');
+        setNewPreparedByDesignation('');
+        fetchMasters();
+      }
+    } catch (e) { alert("Error adding executive"); }
+  };
+
+  const removeExecutive = async (id: number) => {
+    if (!window.confirm("Delete this executive?")) return;
+    try {
+      const res = await fetch(`/api/executives/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+      });
+      if (res.ok) fetchMasters();
+    } catch (e) { alert("Error deleting executive"); }
+  };
+
+  const addPlant = async () => {
+    if (!newPlantName.trim()) return;
+    try {
+      const res = await fetch('/api/plants', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+        },
+        body: JSON.stringify({ name: newPlantName, location: newPlantLocation })
+      });
+      if (res.ok) {
+        setNewPlantName('');
+        setNewPlantLocation('');
+        fetchMasters();
+      }
+    } catch (e) { alert("Error adding plant"); }
+  };
+
+  const removePlant = async (id: number) => {
+    if (!window.confirm("Delete this plant?")) return;
+    try {
+      const res = await fetch(`/api/plants/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+      });
+      if (res.ok) fetchMasters();
+    } catch (e) { alert("Error deleting plant"); }
   };
 
   const clearDraft = () => {
@@ -109,7 +160,9 @@ const Builder: React.FC = () => {
     try {
       const payload = {
         doc_no: header.docNo,
-        data: { header, data }
+        data: { header, data },
+        executive_id: selectedExecutiveId,
+        plant_id: selectedPlantId
       };
       const res = await fetch('/api/comparisons', {
         method: 'POST',
@@ -320,20 +373,27 @@ const Builder: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-4">
                 <h3 className="text-sm font-bold text-slate-600 uppercase">Prepared By Options</h3>
-                <div className="flex gap-2">
+                <div className="space-y-2">
                   <input 
                     type="text" 
                     value={newPreparedBy} 
                     onChange={e => setNewPreparedBy(e.target.value)} 
-                    placeholder="Add Name..." 
-                    className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                    placeholder="Name..." 
+                    className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
                   />
-                  <button onClick={() => addSettingOption('preparedBy')} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700">Add</button>
+                  <input 
+                    type="text" 
+                    value={newPreparedByDesignation} 
+                    onChange={e => setNewPreparedByDesignation(e.target.value)} 
+                    placeholder="Designation..." 
+                    className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                  />
+                  <button onClick={addExecutive} className="w-full py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700">Add Executive</button>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {settings.preparedByOptions.map(opt => (
-                    <span key={opt} className="px-3 py-1 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium flex items-center gap-2">
-                      {opt} <X className="w-3 h-3 cursor-pointer hover:text-red-500" onClick={() => removeSettingOption('preparedBy', opt)} />
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {dbExecutives.map(opt => (
+                    <span key={opt.id} className="px-3 py-1 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium flex items-center gap-2">
+                      {opt.name} {opt.designation && `(${opt.designation})`} <X className="w-3 h-3 cursor-pointer hover:text-red-500" onClick={() => removeExecutive(opt.id)} />
                     </span>
                   ))}
                 </div>
@@ -341,20 +401,27 @@ const Builder: React.FC = () => {
 
               <div className="space-y-4">
                 <h3 className="text-sm font-bold text-slate-600 uppercase">Plant Name Options</h3>
-                <div className="flex gap-2">
+                <div className="space-y-2">
                   <input 
                     type="text" 
                     value={newPlantName} 
                     onChange={e => setNewPlantName(e.target.value)} 
-                    placeholder="Add Plant..." 
-                    className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                    placeholder="Plant Name..." 
+                    className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
                   />
-                  <button onClick={() => addSettingOption('plantName')} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700">Add</button>
+                  <input 
+                    type="text" 
+                    value={newPlantLocation} 
+                    onChange={e => setNewPlantLocation(e.target.value)} 
+                    placeholder="Location..." 
+                    className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                  />
+                  <button onClick={addPlant} className="w-full py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700">Add Plant</button>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {settings.plantNameOptions.map(opt => (
-                    <span key={opt} className="px-3 py-1 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium flex items-center gap-2">
-                      {opt} <X className="w-3 h-3 cursor-pointer hover:text-red-500" onClick={() => removeSettingOption('plantName', opt)} />
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {dbPlants.map(opt => (
+                    <span key={opt.id} className="px-3 py-1 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium flex items-center gap-2">
+                      {opt.name} {opt.location && `(${opt.location})`} <X className="w-3 h-3 cursor-pointer hover:text-red-500" onClick={() => removePlant(opt.id)} />
                     </span>
                   ))}
                 </div>
@@ -373,29 +440,53 @@ const Builder: React.FC = () => {
               </div>
               <div>
                 <label className="text-[10px] font-bold text-slate-400 uppercase">Prepared By</label>
-                <input 
-                  type="text" 
-                  list="preparedByList"
-                  value={header.preparedBy} 
-                  onChange={e => setHeader({...header, preparedBy: e.target.value})} 
-                  className="w-full mt-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" 
-                />
-                <datalist id="preparedByList">
-                  {settings.preparedByOptions.map(opt => <option key={opt} value={opt} />)}
-                </datalist>
+                <select 
+                  value={selectedExecutiveId || ''} 
+                  onChange={e => {
+                    const id = parseInt(e.target.value);
+                    setSelectedExecutiveId(id || null);
+                    const exec = dbExecutives.find(x => x.id === id);
+                    if (exec) setHeader({...header, preparedBy: exec.name});
+                  }} 
+                  className="w-full mt-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                >
+                  <option value="">Select Executive</option>
+                  {dbExecutives.map(opt => <option key={opt.id} value={opt.id}>{opt.name}</option>)}
+                </select>
               </div>
               <div>
                 <label className="text-[10px] font-bold text-slate-400 uppercase">Plant</label>
+                <select 
+                  value={selectedPlantId || ''} 
+                  onChange={e => {
+                    const id = parseInt(e.target.value);
+                    setSelectedPlantId(id || null);
+                    const plant = dbPlants.find(x => x.id === id);
+                    if (plant) setHeader({...header, plantName: plant.name});
+                  }} 
+                  className="w-full mt-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                >
+                  <option value="">Select Plant</option>
+                  {dbPlants.map(opt => <option key={opt.id} value={opt.id}>{opt.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase">Date</label>
                 <input 
-                  type="text" 
-                  list="plantNameList"
-                  value={header.plantName} 
-                  onChange={e => setHeader({...header, plantName: e.target.value})} 
+                  type="date" 
+                  value={header.date} 
+                  onChange={e => setHeader({...header, date: e.target.value})} 
                   className="w-full mt-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" 
                 />
-                <datalist id="plantNameList">
-                  {settings.plantNameOptions.map(opt => <option key={opt} value={opt} />)}
-                </datalist>
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase">Indent Date</label>
+                <input 
+                  type="date" 
+                  value={header.indentDate} 
+                  onChange={e => setHeader({...header, indentDate: e.target.value})} 
+                  className="w-full mt-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" 
+                />
               </div>
             </div>
           </div>

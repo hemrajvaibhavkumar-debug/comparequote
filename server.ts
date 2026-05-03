@@ -206,13 +206,77 @@ async function startServer() {
     }
   });
 
+  // --- Master Data CRUD (Executives & Plants) ---
+  
+  app.get("/api/masters", authenticateToken, async (req, res) => {
+    try {
+      const [executives, plants] = await Promise.all([
+        prisma.executive.findMany({ orderBy: { name: 'asc' } }),
+        prisma.plant.findMany({ orderBy: { name: 'asc' } })
+      ]);
+      res.json({ executives, plants });
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
+  app.post("/api/executives", authenticateToken, async (req, res) => {
+    try {
+      const { name, designation } = req.body;
+      const executive = await prisma.executive.create({ data: { name, designation } });
+      res.json(executive);
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
+  app.delete("/api/executives/:id", authenticateToken, async (req, res) => {
+    try {
+      await prisma.executive.delete({ where: { id: parseInt(req.params.id) } });
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
+  app.post("/api/plants", authenticateToken, async (req, res) => {
+    try {
+      const { name, location } = req.body;
+      const plant = await prisma.plant.create({ data: { name, location } });
+      res.json(plant);
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
+  app.delete("/api/plants/:id", authenticateToken, async (req, res) => {
+    try {
+      await prisma.plant.delete({ where: { id: parseInt(req.params.id) } });
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
+  // --- Comparison CRUD ---
+
   app.post("/api/comparisons", authenticateToken, async (req, res) => {
     try {
-      const validated = SaveComparisonSchema.parse(req.body);
+      const { doc_no, data, executive_id, plant_id } = req.body;
       const comparison = await prisma.comparison.upsert({
-        where: { doc_no: validated.doc_no },
-        update: { data: validated.data as any, created_at: new Date() },
-        create: { doc_no: validated.doc_no, data: validated.data as any },
+        where: { doc_no },
+        update: { 
+          data: data as any, 
+          executive_id: executive_id ? parseInt(executive_id) : null,
+          plant_id: plant_id ? parseInt(plant_id) : null,
+          created_at: new Date() 
+        },
+        create: { 
+          doc_no, 
+          data: data as any,
+          executive_id: executive_id ? parseInt(executive_id) : null,
+          plant_id: plant_id ? parseInt(plant_id) : null
+        },
       });
       res.json({ success: true, comparison });
     } catch (err) {
@@ -225,7 +289,10 @@ async function startServer() {
     try {
       const comparisons = await prisma.comparison.findMany({
         orderBy: { created_at: "desc" },
-        select: { id: true, doc_no: true, created_at: true, data: true },
+        include: {
+          executive: true,
+          plant: true
+        }
       });
       res.json(comparisons);
     } catch (err) {
@@ -238,6 +305,7 @@ async function startServer() {
     try {
       const comparison = await prisma.comparison.findUnique({
         where: { id: parseInt(req.params.id) },
+        include: { executive: true, plant: true }
       });
       if (!comparison) return res.status(404).json({ error: "Not found" });
       res.json(comparison);
@@ -249,12 +317,14 @@ async function startServer() {
 
   app.put("/api/comparisons/:id", authenticateToken, async (req, res) => {
     try {
-      const validated = SaveComparisonSchema.parse(req.body);
+      const { doc_no, data, executive_id, plant_id } = req.body;
       const comparison = await prisma.comparison.update({
         where: { id: parseInt(req.params.id) },
         data: { 
-          doc_no: validated.doc_no,
-          data: validated.data as any,
+          doc_no,
+          data: data as any,
+          executive_id: executive_id ? parseInt(executive_id) : null,
+          plant_id: plant_id ? parseInt(plant_id) : null,
           created_at: new Date()
         },
       });
