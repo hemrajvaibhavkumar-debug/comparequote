@@ -272,7 +272,7 @@ const Builder: React.FC = () => {
             let nr = parseFloat(q.netRate) || 0;
             let mrp = parseFloat(q.mrp) || 0;
             const disc = parseFloat(q.discount) || 0;
-            const qty = parseFloat(item.qty) || 0;
+            const qty = Number(item.qty) || 0;
 
             if (disc === 0) {
               // If no discount, sync MRP and NetRate

@@ -61,8 +61,6 @@ async function startServer() {
     res.status(401).json({ error: "Invalid password" });
   });
 
-  setupGmailRoutes(app);
-
   app.post("/api/extract", extractLimiter, async (req, res) => {
     try {
       const { input, files, provider = 'groq' } = req.body;
@@ -389,4 +387,3 @@ async function startServer() {
 }
 
 startServer().catch(console.error);
-er().catch(console.error);
