@@ -15,6 +15,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
   const vendors = data?.vendors || [];
   const items = data?.items || [];
   const vendorCols = 5; // MAKE, MRP, DIS, NET RATE, TOTAL AMOUNT
+  const hasWeight = items.some(item => item.weight !== undefined && item.weight !== null && item.weight !== '');
 
   const calculateVendorTotal = (vendorName: string) => {
     return items.reduce((sum, item) => {
@@ -29,13 +30,16 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
       const newItems = [...prev.items];
       const item = { ...newItems[itemIndex], [field]: value };
       
-      // If quantity changes, update all vendor total amounts
-      if (field === 'qty') {
-        const newQty = parseFloat(value) || 0;
+      // If quantity or weight changes, update all vendor total amounts
+      if (field === 'qty' || field === 'weight') {
+        const newQty = parseFloat(item.qty) || 0;
+        const newWeight = parseFloat(item.weight) || 0;
+        const multiplier = newWeight > 0 ? newWeight : newQty;
+
         if (item.vendorQuotes) {
           item.vendorQuotes = item.vendorQuotes.map((q: any) => ({
             ...q,
-            totalAmount: (parseFloat(q.netRate) || 0) * newQty
+            totalAmount: (parseFloat(q.netRate) || 0) * multiplier
           }));
         }
       }
@@ -99,8 +103,10 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
         }
       }
 
-      // Always update totalAmount based on netRate and qty
-      currentQuote.totalAmount = (parseFloat(currentQuote.netRate) || 0) * qty;
+      // Always update totalAmount based on netRate and qty/weight
+      const weightVal = parseFloat(item.weight) || 0;
+      const multiplier = weightVal > 0 ? weightVal : qty;
+      currentQuote.totalAmount = (parseFloat(currentQuote.netRate) || 0) * multiplier;
 
       if (qIndex >= 0) {
         quotes[qIndex] = currentQuote;
@@ -235,7 +241,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
             </th>
           </tr>
           <tr>
-            <th colSpan={7} className="text-left p-0 border border-[#000000] font-bold uppercase">
+            <th colSpan={hasWeight ? 8 : 7} className="text-left p-0 border border-[#000000] font-bold uppercase">
               <div className="flex items-center">
                 <span className="pl-1 whitespace-nowrap">PLANT NAME -</span>
                 <input type="text" value={header.plantName} onChange={e => updateHeader('plantName', e.target.value)} className="w-full p-1 bg-transparent focus:outline-none font-bold uppercase" readOnly={readOnly} />
@@ -266,6 +272,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
             <th rowSpan={2} className="border border-[#000000] p-1 w-80 text-left font-bold">ITEM DESCRIPTION</th>
             <th rowSpan={2} className="border border-[#000000] p-1 whitespace-nowrap">UOM</th>
             <th rowSpan={2} className="border border-[#000000] p-1 whitespace-nowrap">QTY</th>
+            {hasWeight && <th rowSpan={2} className="border border-[#000000] p-1 whitespace-nowrap">WT</th>}
             <th colSpan={2} className="border border-[#000000] p-1 whitespace-nowrap">PREVIOUS PRICE</th>
             {vendors.map((v, i) => (
               <th key={i} colSpan={vendorCols} className="border border-[#000000] p-1 text-base font-black uppercase tracking-widest bg-[#ffffff] whitespace-nowrap">
@@ -303,6 +310,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
               <td className="border border-[#000000] p-0 bg-[#ffffff]"><input type="text" value={item.description || ''} onChange={e => updateItem(idx, 'description', e.target.value)} className="w-full text-left p-1 font-medium bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>
               <td className="border border-[#000000] p-0 bg-[#ffffff] whitespace-nowrap"><input type="text" value={item.uom || ''} onChange={e => updateItem(idx, 'uom', e.target.value)} className="w-full text-center p-1 uppercase bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>
               <td className="border border-[#000000] p-0 bg-[#ffffff] whitespace-nowrap"><input type="text" value={item.qty || ''} onChange={e => updateItem(idx, 'qty', e.target.value)} className="w-full text-center p-1 font-bold bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>
+              {hasWeight && <td className="border border-[#000000] p-0 bg-[#ffffff] whitespace-nowrap"><input type="text" value={item.weight || ''} onChange={e => updateItem(idx, 'weight', e.target.value)} className="w-full text-center p-1 font-bold bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>}
               <td className="border border-[#000000] p-0 bg-[#ffffff] whitespace-nowrap"><input type="text" value={item.previousPrice?.rate || ''} onChange={e => updatePreviousPrice(idx, 'rate', e.target.value)} className="w-full text-center p-1 bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>
               <td className="border border-[#000000] p-0 bg-[#ffffff] whitespace-nowrap"><input type="text" value={item.previousPrice?.date || ''} onChange={e => updatePreviousPrice(idx, 'date', e.target.value)} className="w-full text-center p-1 text-[8px] bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>
               {vendors.map((v: string, vIdx: number) => {
@@ -340,7 +348,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
 
           {/* Totals */}
           <tr className="bg-[#ffffff]">
-             <td colSpan={7} className="border border-[#000000]"></td>
+             <td colSpan={hasWeight ? 8 : 7} className="border border-[#000000]"></td>
              {vendors.map((v, i) => (
                <React.Fragment key={i}>
                  <td colSpan={4} className="border border-[#000000] text-right p-1 font-bold uppercase tracking-tighter">TOTAL</td>
@@ -352,7 +360,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
           
           {/* GST */}
           <tr>
-             <td colSpan={7} className="border border-[#000000]"></td>
+             <td colSpan={hasWeight ? 8 : 7} className="border border-[#000000]"></td>
              {vendors.map((v, i) => {
                const total = calculateVendorTotal(v);
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
@@ -374,7 +382,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
 
           {/* Grand Total */}
           <tr className="bg-[#ffffff]">
-             <td colSpan={7} className="border border-[#000000]"></td>
+             <td colSpan={hasWeight ? 8 : 7} className="border border-[#000000]"></td>
              {vendors.map((v, i) => {
                const total = calculateVendorTotal(v);
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
@@ -392,7 +400,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
 
           {/* Terms and Conditions */}
           <tr className="bg-[#ffffff]">
-             <td colSpan={7} className="border border-[#000000]"></td>
+             <td colSpan={hasWeight ? 8 : 7} className="border border-[#000000]"></td>
              {vendors.map((v, i) => (
                 <td key={i} colSpan={vendorCols} className="border border-[#000000] text-center p-1 font-black uppercase bg-slate-50">TERMS & CONDITION</td>
              ))}
@@ -401,7 +409,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
           
           {/* Detailed Terms */}
           <tr>
-             <td colSpan={7} className="border border-[#000000]"></td>
+             <td colSpan={hasWeight ? 8 : 7} className="border border-[#000000]"></td>
              {vendors.map((v, i) => {
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
                return (
@@ -416,7 +424,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
              <td className="print-hidden border-[#000000] border"></td>
           </tr>
           <tr>
-             <td colSpan={7} className="border border-[#000000]"></td>
+             <td colSpan={hasWeight ? 8 : 7} className="border border-[#000000]"></td>
              {vendors.map((v, i) => {
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
                return (
@@ -431,7 +439,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
              <td className="print-hidden border-[#000000] border"></td>
           </tr>
           <tr>
-             <td colSpan={7} className="border border-[#000000]"></td>
+             <td colSpan={hasWeight ? 8 : 7} className="border border-[#000000]"></td>
              {vendors.map((v, i) => {
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
                return (
@@ -446,7 +454,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
              <td className="print-hidden border-[#000000] border"></td>
           </tr>
           <tr>
-             <td colSpan={7} className="border border-[#000000]"></td>
+             <td colSpan={hasWeight ? 8 : 7} className="border border-[#000000]"></td>
              {vendors.map((v, i) => {
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
                return (
@@ -461,7 +469,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
              <td className="print-hidden border-[#000000] border"></td>
           </tr>
           <tr>
-             <td colSpan={7} className="border border-[#000000]"></td>
+             <td colSpan={hasWeight ? 8 : 7} className="border border-[#000000]"></td>
              {vendors.map((v, i) => {
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
                return (
@@ -484,7 +492,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
              <td className="print-hidden border-[#000000] border"></td>
           </tr>
           <tr>
-             <td colSpan={7} className="border border-[#000000]"></td>
+             <td colSpan={hasWeight ? 8 : 7} className="border border-[#000000]"></td>
              {vendors.map((v, i) => {
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
                return (

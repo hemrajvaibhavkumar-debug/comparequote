@@ -158,6 +158,7 @@ async function startServer() {
                       description: { type: Type.STRING },
                       uom: { type: Type.STRING },
                       qty: { type: Type.NUMBER },
+                      weight: { type: Type.NUMBER },
                       previousPrice: {
                         type: Type.OBJECT,
                         properties: {

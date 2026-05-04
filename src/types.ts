@@ -27,6 +27,7 @@ export interface Item {
   description: string;
   uom: string;
   qty: number | string;
+  weight?: number | string;
   previousPrice: {
     rate: number | string;
     date: string;

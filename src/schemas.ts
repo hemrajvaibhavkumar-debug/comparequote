@@ -26,6 +26,7 @@ export const ComparisonItemSchema = z.object({
   description: z.string().default(""),
   uom: z.string().default(""),
   qty: z.number().default(0),
+  weight: z.number().optional(),
   previousPrice: PreviousPriceSchema.optional(),
   vendorQuotes: z.array(VendorQuoteSchema).default([]),
 });
