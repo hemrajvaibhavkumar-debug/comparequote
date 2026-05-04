@@ -10,10 +10,15 @@ import { ComparisonDataSchema, SaveComparisonSchema } from "./src/schemas.ts";
 import jwt from "jsonwebtoken";
 import { rateLimit } from "express-rate-limit";
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new pg.Pool({ 
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL?.includes("neon.tech") || process.env.DATABASE_URL?.includes("render.com") 
+    ? { rejectUnauthorized: false } 
+    : false
+});
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
-const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret";
+const JWT_SECRET = process.env.JWT_SECRET || "quotecompare-default-secret-2026";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
 // Rate Limiters
@@ -282,21 +287,27 @@ async function startServer() {
     }
   });
 
-  app.get("/api/comparisons/count-year", authenticateToken, async (req, res) => {
+  app.get("/api/comparisons/latest-year", authenticateToken, async (req, res) => {
     try {
       const year = new Date().getFullYear();
       const startOfYear = new Date(year, 0, 1);
       const endOfYear = new Date(year, 11, 31, 23, 59, 59);
 
-      const count = await prisma.comparison.count({
+      const latest = await prisma.comparison.findFirst({
         where: {
           created_at: {
             gte: startOfYear,
             lte: endOfYear
           }
+        },
+        orderBy: {
+          created_at: 'desc'
+        },
+        select: {
+          doc_no: true
         }
       });
-      res.json({ count });
+      res.json({ latest: latest?.doc_no || null });
     } catch (err) {
       res.status(500).json({ error: String(err) });
     }

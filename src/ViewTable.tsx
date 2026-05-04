@@ -24,7 +24,14 @@ export default function ViewTable() {
         'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
       }
     })
-      .then(res => res.json())
+      .then(res => {
+        if (res.status === 403) {
+          localStorage.removeItem('admin_token');
+          window.location.href = '/login';
+          throw new Error("Session expired. Please log in again.");
+        }
+        return res.json();
+      })
       .then(d => {
         setRecord(d);
         setHeader(d.data?.header || {});

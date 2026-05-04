@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, FileText, Download, Table as TableIcon, FileOutput, Loader2, Plus, Trash2, Eye, Settings as SettingsIcon, X } from 'lucide-react';
+import { Upload, FileText, Download, Table as TableIcon, Loader2, Plus, Trash2, Eye, Settings as SettingsIcon, X, RotateCcw } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { extractQuotations } from './services/gemini';
 import { ComparisonData, HeaderInfo } from './types';
@@ -7,8 +7,6 @@ import { ComparisonTable } from './components/ComparisonTable';
 import * as Papa from 'papaparse';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
-import ExcelJS from 'exceljs';
-import { saveAs } from 'file-saver';
 
 declare const google: any;
 
@@ -44,20 +42,37 @@ const Builder: React.FC = () => {
     return saved ? JSON.parse(saved) : { items: [], vendors: [] };
   });
 
-  const generateDocNo = async () => {
-    // Only generate if docNo is empty
-    if (header.docNo) return;
+  const generateDocNo = async (force = false) => {
+    // Only generate if docNo is empty, unless forced
+    if (header.docNo && !force) return;
 
     try {
-      const res = await fetch('/api/comparisons/count-year', {
+      const res = await fetch('/api/comparisons/latest-year', {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
       });
-      const { count } = await res.json();
+      
+      if (res.status === 403) {
+        localStorage.removeItem('admin_token');
+        window.location.href = '/login';
+        return;
+      }
+      
+      const { latest } = await res.json();
       
       const now = new Date();
       const mm = String(now.getMonth() + 1).padStart(2, '0');
       const yy = String(now.getFullYear()).slice(-2);
-      const serial = count + 1;
+      
+      let serial = 1;
+      if (latest) {
+        // Extract the numerical part after the last dash
+        const parts = latest.split('-');
+        const lastPart = parts[parts.length - 1];
+        const lastSerial = parseInt(lastPart);
+        if (!isNaN(lastSerial)) {
+          serial = lastSerial + 1;
+        }
+      }
       
       const newDocNo = `C${mm}${yy}-${serial}`;
       setHeader(prev => ({ ...prev, docNo: newDocNo }));
@@ -93,6 +108,13 @@ const Builder: React.FC = () => {
       const res = await fetch('/api/masters', {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
       });
+
+      if (res.status === 403) {
+        localStorage.removeItem('admin_token');
+        window.location.href = '/login';
+        return;
+      }
+
       const d = await res.json();
       if (d.executives) setDbExecutives(d.executives);
       if (d.plants) setDbPlants(d.plants);
@@ -172,7 +194,7 @@ const Builder: React.FC = () => {
       localStorage.removeItem('quote_draft_header');
       localStorage.removeItem('quote_draft_data');
       // Regenerate doc no for the new fresh draft
-      setTimeout(() => generateDocNo(), 100);
+      setTimeout(() => generateDocNo(true), 100);
     }
   };
 
@@ -197,6 +219,13 @@ const Builder: React.FC = () => {
         },
         body: JSON.stringify(payload)
       });
+
+      if (res.status === 403) {
+        localStorage.removeItem('admin_token');
+        window.location.href = '/login';
+        return;
+      }
+
       if (!res.ok) {
         const errData = await res.json();
         throw new Error(errData.error || "Failed to save.");
@@ -343,48 +372,6 @@ const Builder: React.FC = () => {
     }
   };
 
-  const exportExcel = async () => {
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Comparison');
-
-    worksheet.columns = [
-      { header: 'SI NO', key: 'siNo', width: 10 },
-      { header: 'DESCRIPTION', key: 'desc', width: 40 },
-      { header: 'UOM', key: 'uom', width: 10 },
-      { header: 'QTY', key: 'qty', width: 10 },
-      { header: 'PREV RATE', key: 'prev', width: 15 },
-    ];
-
-    const vendors = data.vendors || [];
-    vendors.forEach(v => {
-      worksheet.columns = [...worksheet.columns, 
-        { header: `${v} MAKE`, key: `${v}_make`, width: 15 },
-        { header: `${v} RATE`, key: `${v}_rate`, width: 15 },
-        { header: `${v} TOTAL`, key: `${v}_total`, width: 15 }
-      ];
-    });
-
-    data.items.forEach((item, i) => {
-      const row: any = {
-        siNo: item.siNo || (i + 1),
-        desc: item.description,
-        uom: item.uom,
-        qty: item.qty,
-        prev: item.previousPrice?.rate || 0
-      };
-      vendors.forEach(v => {
-        const q = item.vendorQuotes?.find(q => q.vendorName === v);
-        row[`${v}_make`] = q?.make || '';
-        row[`${v}_rate`] = q?.netRate || 0;
-        row[`${v}_total`] = q?.totalAmount || 0;
-      });
-      worksheet.addRow(row);
-    });
-
-    const buffer = await workbook.xlsx.writeBuffer();
-    saveAs(new Blob([buffer]), `Comparison_${header.docNo || 'export'}.xlsx`);
-  };
-
   const handlePrint = () => {
     window.print();
   };
@@ -412,14 +399,11 @@ const Builder: React.FC = () => {
              <button onClick={saveToNeon} disabled={isSaving || !data.items.length} className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 disabled:opacity-50 transition-all shadow-lg">
                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />} Save to DB
              </button>
-             <button onClick={exportExcel} disabled={!data.items.length} className="flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 disabled:opacity-50 transition-all shadow-lg">
-               <FileOutput className="w-4 h-4" /> Excel
-             </button>
              <button onClick={handlePrint} disabled={!data.items.length} className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-lg">
                <FileText className="w-4 h-4" /> Export/Print PDF
              </button>
-             <button onClick={clearDraft} className="flex items-center gap-2 px-4 py-2.5 border border-red-100 text-red-500 rounded-xl text-sm font-bold hover:bg-red-50 transition-all">
-               <Trash2 className="w-4 h-4" /> Clear
+             <button onClick={clearDraft} className="flex items-center gap-2 px-6 py-2.5 bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition-all border border-red-200 shadow-sm">
+               <RotateCcw className="w-4 h-4" /> RESET ALL
              </button>
              <button onClick={() => setShowSettings(!showSettings)} className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-200 transition-all">
                <SettingsIcon className="w-4 h-4" /> Settings
@@ -503,8 +487,17 @@ const Builder: React.FC = () => {
             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Document Metadata</h2>
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">Doc No.</label>
-                <input type="text" value={header.docNo} onChange={e => setHeader({...header, docNo: e.target.value})} className="w-full mt-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" placeholder="QT-2024-001" />
+                <div className="flex justify-between items-end">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase">Doc No.</label>
+                  <button 
+                    onClick={() => generateDocNo(true)}
+                    className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 mb-0.5"
+                    title="Reset to latest chronological number"
+                  >
+                    <RotateCcw className="w-2.5 h-2.5" /> RESET
+                  </button>
+                </div>
+                <input type="text" value={header.docNo} onChange={e => setHeader({...header, docNo: e.target.value})} className="w-full mt-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" placeholder="C0124-1" />
               </div>
               <div>
                 <label className="text-[10px] font-bold text-slate-400 uppercase">Prepared By</label>

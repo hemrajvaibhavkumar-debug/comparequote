@@ -153,6 +153,41 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
     });
   };
 
+  const addVendor = () => {
+    if (readOnly) return;
+    const vendorName = window.prompt("Enter new vendor name:");
+    if (!vendorName) return;
+    if (vendors.includes(vendorName)) {
+      alert("Vendor already exists");
+      return;
+    }
+
+    setData((prev: any) => ({
+      ...prev,
+      vendors: [...prev.vendors, vendorName],
+      items: prev.items.map((item: any) => ({
+        ...item,
+        vendorQuotes: [
+          ...(item.vendorQuotes || []),
+          {
+            vendorName,
+            make: '',
+            mrp: '',
+            discount: '',
+            netRate: '',
+            totalAmount: '',
+            deliveryPeriod: '',
+            readyStock: '',
+            packingAndForwarding: '',
+            freight: '',
+            gstStatus: 'Exclusive',
+            extra: ''
+          }
+        ]
+      }))
+    }));
+  };
+
   if (!items.length) {
     return (
       <div className="p-8 text-center text-[#000000] bg-[#ffffff] rounded-lg border-2 border-dashed">
@@ -211,7 +246,13 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                  BY {v}
                </th>
             ))}
-            <th className="print-hidden w-10 border-[#000000] border bg-[#ffffff]"></th>
+            <th className="print-hidden w-10 border-[#000000] border bg-[#ffffff]">
+              {!readOnly && (
+                <button onClick={addVendor} className="p-1 hover:text-indigo-600 text-[#000000] cursor-pointer" title="Add Vendor">
+                  <PlusCircle className="w-4 h-4 mx-auto" />
+                </button>
+              )}
+            </th>
           </tr>
           
           {/* Main Table Headers */}
