@@ -92,7 +92,7 @@ async function startServer() {
 
       if (provider === 'groq') {
         const groqApiKey = process.env.GROQ_API_KEY;
-        const groqModel = process.env.GROQ_MODEL || "llama3-70b-8192";
+        const groqModel = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
         
         if (!groqApiKey) {
           throw new Error("Groq API key not configured");

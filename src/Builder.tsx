@@ -584,13 +584,12 @@ const Builder: React.FC = () => {
                   >
                     Gemini (Vision)
                   </button>
-                  <button 
-                    onClick={() => setProvider('groq')} 
+                  <button
+                    onClick={() => setProvider('groq')}
                     className={`flex-1 py-2 text-[10px] font-bold uppercase rounded-lg transition-all ${provider === 'groq' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                   >
-                    Groq (Llama-4)
-                  </button>
-                </div>
+                    Groq (Llama-3.3)
+                  </button>                </div>
                 <button onClick={handleExtract} disabled={isExtracting || (!inputText && !files.length)} className="w-full py-3.5 bg-slate-800 text-white rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-slate-900 disabled:opacity-50 transition-all flex items-center justify-center gap-2">
                   {isExtracting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />} Extract Data
                 </button>
