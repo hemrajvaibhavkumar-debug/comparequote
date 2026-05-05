@@ -68,137 +68,103 @@ async function startServer() {
 
   app.post("/api/extract", extractLimiter, async (req, res) => {
     try {
-      const { input, files, provider = 'groq' } = req.body;
+      const { input, files } = req.body;
+      console.log(`[AI] Extraction requested. Files: ${files?.length || 0}, Text: ${input ? 'Yes' : 'No'}`);
       
-      const prompt = `Extract quotation details from the following information and structure it for a comparison table. 
+      const prompt = `You are an expert procurement assistant. Your task is to extract all quotation details from the provided data. 
       
+      DATA SOURCES:
+      1. Attached Files (PDFs/Images): These contain the primary quotation documents. You MUST carefully scan every page/image.
+      2. Input Text: Additional notes or pasted quotation data.
+      
+      CRITICAL INSTRUCTIONS:
+      - Analyze BOTH the attached files and the input text.
+      - Find every Vendor Name and every Item mentioned.
+      - For each item, extract: Description, UOM, QTY, and any Previous Price if mentioned.
+      - For each vendor's quote on an item, extract: Make, MRP, Discount, and Net Rate.
+      
+      CRITICAL INSTRUCTION FOR STEEL ITEMS & WEIGHT:
+      If an item is a steel item (e.g., TMT bars, plates, beams, etc.) and a weight (in kg, MT, or tons) is mentioned, you MUST extract it.
+      - Set the "weight" field to the numerical weight value.
+      - If weight is mentioned, calculate totalAmount as (Net Rate * Weight).
+      - If NOT mentioned, calculate totalAmount as (Net Rate * QTY).
+
       CRITICAL INSTRUCTION FOR GST STATUS:
-      You must intelligently determine if the quoted prices are "Inclusive" or "Exclusive" of GST.
-      - Set to "Inclusive" if you see: "All Inclusive", "Incl. GST", "GST Paid", "Net Rate", "Inclusive of all taxes", "VAT Included", or if the total amount matches a calculation where GST is already added.
-      - Set to "Exclusive" if you see: "GST Extra", "Taxes Extra", "+ GST", "GST @ 18%", "Plus Taxes", "Excluding GST", or if the quote specifically lists GST as a separate line item to be added.
-      - Default to "Exclusive" if it's ambiguous, but look for contextual clues like "Prices are ex-works" (often implies taxes extra).
-      - If multiple items have different statuses, use the most common one or the one stated in general terms.
+      Intelligently determine if quoted prices are "Inclusive" or "Exclusive" of GST.
+      - "Inclusive" if you see: "All Inclusive", "Incl. GST", "GST Paid", "Net Rate", "Inclusive of all taxes".
+      - "Exclusive" if you see: "GST Extra", "Taxes Extra", "+ GST", "GST @ 18%", "Excluding GST".
+      - Default to "Exclusive" if ambiguous.
 
-      Other fields to extract:
-      - Delivery Period: Time required for delivery.
-      - Freight: Transportation charges.
-      - Packing & Forwarding (P&F): Extract exact % or value.
-      - Ready Stock: Yes/No.
-      - Other Extra: Special terms.
-      
-      Format the output as JSON according to the schema.`;
+      Format the output as JSON according to the schema. Always return valid JSON only.`;
 
-      let parsed: any;
-
-      if (provider === 'groq') {
-        const groqApiKey = process.env.GROQ_API_KEY;
-        const groqModel = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
-        
-        if (!groqApiKey) {
-          throw new Error("Groq API key not configured");
-        }
-
-        let fullText = input || "";
-        if (files && files.length > 0) {
-          fullText += "\n\n[Note: Files were uploaded but Groq might have limited vision support. Using text input.]\n";
-          // If we had a text extraction service for PDFs/Images, we'd use it here.
-          // For now, we rely on the input text if provider is Groq and it's not a vision model.
-        }
-
-        const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${groqApiKey}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            model: groqModel,
-            messages: [
-              { role: "system", content: "You are a helpful assistant that extracts quotation data into structured JSON. Always return ONLY valid JSON." },
-              { role: "user", content: `${prompt}\n\nInput Information:\n${fullText}` }
-            ],
-            response_format: { type: "json_object" }
-          })
-        });
-
-        if (!groqResponse.ok) {
-          const error = await groqResponse.json();
-          throw new Error(`Groq API error: ${JSON.stringify(error)}`);
-        }
-
-        const groqData = await groqResponse.json();
-        parsed = JSON.parse(groqData.choices[0].message.content);
-      } else {
-        // Default to Gemini
-        const model = "gemini-flash-latest";
-        const response = await ai.models.generateContent({
-          model,
-          contents: [
-            {
-              parts: [
-                { text: prompt },
-                ...(files?.map((f: any) => ({ inlineData: { mimeType: f.mimeType, data: f.data } })) || []),
-                ...(input && input.trim() ? [{ text: input }] : [])
-              ]
-            }
-          ],
-          config: {
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: Type.OBJECT,
-              properties: {
-                vendors: { type: Type.ARRAY, items: { type: Type.STRING } },
+      const model = "gemini-2.5-flash";
+      const response = await ai.models.generateContent({
+        model,
+        contents: [
+          {
+            parts: [
+              { text: prompt },
+              ...(files?.map((f: any) => ({ inlineData: { mimeType: f.mimeType, data: f.data } })) || []),
+              ...(input && input.trim() ? [{ text: input }] : [])
+            ]
+          }
+        ],
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              vendors: { type: Type.ARRAY, items: { type: Type.STRING } },
+              items: {
+                type: Type.ARRAY,
                 items: {
-                  type: Type.ARRAY,
-                  items: {
-                    type: Type.OBJECT,
-                    properties: {
-                      indentNo: { type: Type.STRING },
-                      siNo: { type: Type.STRING },
-                      description: { type: Type.STRING },
-                      uom: { type: Type.STRING },
-                      qty: { type: Type.NUMBER },
-                      weight: { type: Type.NUMBER },
-                      previousPrice: {
+                  type: Type.OBJECT,
+                  properties: {
+                    indentNo: { type: Type.STRING },
+                    siNo: { type: Type.STRING },
+                    description: { type: Type.STRING },
+                    uom: { type: Type.STRING },
+                    qty: { type: Type.NUMBER },
+                    weight: { type: Type.NUMBER },
+                    previousPrice: {
+                      type: Type.OBJECT,
+                      properties: {
+                        rate: { type: Type.NUMBER },
+                        date: { type: Type.STRING }
+                      }
+                    },
+                    vendorQuotes: {
+                      type: Type.ARRAY,
+                      items: {
                         type: Type.OBJECT,
                         properties: {
-                          rate: { type: Type.NUMBER },
-                          date: { type: Type.STRING }
-                        }
-                      },
-                      vendorQuotes: {
-                        type: Type.ARRAY,
-                        items: {
-                          type: Type.OBJECT,
-                          properties: {
-                            vendorName: { type: Type.STRING },
-                            make: { type: Type.STRING },
-                            mrp: { type: Type.NUMBER },
-                            discount: { type: Type.NUMBER },
-                            netRate: { type: Type.NUMBER },
-                            totalAmount: { type: Type.NUMBER },
-                            deliveryPeriod: { type: Type.STRING },
-                            readyStock: { type: Type.STRING },
-                            packingAndForwarding: { type: Type.STRING },
-                            freight: { type: Type.STRING },
-                            gstStatus: { type: Type.STRING },
-                            extra: { type: Type.STRING }
-                          }
+                          vendorName: { type: Type.STRING },
+                          make: { type: Type.STRING },
+                          mrp: { type: Type.NUMBER },
+                          discount: { type: Type.NUMBER },
+                          netRate: { type: Type.NUMBER },
+                          totalAmount: { type: Type.NUMBER },
+                          deliveryPeriod: { type: Type.STRING },
+                          readyStock: { type: Type.STRING },
+                          packingAndForwarding: { type: Type.STRING },
+                          freight: { type: Type.STRING },
+                          gstStatus: { type: Type.STRING },
+                          extra: { type: Type.STRING }
                         }
                       }
                     }
                   }
                 }
-              },
-              required: ["vendors", "items"]
-            }
+              }
+            },
+            required: ["vendors", "items"]
           }
-        });
+        }
+      });
 
-        const rawText = response.text || "{}";
-        const cleanedText = rawText.replace(/^\`\`\`json/m, '').replace(/^\`\`\`/m, '').trim();
-        parsed = JSON.parse(cleanedText);
-      }
+      const rawText = response.text || "{}";
+      const cleanedText = rawText.replace(/^\`\`\`json/m, '').replace(/^\`\`\`/m, '').trim();
+      const parsed = JSON.parse(cleanedText);
       
       // Zod Validation for AI output
       const validated = ComparisonDataSchema.parse(parsed);

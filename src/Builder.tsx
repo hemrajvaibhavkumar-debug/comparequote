@@ -85,7 +85,6 @@ const Builder: React.FC = () => {
   const [isExtracting, setIsExtracting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [files, setFiles] = useState<{ name: string; mimeType: string; data: string }[]>([]);
-  const [provider, setProvider] = useState<'gemini' | 'groq'>('groq');
   
   const tableRef = useRef<HTMLDivElement>(null);
 
@@ -294,7 +293,7 @@ const Builder: React.FC = () => {
   const handleExtract = async () => {
     setIsExtracting(true);
     try {
-      const extracted = await extractQuotations(inputText, files, provider);
+      const extracted = await extractQuotations(inputText, files);
       if (extracted?.items) {
         extracted.items = extracted.items.map((item) => {
           const processedQuotes = item.vendorQuotes?.map((q: any) => {
@@ -577,19 +576,6 @@ const Builder: React.FC = () => {
 
             <div className="flex gap-3">
               <div className="flex flex-col gap-2 flex-1">
-                <div className="flex bg-slate-100 p-1 rounded-xl">
-                  <button 
-                    onClick={() => setProvider('gemini')} 
-                    className={`flex-1 py-2 text-[10px] font-bold uppercase rounded-lg transition-all ${provider === 'gemini' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                  >
-                    Gemini (Vision)
-                  </button>
-                  <button
-                    onClick={() => setProvider('groq')}
-                    className={`flex-1 py-2 text-[10px] font-bold uppercase rounded-lg transition-all ${provider === 'groq' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                  >
-                    Groq (Llama-3.3)
-                  </button>                </div>
                 <button onClick={handleExtract} disabled={isExtracting || (!inputText && !files.length)} className="w-full py-3.5 bg-slate-800 text-white rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-slate-900 disabled:opacity-50 transition-all flex items-center justify-center gap-2">
                   {isExtracting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />} Extract Data
                 </button>
