@@ -24,6 +24,20 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
     }, 0);
   };
 
+  const updateVendorName = (oldName: string, newName: string) => {
+    if (readOnly || !newName || oldName === newName) return;
+    setData((prev: any) => {
+      const newVendors = prev.vendors.map((v: string) => v === oldName ? newName : v);
+      const newItems = prev.items.map((item: any) => ({
+        ...item,
+        vendorQuotes: (item.vendorQuotes || []).map((q: any) => 
+          q.vendorName === oldName ? { ...q, vendorName: newName } : q
+        )
+      }));
+      return { ...prev, vendors: newVendors, items: newItems };
+    });
+  };
+
   const updateItem = (itemIndex: number, field: keyof Item, value: any) => {
     if (readOnly) return;
     setData((prev: any) => {
@@ -248,8 +262,17 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
               </div>
             </th>
             {vendors.map((v, i) => (
-               <th key={i} colSpan={vendorCols} className="text-center p-1 border border-[#000000] bg-[#ffffff] font-bold uppercase">
-                 BY {v}
+               <th key={i} colSpan={vendorCols} className="text-center p-0 border border-[#000000] bg-[#ffffff] font-bold uppercase">
+                 <div className="flex items-center justify-center">
+                    <span className="pl-1">BY</span>
+                    <input 
+                      type="text" 
+                      value={v} 
+                      onChange={e => updateVendorName(v, e.target.value)} 
+                      className="w-full p-1 text-center bg-transparent focus:outline-none font-bold uppercase" 
+                      readOnly={readOnly} 
+                    />
+                 </div>
                </th>
             ))}
             <th className="print-hidden w-10 border-[#000000] border bg-[#ffffff]">
@@ -275,11 +298,17 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
             {hasWeight && <th rowSpan={2} className="border border-[#000000] p-1 whitespace-nowrap">WT</th>}
             <th colSpan={2} className="border border-[#000000] p-1 whitespace-nowrap">PREVIOUS PRICE</th>
             {vendors.map((v, i) => (
-              <th key={i} colSpan={vendorCols} className="border border-[#000000] p-1 text-base font-black uppercase tracking-widest bg-[#ffffff] whitespace-nowrap">
-                <div className="flex items-center justify-center gap-2">
-                  {v}
+              <th key={i} colSpan={vendorCols} className="border border-[#000000] p-0 text-base font-black uppercase tracking-widest bg-[#ffffff] whitespace-nowrap">
+                <div className="flex items-center justify-center gap-1 group">
+                  <input 
+                    type="text" 
+                    value={v} 
+                    onChange={e => updateVendorName(v, e.target.value)} 
+                    className="w-full p-1 text-center bg-transparent focus:outline-none font-black uppercase" 
+                    readOnly={readOnly} 
+                  />
                   {!readOnly && (
-                    <button onClick={() => removeVendor(v)} className="print-hidden p-1 hover:text-red-600 text-[#000000] cursor-pointer" title={`Remove ${v}`}>
+                    <button onClick={() => removeVendor(v)} className="print-hidden p-1 opacity-0 group-hover:opacity-100 hover:text-red-600 text-[#000000] cursor-pointer transition-opacity" title={`Remove ${v}`}>
                       <Trash2 className="w-4 h-4" />
                     </button>
                   )}

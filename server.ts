@@ -10,6 +10,9 @@ import { ComparisonDataSchema, SaveComparisonSchema } from "./src/schemas.ts";
 import jwt from "jsonwebtoken";
 import { rateLimit } from "express-rate-limit";
 
+import OpenAI from "openai";
+import pdf from "pdf-extraction";
+
 const pool = new pg.Pool({ 
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.DATABASE_URL?.includes("neon.tech") || process.env.DATABASE_URL?.includes("render.com") 
@@ -34,8 +37,19 @@ const loginLimiter = rateLimit({
   message: { error: "Too many login attempts. Please try again later." }
 });
 
+async function extractTextFromPDF(buffer: Buffer): Promise<string> {
+  try {
+    const data = await pdf(buffer);
+    return data.text || "[No text found]";
+  } catch (err) {
+    console.error("PDF Parse Error:", err);
+    return "[Error parsing PDF]";
+  }
+}
+
 async function startServer() {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "" });
   const app = express();
   const PORT = 3000;
 
@@ -68,14 +82,15 @@ async function startServer() {
 
   app.post("/api/extract", extractLimiter, async (req, res) => {
     try {
-      const { input, files } = req.body;
-      console.log(`[AI] Extraction requested. Files: ${files?.length || 0}, Text: ${input ? 'Yes' : 'No'}`);
+      const { input, files, existingItems } = req.body;
+      console.log(`[AI] Extraction requested. Files: ${files?.length || 0}, Text: ${input ? 'Yes' : 'No'}, Existing Items: ${existingItems?.length || 0}`);
       
       const prompt = `You are an expert procurement assistant. Your task is to extract all quotation details from the provided data. 
       
       DATA SOURCES:
-      1. Attached Files (PDFs/Images): These contain the primary quotation documents. You MUST carefully scan every page/image.
+      1. Attached Files (PDFs/Images): These contain the primary quotation documents.
       2. Input Text: Additional notes or pasted quotation data.
+      3. Existing Items: ${existingItems && existingItems.length > 0 ? existingItems.join(", ") : "None yet."}
       
       CRITICAL INSTRUCTIONS:
       - Analyze BOTH the attached files and the input text.
@@ -83,20 +98,112 @@ async function startServer() {
       - For each item, extract: Description, UOM, QTY, and any Previous Price if mentioned.
       - For each vendor's quote on an item, extract: Make, MRP, Discount, and Net Rate.
       
+      CRITICAL INSTRUCTION FOR PRICE PRECISION:
+      - All extracted numerical values (MRP, Discount, Net Rate, Total Amount, Previous Price Rate) MUST be numbers (not strings).
+      - You MUST round all these values to exactly 2 decimal places.
+      - Example: 100 -> 100.00, 99.991 -> 99.99.
+
+      CRITICAL INSTRUCTION FOR ITEM MATCHING:
+      If an extracted item is similar to one of the "Existing Items" listed above, you MUST use the EXACT description from the existing list.
+      - Match intelligently (ignore casing, spacing, hyphens, and units like 12" vs 12 inch).
+      
       CRITICAL INSTRUCTION FOR STEEL ITEMS & WEIGHT:
-      If an item is a steel item (e.g., TMT bars, plates, beams, etc.) and a weight (in kg, MT, or tons) is mentioned, you MUST extract it.
-      - Set the "weight" field to the numerical weight value.
+      If an item is a steel item (e.g., TMT bars, plates, beams, etc.) and a weight (in kg, MT, or tons) is mentioned, extract it.
       - If weight is mentioned, calculate totalAmount as (Net Rate * Weight).
       - If NOT mentioned, calculate totalAmount as (Net Rate * QTY).
 
       CRITICAL INSTRUCTION FOR GST STATUS:
-      Intelligently determine if quoted prices are "Inclusive" or "Exclusive" of GST.
-      - "Inclusive" if you see: "All Inclusive", "Incl. GST", "GST Paid", "Net Rate", "Inclusive of all taxes".
-      - "Exclusive" if you see: "GST Extra", "Taxes Extra", "+ GST", "GST @ 18%", "Excluding GST".
-      - Default to "Exclusive" if ambiguous.
+      Intelligently determine if quoted prices are "Inclusive" or "Exclusive" of GST. Default to "Exclusive".
 
-      Format the output as JSON according to the schema. Always return valid JSON only.`;
+      OUTPUT FORMAT:
+      Return strict JSON matching this structure:
+      {
+        "vendors": ["Vendor Name"],
+        "items": [
+          {
+            "description": "Item Name",
+            "uom": "PCS",
+            "qty": 1,
+            "weight": 0,
+            "previousPrice": { "rate": 0, "date": "" },
+            "vendorQuotes": [
+              {
+                "vendorName": "Vendor Name",
+                "make": "",
+                "mrp": 0,
+                "discount": 0,
+                "netRate": 0,
+                "totalAmount": 0,
+                "deliveryPeriod": "",
+                "readyStock": "",
+                "packingAndForwarding": "",
+                "freight": "",
+                "gstStatus": "Exclusive",
+                "extra": ""
+              }
+            ]
+          }
+        ]
+      }`;
 
+      // Helper to process with OpenAI
+      const callOpenAI = async (model: string) => {
+        console.log(`[AI] Attempting extraction with ${model}...`);
+        
+        let pdfText = "";
+        const pdfFiles = files?.filter((f: any) => f.mimeType === "application/pdf") || [];
+        for (const f of pdfFiles) {
+          const text = await extractTextFromPDF(Buffer.from(f.data, 'base64'));
+          pdfText += `\nFILE CONTENT (${f.name || 'PDF'}):\n${text}\n`;
+        }
+
+        const messages: any[] = [
+          { role: "system", content: "You are a helpful procurement assistant that extracts data into strict JSON format." },
+          { role: "user", content: [
+            { type: "text", text: prompt },
+            ...(input ? [{ type: "text", text: `TEXT INPUT:\n${input}` }] : []),
+            ...(pdfText ? [{ type: "text", text: `PDF DATA:\n${pdfText}` }] : []),
+            ...(files?.filter((f: any) => f.mimeType.startsWith("image/")).map((f: any) => ({
+              type: "image_url",
+              image_url: { url: `data:${f.mimeType};base64,${f.data}` }
+            })) || [])
+          ]}
+        ];
+
+        const response = await openai.chat.completions.create({
+          model,
+          messages,
+          response_format: { type: "json_object" },
+          temperature: 0,
+        });
+
+        const rawResult = response.choices[0].message.content || "{}";
+        const parsed = JSON.parse(rawResult);
+        return ComparisonDataSchema.parse(parsed);
+      };
+
+      // 1. GPT-4o-mini (Primary)
+      if (process.env.OPENAI_API_KEY) {
+        try {
+          const result = await callOpenAI("gpt-4o-mini");
+          console.log("[AI] GPT-4o-mini successful.");
+          return res.json(result);
+        } catch (err: any) {
+          console.error("[AI] GPT-4o-mini failed:", err.message || err);
+        }
+
+        // 2. GPT-4o (Fallback 1)
+        try {
+          const result = await callOpenAI("gpt-4o");
+          console.log("[AI] GPT-4o successful.");
+          return res.json(result);
+        } catch (err: any) {
+          console.error("[AI] GPT-4o failed:", err.message || err);
+        }
+      }
+
+      // 3. Gemini (Fallback 2 - Native File Processing)
+      console.log("[AI] Attempting extraction with Gemini (Fallback)...");
       const model = "gemini-2.5-flash";
       const response = await ai.models.generateContent({
         model,
@@ -165,12 +272,12 @@ async function startServer() {
       const rawText = response.text || "{}";
       const cleanedText = rawText.replace(/^\`\`\`json/m, '').replace(/^\`\`\`/m, '').trim();
       const parsed = JSON.parse(cleanedText);
-      
-      // Zod Validation for AI output
       const validated = ComparisonDataSchema.parse(parsed);
+      console.log("[AI] Gemini successful.");
       res.json(validated);
-    } catch (err) {
-      console.error(err);
+
+    } catch (err: any) {
+      console.error("[AI] All extraction attempts failed:", err);
       res.status(500).json({ error: String(err) });
     }
   });
