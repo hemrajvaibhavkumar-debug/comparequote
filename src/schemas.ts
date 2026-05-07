@@ -13,6 +13,7 @@ export const VendorQuoteSchema = z.object({
   freight: z.string().default(""),
   gstStatus: z.string().default("Exclusive"),
   extra: z.string().default(""),
+  quoteDate: z.string().optional(),
 });
 
 export const PreviousPriceSchema = z.object({

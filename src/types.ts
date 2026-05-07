@@ -19,6 +19,7 @@ export interface VendorQuote {
   freight: string;
   gstStatus: string; // "Inclusive" or "Exclusive"
   extra: string;
+  quoteDate?: string;
 }
 
 export interface Item {

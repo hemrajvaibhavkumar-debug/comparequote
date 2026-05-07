@@ -96,7 +96,7 @@ async function startServer() {
       - Analyze BOTH the attached files and the input text.
       - Find every Vendor Name and every Item mentioned.
       - For each item, extract: Description, UOM, QTY, and any Previous Price if mentioned.
-      - For each vendor's quote on an item, extract: Make, MRP, Discount, and Net Rate.
+      - For each vendor's quote on an item, extract: Make, MRP, Discount, Net Rate, and Quote Date (the date mentioned on the quotation document).
       
       CRITICAL INSTRUCTION FOR PRICE PRECISION:
       - All extracted numerical values (MRP, Discount, Net Rate, Total Amount, Previous Price Rate) MUST be numbers (not strings).
@@ -256,7 +256,8 @@ async function startServer() {
                           packingAndForwarding: { type: Type.STRING },
                           freight: { type: Type.STRING },
                           gstStatus: { type: Type.STRING },
-                          extra: { type: Type.STRING }
+                          extra: { type: Type.STRING },
+                          quoteDate: { type: Type.STRING }
                         }
                       }
                     }

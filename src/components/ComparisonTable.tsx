@@ -38,6 +38,19 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
     });
   };
 
+  const updateQuoteDate = (vendorName: string, newDate: string) => {
+    if (readOnly) return;
+    setData((prev: ComparisonData) => {
+      const newItems = prev.items.map(item => ({
+        ...item,
+        vendorQuotes: item.vendorQuotes.map(q => 
+          q.vendorName === vendorName ? { ...q, quoteDate: newDate } : q
+        )
+      }));
+      return { ...prev, items: newItems };
+    });
+  };
+
   const updateItem = (itemIndex: number, field: keyof Item, value: any) => {
     if (readOnly) return;
     setData((prev: any) => {
@@ -166,7 +179,8 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
         description: '', uom: '', qty: '',
         previousPrice: { rate: '', date: '' },
         vendorQuotes: prev.vendors.map((v: string) => ({
-          vendorName: v, make: '', mrp: '', discount: '', netRate: '', totalAmount: '', deliveryPeriod: '', readyStock: '', packingAndForwarding: '', freight: '', gstStatus: 'Exclusive', extra: ''
+          vendorName: v, make: '', mrp: '', discount: '', netRate: '', totalAmount: '', deliveryPeriod: '', readyStock: '', packingAndForwarding: '', freight: '', gstStatus: 'Exclusive', extra: '',
+          quoteDate: new Date().toLocaleDateString('en-GB')
         }))
       });
       return { ...prev, items: newItems };
@@ -201,7 +215,8 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
             packingAndForwarding: '',
             freight: '',
             gstStatus: 'Exclusive',
-            extra: ''
+            extra: '',
+            quoteDate: new Date().toLocaleDateString('en-GB')
           }
         ]
       }))
@@ -261,20 +276,24 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                 <input type="text" value={header.plantName} onChange={e => updateHeader('plantName', e.target.value)} className="w-full p-1 bg-transparent focus:outline-none font-bold uppercase" readOnly={readOnly} />
               </div>
             </th>
-            {vendors.map((v, i) => (
-               <th key={i} colSpan={vendorCols} className="text-center p-0 border border-[#000000] bg-[#ffffff] font-bold uppercase">
-                 <div className="flex items-center justify-center">
-                    <span className="pl-1">BY</span>
-                    <input 
-                      type="text" 
-                      value={v} 
-                      onChange={e => updateVendorName(v, e.target.value)} 
-                      className="w-full p-1 text-center bg-transparent focus:outline-none font-bold uppercase" 
-                      readOnly={readOnly} 
-                    />
-                 </div>
-               </th>
-            ))}
+            {vendors.map((v, i) => {
+               const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
+               const quoteDate = firstQuote?.quoteDate || new Date().toLocaleDateString('en-GB');
+               return (
+                <th key={i} colSpan={vendorCols} className="text-center p-0 border border-[#000000] bg-[#ffffff] font-bold uppercase">
+                  <div className="flex items-center justify-center">
+                     <span className="pl-1">BY</span>
+                     <input 
+                       type="text" 
+                       value={quoteDate} 
+                       onChange={e => updateQuoteDate(v, e.target.value)} 
+                       className="w-full p-1 text-center bg-transparent focus:outline-none font-bold uppercase" 
+                       readOnly={readOnly} 
+                     />
+                  </div>
+                </th>
+               );
+            })}
             <th className="print-hidden w-10 border-[#000000] border bg-[#ffffff]">
               {!readOnly && (
                 <button onClick={addVendor} className="p-1 hover:text-indigo-600 text-[#000000] cursor-pointer" title="Add Vendor">
