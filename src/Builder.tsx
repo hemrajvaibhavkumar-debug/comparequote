@@ -293,7 +293,8 @@ const Builder: React.FC = () => {
   const handleExtract = async () => {
     setIsExtracting(true);
     try {
-      const extracted = await extractQuotations(inputText, files);
+      const existingItemDescriptions = data.items.map(item => item.description).filter(d => !!d);
+      const extracted = await extractQuotations(inputText, files, existingItemDescriptions);
       if (extracted?.items) {
         extracted.items = extracted.items.map((item) => {
           const processedQuotes = item.vendorQuotes?.map((q: any) => {
@@ -362,6 +363,10 @@ const Builder: React.FC = () => {
             items: mergedItems
           };
         });
+
+        // Clear input text and files after successful extraction to prevent duplicates on next click
+        setInputText('');
+        setFiles([]);
       }
     } catch (error: any) {
       console.error(error);

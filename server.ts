@@ -85,38 +85,39 @@ async function startServer() {
       const { input, files, existingItems } = req.body;
       console.log(`[AI] Extraction requested. Files: ${files?.length || 0}, Text: ${input ? 'Yes' : 'No'}, Existing Items: ${existingItems?.length || 0}`);
       
-      const prompt = `You are an expert procurement assistant. Your task is to extract all quotation details from the provided data. 
+      const isTextOnly = (!files || files.length === 0) && input && input.trim().length > 0;
+
+      const prompt = `You are an expert procurement assistant specializing in high-precision data extraction. 
       
       DATA SOURCES:
-      1. Attached Files (PDFs/Images): These contain the primary quotation documents.
-      2. Input Text: Additional notes or pasted quotation data.
+      ${files && files.length > 0 ? "1. Attached Files (PDFs/Images): These contain the primary quotation documents." : ""}
+      ${input ? `2. Input Text: ${isTextOnly ? "THIS IS THE ONLY SOURCE. Extract everything from this text." : "Additional notes or pasted quotation data."}` : ""}
       3. Existing Items: ${existingItems && existingItems.length > 0 ? existingItems.join(", ") : "None yet."}
       
       CRITICAL INSTRUCTIONS:
-      - Analyze BOTH the attached files and the input text.
-      - Find every Vendor Name and every Item mentioned.
+      - Analyze the provided data sources carefully. 
+      ${isTextOnly ? "- Since this is TEXT-ONLY input, do NOT hallucinate or 'invent' any data. If a field (like MRP or Discount) is not explicitly mentioned, leave it as 0." : "- Find every Vendor Name and every Item mentioned across all sources."}
       - For each item, extract: Description, UOM, QTY, and any Previous Price if mentioned.
-      - For each vendor's quote on an item, extract: Make, MRP, Discount, Net Rate, and Quote Date (the date mentioned on the quotation document).
+      - For each vendor's quote on an item, extract: Make, MRP, Discount, Net Rate, and Quote Date.
       
+      VENDOR IDENTIFICATION:
+      - If you cannot find a clear Vendor Name for a piece of data, use "Unknown Vendor" instead of guessing.
+      - Group items by the vendor they belong to.
+
       CRITICAL INSTRUCTION FOR PRICE PRECISION:
       - All extracted numerical values (MRP, Discount, Net Rate, Total Amount, Previous Price Rate) MUST be numbers (not strings).
-      - You MUST round all these values to exactly 2 decimal places.
-      - Example: 100 -> 100.00, 99.991 -> 99.99.
+      - Round all numerical values to exactly 2 decimal places.
+      - If a value is missing or unclear, use 0.
 
       CRITICAL INSTRUCTION FOR ITEM MATCHING:
-      If an extracted item is similar to one of the "Existing Items" listed above, you MUST use the EXACT description from the existing list.
-      - Match intelligently (ignore casing, spacing, hyphens, and units like 12" vs 12 inch).
+      - If an extracted item is similar to one of the "Existing Items" listed, you MUST use the EXACT description from the existing list.
+      - Match intelligently (ignore casing, spacing, and minor unit differences).
       
-      CRITICAL INSTRUCTION FOR STEEL ITEMS & WEIGHT:
-      If an item is a steel item (e.g., TMT bars, plates, beams, etc.) and a weight (in kg, MT, or tons) is mentioned, extract it.
-      - If weight is mentioned, calculate totalAmount as (Net Rate * Weight).
-      - If NOT mentioned, calculate totalAmount as (Net Rate * QTY).
+      STRICT JSON OUTPUT:
+      - Return ONLY a valid JSON object. 
+      - If no valid quotation data is found, return {"vendors": [], "items": []}.
 
-      CRITICAL INSTRUCTION FOR GST STATUS:
-      Intelligently determine if quoted prices are "Inclusive" or "Exclusive" of GST. Default to "Exclusive".
-
-      OUTPUT FORMAT:
-      Return strict JSON matching this structure:
+      JSON STRUCTURE:
       {
         "vendors": ["Vendor Name"],
         "items": [
@@ -139,7 +140,8 @@ async function startServer() {
                 "packingAndForwarding": "",
                 "freight": "",
                 "gstStatus": "Exclusive",
-                "extra": ""
+                "extra": "",
+                "quoteDate": ""
               }
             ]
           }
@@ -158,11 +160,11 @@ async function startServer() {
         }
 
         const messages: any[] = [
-          { role: "system", content: "You are a helpful procurement assistant that extracts data into strict JSON format." },
+          { role: "system", content: "You are a precise procurement data extractor. You only output valid JSON." },
           { role: "user", content: [
             { type: "text", text: prompt },
-            ...(input ? [{ type: "text", text: `TEXT INPUT:\n${input}` }] : []),
-            ...(pdfText ? [{ type: "text", text: `PDF DATA:\n${pdfText}` }] : []),
+            ...(input ? [{ type: "text", text: `SOURCE TEXT:\n${input}` }] : []),
+            ...(pdfText ? [{ type: "text", text: `PDF SOURCE DATA:\n${pdfText}` }] : []),
             ...(files?.filter((f: any) => f.mimeType.startsWith("image/")).map((f: any) => ({
               type: "image_url",
               image_url: { url: `data:${f.mimeType};base64,${f.data}` }
@@ -202,21 +204,21 @@ async function startServer() {
         }
       }
 
-      // 3. Gemini (Fallback 2 - Native File Processing)
+      // 3. Gemini (Fallback - Native File Processing)
       console.log("[AI] Attempting extraction with Gemini (Fallback)...");
-      const model = "gemini-2.5-flash";
-      const response = await ai.models.generateContent({
-        model,
+      const modelName = "gemini-1.5-flash"; // Fixed model name
+      const response = await ai.getGenerativeModel({ model: modelName }).generateContent({
         contents: [
           {
+            role: "user",
             parts: [
               { text: prompt },
               ...(files?.map((f: any) => ({ inlineData: { mimeType: f.mimeType, data: f.data } })) || []),
-              ...(input && input.trim() ? [{ text: input }] : [])
+              ...(input && input.trim() ? [{ text: `SOURCE TEXT:\n${input}` }] : [])
             ]
           }
         ],
-        config: {
+        generationConfig: {
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.OBJECT,
@@ -270,7 +272,7 @@ async function startServer() {
         }
       });
 
-      const rawText = response.text || "{}";
+      const rawText = response.response.text(); // Fixed response access
       const cleanedText = rawText.replace(/^\`\`\`json/m, '').replace(/^\`\`\`/m, '').trim();
       const parsed = JSON.parse(cleanedText);
       const validated = ComparisonDataSchema.parse(parsed);
