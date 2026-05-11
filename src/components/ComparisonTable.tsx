@@ -103,7 +103,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
       
       let currentQuote = qIndex >= 0 ? { ...quotes[qIndex] } : {
         vendorName, make: '', mrp: 0, discount: 0, netRate: 0, totalAmount: 0,
-        deliveryPeriod: '', readyStock: '', packingAndForwarding: '', freight: '', gstStatus: 'Exclusive', extra: ''
+        deliveryPeriod: '', readyStock: '', packingAndForwarding: '', freight: '', gstStatus: '18% Extra', extra: ''
       } as any;
 
       currentQuote[field] = value;
@@ -179,7 +179,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
         description: '', uom: '', qty: '',
         previousPrice: { rate: '', date: '' },
         vendorQuotes: prev.vendors.map((v: string) => ({
-          vendorName: v, make: '', mrp: '', discount: '', netRate: '', totalAmount: '', deliveryPeriod: '', readyStock: '', packingAndForwarding: '', freight: '', gstStatus: 'Exclusive', extra: '',
+          vendorName: v, make: '', mrp: '', discount: '', netRate: '', totalAmount: '', deliveryPeriod: '', readyStock: '', packingAndForwarding: '', freight: '', gstStatus: '18% Extra', extra: '',
           quoteDate: new Date().toLocaleDateString('en-GB')
         }))
       });
@@ -214,7 +214,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
             readyStock: '',
             packingAndForwarding: '',
             freight: '',
-            gstStatus: 'Exclusive',
+            gstStatus: '18% Extra',
             extra: '',
             quoteDate: new Date().toLocaleDateString('en-GB')
           }
@@ -412,12 +412,18 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
              {vendors.map((v, i) => {
                const total = calculateVendorTotal(v);
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
-               const isInclusive = firstQuote?.gstStatus?.toLowerCase() === 'inclusive';
-               const gst = isInclusive ? 0 : total * 0.18;
+               const status = firstQuote?.gstStatus || '18% Extra';
+               const isInclusive = status.toLowerCase() === 'inclusive';
+               let rate = 0;
+               if (!isInclusive) {
+                 if (status.includes('5%')) rate = 0.05;
+                 else rate = 0.18; // Default to 18% for Exclusive or 18% Extra
+               }
+               const gst = total * rate;
                return (
                 <React.Fragment key={i}>
                   <td colSpan={4} className="border border-[#000000] text-right p-1 font-bold uppercase tracking-tighter">
-                    {isInclusive ? 'GST STATUS' : 'GST 18% EXTRA'}
+                    {isInclusive ? 'GST STATUS' : `GST ${Math.round(rate * 100)}% EXTRA`}
                   </td>
                   <td className="border border-[#000000] text-center p-1 font-black bg-slate-50">
                     {isInclusive ? 'INCLUSIVE' : gst.toFixed(2)}
@@ -434,8 +440,14 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
              {vendors.map((v, i) => {
                const total = calculateVendorTotal(v);
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
-               const isInclusive = firstQuote?.gstStatus?.toLowerCase() === 'inclusive';
-               const grandTotal = isInclusive ? total : total * 1.18;
+               const status = firstQuote?.gstStatus || '18% Extra';
+               const isInclusive = status.toLowerCase() === 'inclusive';
+               let rate = 0;
+               if (!isInclusive) {
+                 if (status.includes('5%')) rate = 0.05;
+                 else rate = 0.18; // Default to 18% for Exclusive or 18% Extra
+               }
+               const grandTotal = total * (1 + rate);
                return (
                 <React.Fragment key={i}>
                   <td colSpan={4} className="border border-[#000000] text-right p-1 font-black uppercase tracking-tighter">GRAND TOTAL</td>
@@ -525,12 +537,14 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                   <td colSpan={2} className="border border-[#000000] p-1 italic text-center font-bold uppercase text-[8px]">GST STATUS</td>
                   <td colSpan={3} className="border border-[#000000] p-0">
                     <select 
-                      value={firstQuote?.gstStatus || 'Exclusive'} 
+                      value={firstQuote?.gstStatus || '18% Extra'} 
                       onChange={e => updateQuote(0, v, 'gstStatus', e.target.value)} 
                       className="w-full text-center p-1 font-bold uppercase bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none appearance-none cursor-pointer"
                       disabled={readOnly}
                     >
-                      <option value="Exclusive">Exclusive</option>
+                      <option value="Exclusive">Exclusive (18%)</option>
+                      <option value="18% Extra">18% Extra</option>
+                      <option value="5% Extra">5% Extra</option>
                       <option value="Inclusive">Inclusive</option>
                     </select>
                   </td>

@@ -17,7 +17,7 @@ export interface VendorQuote {
   readyStock: string;
   packingAndForwarding: string;
   freight: string;
-  gstStatus: string; // "Inclusive" or "Exclusive"
+  gstStatus: string; // "Inclusive", "Exclusive", "18% Extra", or "5% Extra"
   extra: string;
   quoteDate?: string;
 }

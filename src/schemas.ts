@@ -11,7 +11,7 @@ export const VendorQuoteSchema = z.object({
   readyStock: z.string().default(""),
   packingAndForwarding: z.string().default(""),
   freight: z.string().default(""),
-  gstStatus: z.string().default("Exclusive"),
+  gstStatus: z.string().default("18% Extra"),
   extra: z.string().default(""),
   quoteDate: z.string().optional(),
 });

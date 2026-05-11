@@ -139,7 +139,7 @@ async function startServer() {
                 "readyStock": "",
                 "packingAndForwarding": "",
                 "freight": "",
-                "gstStatus": "Exclusive",
+                "gstStatus": "18% Extra", // "18% Extra", "5% Extra", or "Inclusive"
                 "extra": "",
                 "quoteDate": ""
               }
