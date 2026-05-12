@@ -103,7 +103,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
       
       let currentQuote = qIndex >= 0 ? { ...quotes[qIndex] } : {
         vendorName, make: '', mrp: 0, discount: 0, netRate: 0, totalAmount: 0,
-        deliveryPeriod: '', readyStock: '', packingAndForwarding: '', freight: '', gstStatus: '18% Extra', extra: ''
+        deliveryPeriod: '', readyStock: '', packingAndForwarding: 'NILL', freight: 'NILL', gstStatus: '18% Extra', extra: ''
       } as any;
 
       currentQuote[field] = value;
@@ -179,7 +179,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
         description: '', uom: '', qty: '',
         previousPrice: { vendor: '', rate: '', date: '' },
         vendorQuotes: prev.vendors.map((v: string) => ({
-          vendorName: v, make: '', mrp: '', discount: '', netRate: '', totalAmount: '', deliveryPeriod: '', readyStock: '', packingAndForwarding: '', freight: '', gstStatus: '18% Extra', extra: '',
+          vendorName: v, make: '', mrp: '', discount: '', netRate: '', totalAmount: '', deliveryPeriod: '', readyStock: '', packingAndForwarding: 'NILL', freight: 'NILL', gstStatus: '18% Extra', extra: '',
           quoteDate: new Date().toLocaleDateString('en-GB')
         }))
       });
@@ -212,8 +212,8 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
             totalAmount: '',
             deliveryPeriod: '',
             readyStock: '',
-            packingAndForwarding: '',
-            freight: '',
+            packingAndForwarding: 'NILL',
+            freight: 'NILL',
             gstStatus: '18% Extra',
             extra: '',
             quoteDate: new Date().toLocaleDateString('en-GB')
@@ -500,7 +500,15 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                 <React.Fragment key={i}>
                   <td colSpan={2} className="border border-[#000000] p-1 italic text-center font-bold uppercase text-[8px]">FREIGHT</td>
                   <td colSpan={3} className="border border-[#000000] p-0">
-                    <textarea value={firstQuote?.freight || ''} onChange={e => updateQuote(0, v, 'freight', e.target.value)} className="w-full text-center p-1 font-bold uppercase bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none resize-none min-h-[40px]" placeholder="E.G. AT ACTUALS" readOnly={readOnly} rows={2}/>
+                    <select 
+                      value={firstQuote?.freight || 'NILL'} 
+                      onChange={e => updateQuote(0, v, 'freight', e.target.value)} 
+                      className="w-full text-center p-1 font-bold uppercase bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none appearance-none cursor-pointer"
+                      disabled={readOnly}
+                    >
+                      <option value="NILL">NILL</option>
+                      <option value="Extra">Extra</option>
+                    </select>
                   </td>
                 </React.Fragment>
                )
@@ -515,7 +523,15 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                 <React.Fragment key={i}>
                   <td colSpan={2} className="border border-[#000000] p-1 italic text-center font-bold uppercase text-[8px]">PACKING & FORWARDING</td>
                   <td colSpan={3} className="border border-[#000000] p-0">
-                    <textarea value={firstQuote?.packingAndForwarding || ''} onChange={e => updateQuote(0, v, 'packingAndForwarding', e.target.value)} className="w-full text-center p-1 font-bold uppercase bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none resize-none min-h-[40px]" placeholder="INCLUDED/EXTRA" readOnly={readOnly} rows={2}/>
+                    <select 
+                      value={firstQuote?.packingAndForwarding || 'NILL'} 
+                      onChange={e => updateQuote(0, v, 'packingAndForwarding', e.target.value)} 
+                      className="w-full text-center p-1 font-bold uppercase bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none appearance-none cursor-pointer"
+                      disabled={readOnly}
+                    >
+                      <option value="NILL">NILL</option>
+                      <option value="Extra">Extra</option>
+                    </select>
                   </td>
                 </React.Fragment>
                )

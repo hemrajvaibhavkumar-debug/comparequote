@@ -137,8 +137,6 @@ async function startServer() {
                 "totalAmount": 0,
                 "deliveryPeriod": "",
                 "readyStock": "",
-                "packingAndForwarding": "",
-                "freight": "",
                 "gstStatus": "18% Extra", // "18% Extra", "5% Extra", or "Inclusive"
                 "extra": "",
                 "quoteDate": ""
@@ -255,8 +253,6 @@ async function startServer() {
                           totalAmount: { type: Type.NUMBER },
                           deliveryPeriod: { type: Type.STRING },
                           readyStock: { type: Type.STRING },
-                          packingAndForwarding: { type: Type.STRING },
-                          freight: { type: Type.STRING },
                           gstStatus: { type: Type.STRING },
                           extra: { type: Type.STRING },
                           quoteDate: { type: Type.STRING }
