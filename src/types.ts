@@ -32,6 +32,7 @@ export interface Item {
   previousPrice: {
     rate: number | string;
     date: string;
+    vendor?: string;
   };
   vendorQuotes: VendorQuote[];
 }

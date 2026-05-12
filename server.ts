@@ -126,7 +126,7 @@ async function startServer() {
             "uom": "PCS",
             "qty": 1,
             "weight": 0,
-            "previousPrice": { "rate": 0, "date": "" },
+            "previousPrice": { "rate": 0, "date": "", "vendor": "" },
             "vendorQuotes": [
               {
                 "vendorName": "Vendor Name",

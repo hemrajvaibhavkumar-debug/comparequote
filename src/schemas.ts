@@ -19,6 +19,7 @@ export const VendorQuoteSchema = z.object({
 export const PreviousPriceSchema = z.object({
   rate: z.number().default(0),
   date: z.string().default(""),
+  vendor: z.string().optional().default(""),
 });
 
 export const ComparisonItemSchema = z.object({
