@@ -66,7 +66,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
         if (item.vendorQuotes) {
           item.vendorQuotes = item.vendorQuotes.map((q: any) => ({
             ...q,
-            totalAmount: (parseFloat(q.netRate) || 0) * multiplier
+            totalAmount: Number(((parseFloat(q.netRate) || 0) * multiplier).toFixed(2))
           }));
         }
       }
@@ -85,9 +85,14 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
     if (readOnly) return;
     setData((prev: any) => {
       const newItems = [...prev.items];
+      let val = value;
+      if (field === 'rate' && value !== '') {
+        const parsed = parseFloat(value);
+        if (!isNaN(parsed)) val = Number(parsed.toFixed(2));
+      }
       newItems[itemIndex] = {
         ...newItems[itemIndex],
-        previousPrice: { ...(newItems[itemIndex].previousPrice || {}), [field]: value }
+        previousPrice: { ...(newItems[itemIndex].previousPrice || {}), [field]: val }
       };
       return { ...prev, items: newItems };
     });
@@ -114,26 +119,29 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
 
       if (field === 'mrp') {
         const mrpVal = parseFloat(value) || 0;
+        currentQuote.mrp = Number(mrpVal.toFixed(2));
         if (disc === 0) {
-          currentQuote.netRate = mrpVal;
+          currentQuote.netRate = Number(mrpVal.toFixed(2));
         } else {
-          currentQuote.netRate = mrpVal * (1 - disc / 100);
+          currentQuote.netRate = Number((mrpVal * (1 - disc / 100)).toFixed(2));
         }
       } else if (field === 'discount') {
         const mrpVal = parseFloat(currentQuote.mrp) || 0;
         const discVal = parseFloat(value) || 0;
-        currentQuote.netRate = mrpVal * (1 - discVal / 100);
+        currentQuote.discount = Number(discVal.toFixed(2));
+        currentQuote.netRate = Number((mrpVal * (1 - discVal / 100)).toFixed(2));
       } else if (field === 'netRate') {
         const nrVal = parseFloat(value) || 0;
+        currentQuote.netRate = Number(nrVal.toFixed(2));
         if (disc === 0) {
-          currentQuote.mrp = nrVal;
+          currentQuote.mrp = Number(nrVal.toFixed(2));
         }
       }
 
       // Always update totalAmount based on netRate and qty/weight
       const weightVal = parseFloat(item.weight) || 0;
       const multiplier = weightVal > 0 ? weightVal : qty;
-      currentQuote.totalAmount = (parseFloat(currentQuote.netRate) || 0) * multiplier;
+      currentQuote.totalAmount = Number(((parseFloat(currentQuote.netRate) || 0) * multiplier).toFixed(2));
 
       if (qIndex >= 0) {
         quotes[qIndex] = currentQuote;
@@ -415,17 +423,17 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                   readOnly={readOnly} 
                 />
               </td>
-              <td className="border border-[#000000] p-0 bg-[#ffffff]"><input type="text" value={item.previousPrice?.rate || ''} onChange={e => updatePreviousPrice(idx, 'rate', e.target.value)} className="w-full text-center p-1 bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>
+              <td className="border border-[#000000] p-0 bg-[#ffffff]"><input type="text" value={typeof item.previousPrice?.rate === 'number' ? item.previousPrice.rate.toFixed(2) : item.previousPrice?.rate || ''} onChange={e => updatePreviousPrice(idx, 'rate', e.target.value)} className="w-full text-center p-1 bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>
               <td className="border border-[#000000] p-0 bg-[#ffffff]"><input type="text" value={item.previousPrice?.date || ''} onChange={e => updatePreviousPrice(idx, 'date', e.target.value)} className="w-full text-center p-1 bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>
               {vendors.map((v: string, vIdx: number) => {
                 const quote = item.vendorQuotes?.find((q: any) => q.vendorName === v);
                 return (
                   <React.Fragment key={vIdx}>
                     <td className="border border-[#000000] p-0 bg-[#ffffff]"><textarea value={quote?.make || ''} onChange={e => updateQuote(idx, v, 'make', e.target.value)} className="w-full text-center p-1 italic bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none resize-none min-h-[40px]" readOnly={readOnly} rows={2} /></td>
-                    <td className="border border-[#000000] p-0 bg-[#ffffff]"><input type="text" value={quote?.mrp || ''} onChange={e => updateQuote(idx, v, 'mrp', e.target.value)} className="w-full text-center p-1 font-bold bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>
-                    <td className="border border-[#000000] p-0 bg-[#ffffff]"><input type="text" value={quote?.discount || ''} onChange={e => updateQuote(idx, v, 'discount', e.target.value)} className="w-full text-center p-1 bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>
-                    <td className="border border-[#000000] p-0 bg-[#ffffff]"><input type="text" value={quote?.netRate || ''} onChange={e => updateQuote(idx, v, 'netRate', e.target.value)} className="w-full text-center p-1 font-bold bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>
-                    <td className="border border-[#000000] p-0 bg-[#ffffff]"><input type="text" value={quote?.totalAmount || ''} onChange={e => updateQuote(idx, v, 'totalAmount', e.target.value)} className="w-full text-center p-1 font-bold bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>
+                    <td className="border border-[#000000] p-0 bg-[#ffffff]"><input type="text" value={typeof quote?.mrp === 'number' ? quote.mrp.toFixed(2) : quote?.mrp || ''} onChange={e => updateQuote(idx, v, 'mrp', e.target.value)} className="w-full text-center p-1 font-bold bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>
+                    <td className="border border-[#000000] p-0 bg-[#ffffff]"><input type="text" value={typeof quote?.discount === 'number' ? quote.discount.toFixed(2) : quote?.discount || ''} onChange={e => updateQuote(idx, v, 'discount', e.target.value)} className="w-full text-center p-1 bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>
+                    <td className="border border-[#000000] p-0 bg-[#ffffff]"><input type="text" value={typeof quote?.netRate === 'number' ? quote.netRate.toFixed(2) : quote?.netRate || ''} onChange={e => updateQuote(idx, v, 'netRate', e.target.value)} className="w-full text-center p-1 font-bold bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>
+                    <td className="border border-[#000000] p-0 bg-[#ffffff]"><input type="text" value={typeof quote?.totalAmount === 'number' ? quote.totalAmount.toFixed(2) : quote?.totalAmount || ''} onChange={e => updateQuote(idx, v, 'totalAmount', e.target.value)} className="w-full text-center p-1 font-bold bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>
                   </React.Fragment>
                 )
               })}

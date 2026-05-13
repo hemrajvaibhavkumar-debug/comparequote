@@ -82,8 +82,8 @@ async function startServer() {
 
   app.post("/api/extract", extractLimiter, async (req, res) => {
     try {
-      const { input, files, existingItems } = req.body;
-      console.log(`[AI] Extraction requested. Files: ${files?.length || 0}, Text: ${input ? 'Yes' : 'No'}, Existing Items: ${existingItems?.length || 0}`);
+      const { input, files } = req.body;
+      console.log(`[AI] Extraction requested. Files: ${files?.length || 0}, Text: ${input ? 'Yes' : 'No'}`);
       
       const isTextOnly = (!files || files.length === 0) && input && input.trim().length > 0;
 
@@ -92,7 +92,6 @@ async function startServer() {
       DATA SOURCES:
       ${files && files.length > 0 ? "1. Attached Files (PDFs/Images): These contain the primary quotation documents." : ""}
       ${input ? `2. Input Text: ${isTextOnly ? "THIS IS THE ONLY SOURCE. Extract everything from this text." : "Additional notes or pasted quotation data."}` : ""}
-      3. Existing Items: ${existingItems && existingItems.length > 0 ? existingItems.join(", ") : "None yet."}
       
       CRITICAL INSTRUCTIONS:
       - Analyze the provided data sources carefully. 
@@ -108,10 +107,6 @@ async function startServer() {
       - All extracted numerical values (MRP, Discount, Net Rate, Total Amount, Previous Price Rate) MUST be numbers (not strings).
       - Round all numerical values to exactly 2 decimal places.
       - If a value is missing or unclear, use 0.
-
-      CRITICAL INSTRUCTION FOR ITEM MATCHING:
-      - If an extracted item is similar to one of the "Existing Items" listed, you MUST use the EXACT description from the existing list.
-      - Match intelligently (ignore casing, spacing, and minor unit differences).
       
       STRICT JSON OUTPUT:
       - Return ONLY a valid JSON object. 

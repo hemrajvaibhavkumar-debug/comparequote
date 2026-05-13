@@ -293,8 +293,7 @@ const Builder: React.FC = () => {
   const handleExtract = async () => {
     setIsExtracting(true);
     try {
-      const existingItemDescriptions = data.items.map(item => item.description).filter(d => !!d);
-      const extracted = await extractQuotations(inputText, files, existingItemDescriptions);
+      const extracted = await extractQuotations(inputText, files);
       if (extracted?.items) {
         extracted.items = extracted.items.map((item) => {
           const processedQuotes = item.vendorQuotes?.map((q: any) => {
@@ -311,9 +310,9 @@ const Builder: React.FC = () => {
 
             return {
               ...q,
-              mrp,
-              netRate: nr,
-              totalAmount: nr * qty
+              mrp: Number(mrp.toFixed(2)),
+              netRate: Number(nr.toFixed(2)),
+              totalAmount: Number((nr * qty).toFixed(2))
             };
           });
 
@@ -333,7 +332,7 @@ const Builder: React.FC = () => {
           
           extracted.items.forEach((newItem: any) => {
             const existingItemIndex = mergedItems.findIndex(
-              ei => ei.description?.toLowerCase().trim() === newItem.description?.toLowerCase().trim()
+              ei => ei.description?.toLowerCase().replace(/\s+/g, '') === newItem.description?.toLowerCase().replace(/\s+/g, '')
             );
             
             if (existingItemIndex > -1) {
