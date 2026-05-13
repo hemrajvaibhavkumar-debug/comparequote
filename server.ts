@@ -82,23 +82,27 @@ async function startServer() {
 
   app.post("/api/extract", extractLimiter, async (req, res) => {
     try {
-      const { input, files } = req.body;
-      console.log(`[AI] Extraction requested. Files: ${files?.length || 0}, Text: ${input ? 'Yes' : 'No'}`);
-      
+      const { input, files, userPrompt } = req.body;
+      console.log(`[AI] Extraction requested. Files: ${files?.length || 0}, Text: ${input ? 'Yes' : 'No'}, User Prompt: ${userPrompt ? 'Yes' : 'No'}`);
+
       const isTextOnly = (!files || files.length === 0) && input && input.trim().length > 0;
 
-      const prompt = `You are an expert procurement assistant specializing in high-precision data extraction. 
-      
+      const prompt = `You are an expert procurement assistant specializing in high-precision data extraction.
+
+      ${userPrompt ? `USER SPECIFIC INSTRUCTIONS (HIGH PRIORITY):
+      ${userPrompt}
+      ` : ""}
+
       DATA SOURCES:
       ${files && files.length > 0 ? "1. Attached Files (PDFs/Images): These contain the primary quotation documents." : ""}
       ${input ? `2. Input Text: ${isTextOnly ? "THIS IS THE ONLY SOURCE. Extract everything from this text." : "Additional notes or pasted quotation data."}` : ""}
-      
+
       CRITICAL INSTRUCTIONS:
-      - Analyze the provided data sources carefully. 
+      - Analyze the provided data sources carefully.
+      ${userPrompt ? `- ADHERE STRICTLY to the "USER SPECIFIC INSTRUCTIONS" provided above.` : ""}
       ${isTextOnly ? "- Since this is TEXT-ONLY input, do NOT hallucinate or 'invent' any data. If a field (like MRP or Discount) is not explicitly mentioned, leave it as 0." : "- Find every Vendor Name and every Item mentioned across all sources."}
       - For each item, extract: Description, UOM, QTY, and any Previous Price if mentioned.
-      - For each vendor's quote on an item, extract: Make, MRP, Discount, Net Rate, and Quote Date.
-      
+      - For each vendor's quote on an item, extract: Make, MRP, Discount, Net Rate, and Quote Date.      
       VENDOR IDENTIFICATION:
       - If you cannot find a clear Vendor Name for a piece of data, use "Unknown Vendor" instead of guessing.
       - Group items by the vendor they belong to.

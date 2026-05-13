@@ -82,6 +82,7 @@ const Builder: React.FC = () => {
   };
 
   const [inputText, setInputText] = useState('');
+  const [extractionPrompt, setExtractionPrompt] = useState('');
   const [isExtracting, setIsExtracting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [files, setFiles] = useState<{ name: string; mimeType: string; data: string }[]>([]);
@@ -293,7 +294,7 @@ const Builder: React.FC = () => {
   const handleExtract = async () => {
     setIsExtracting(true);
     try {
-      const extracted = await extractQuotations(inputText, files);
+      const extracted = await extractQuotations(inputText, files, extractionPrompt);
       if (extracted?.items) {
         extracted.items = extracted.items.map((item) => {
           const processedQuotes = item.vendorQuotes?.map((q: any) => {
@@ -550,6 +551,16 @@ const Builder: React.FC = () => {
                   value={header.indentDate} 
                   onChange={e => setHeader({...header, indentDate: e.target.value})} 
                   className="w-full mt-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" 
+                />
+              </div>
+
+              <div className="col-span-2">
+                <label className="text-[10px] font-bold text-slate-400 uppercase">Special Extraction Instructions (Optional)</label>
+                <textarea 
+                  value={extractionPrompt} 
+                  onChange={e => setExtractionPrompt(e.target.value)} 
+                  className="w-full mt-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm min-h-[80px]" 
+                  placeholder="e.g. 'The data is in one line', 'Ignore vendor X', 'Focus on specific columns'"
                 />
               </div>
             </div>
