@@ -204,7 +204,8 @@ async function startServer() {
       // 3. Gemini (Fallback - Native File Processing)
       console.log("[AI] Attempting extraction with Gemini (Fallback)...");
       const modelName = "gemini-1.5-flash"; // Fixed model name
-      const response = await ai.getGenerativeModel({ model: modelName }).generateContent({
+      const response = await ai.models.generateContent({
+        model: modelName,
         contents: [
           {
             role: "user",
@@ -215,46 +216,46 @@ async function startServer() {
             ]
           }
         ],
-        generationConfig: {
+        config: {
           responseMimeType: "application/json",
           responseSchema: {
-            type: Type.OBJECT,
+            type: "object",
             properties: {
-              vendors: { type: Type.ARRAY, items: { type: Type.STRING } },
+              vendors: { type: "array", items: { type: "string" } },
               items: {
-                type: Type.ARRAY,
+                type: "array",
                 items: {
-                  type: Type.OBJECT,
+                  type: "object",
                   properties: {
-                    indentNo: { type: Type.STRING },
-                    siNo: { type: Type.STRING },
-                    description: { type: Type.STRING },
-                    uom: { type: Type.STRING },
-                    qty: { type: Type.NUMBER },
-                    weight: { type: Type.NUMBER },
+                    indentNo: { type: "string" },
+                    siNo: { type: "string" },
+                    description: { type: "string" },
+                    uom: { type: "string" },
+                    qty: { type: "number" },
+                    weight: { type: "number" },
                     previousPrice: {
-                      type: Type.OBJECT,
+                      type: "object",
                       properties: {
-                        rate: { type: Type.NUMBER },
-                        date: { type: Type.STRING }
+                        rate: { type: "number" },
+                        date: { type: "string" }
                       }
                     },
                     vendorQuotes: {
-                      type: Type.ARRAY,
+                      type: "array",
                       items: {
-                        type: Type.OBJECT,
+                        type: "object",
                         properties: {
-                          vendorName: { type: Type.STRING },
-                          make: { type: Type.STRING },
-                          mrp: { type: Type.NUMBER },
-                          discount: { type: Type.NUMBER },
-                          netRate: { type: Type.NUMBER },
-                          totalAmount: { type: Type.NUMBER },
-                          deliveryPeriod: { type: Type.STRING },
-                          readyStock: { type: Type.STRING },
-                          gstStatus: { type: Type.STRING },
-                          extra: { type: Type.STRING },
-                          quoteDate: { type: Type.STRING }
+                          vendorName: { type: "string" },
+                          make: { type: "string" },
+                          mrp: { type: "number" },
+                          discount: { type: "number" },
+                          netRate: { type: "number" },
+                          totalAmount: { type: "number" },
+                          deliveryPeriod: { type: "string" },
+                          readyStock: { type: "string" },
+                          gstStatus: { type: "string" },
+                          extra: { type: "string" },
+                          quoteDate: { type: "string" }
                         }
                       }
                     }
@@ -267,7 +268,7 @@ async function startServer() {
         }
       });
 
-      const rawText = response.response.text(); // Fixed response access
+      const rawText = response.text || "{}";
       const cleanedText = rawText.replace(/^\`\`\`json/m, '').replace(/^\`\`\`/m, '').trim();
       const parsed = JSON.parse(cleanedText);
       const validated = ComparisonDataSchema.parse(parsed);

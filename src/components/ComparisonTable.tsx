@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ComparisonData, HeaderInfo, Item, VendorQuote } from '../types';
 import { Trash2, PlusCircle } from 'lucide-react';
 
@@ -10,6 +10,41 @@ interface ComparisonTableProps {
   tableRef: React.RefObject<HTMLDivElement | null>;
   readOnly?: boolean;
 }
+
+const AutoExpandingTextarea: React.FC<{
+  value: string;
+  onChange: (val: string) => void;
+  className?: string;
+  readOnly?: boolean;
+  rows?: number;
+  placeholder?: string;
+}> = ({ value, onChange, className, readOnly, rows = 1, placeholder }) => {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const adjustHeight = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  };
+
+  useEffect(() => {
+    adjustHeight();
+  }, [value]);
+
+  return (
+    <textarea
+      ref={textareaRef}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={`${className} overflow-hidden resize-none`}
+      readOnly={readOnly}
+      rows={rows}
+      placeholder={placeholder}
+    />
+  );
+};
 
 export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData, header, setHeader, tableRef, readOnly = false }) => {
   const vendors = data?.vendors || [];
@@ -108,7 +143,6 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
 
       currentQuote[field] = value;
 
-      // Logic: If discount is not mentioned (0 or empty), netRate = MRP
       const disc = parseFloat(currentQuote.discount) || 0;
       const qty = parseFloat(item.qty) || 0;
 
@@ -130,7 +164,6 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
         }
       }
 
-      // Always update totalAmount based on netRate and qty/weight
       const weightVal = parseFloat(item.weight) || 0;
       const multiplier = weightVal > 0 ? weightVal : qty;
       currentQuote.totalAmount = ((parseFloat(currentQuote.netRate) || 0) * multiplier).toFixed(2);
@@ -231,6 +264,8 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
     );
   }
 
+  const totalCols = (hasWeight ? 10 : 9) + vendors.length * vendorCols;
+
   return (
     <div className="overflow-x-auto bg-[#ffffff]">
       <div ref={tableRef} className="bg-[#ffffff] p-2">
@@ -285,9 +320,8 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
         `}</style>
         <table className="comp-table w-full border-collapse text-[9px] min-w-[1000px] text-[#000000] table-auto border-2 border-[#000000]">
           <thead>
-            {/* Header Info Rows */}
           <tr>
-            <th colSpan={hasWeight ? 10 + vendors.length * vendorCols : 9 + vendors.length * vendorCols} className="text-left p-0 border border-[#000000] font-bold uppercase whitespace-nowrap bg-white">
+            <th colSpan={totalCols} className="text-left p-0 border border-[#000000] font-bold uppercase whitespace-nowrap bg-white">
               <div className="flex items-center">
                 <span className="pl-1 flex-shrink-0">DOC NO. -</span>
                 <input type="text" value={header.docNo} onChange={e => updateHeader('docNo', e.target.value)} className="w-full p-1 bg-transparent focus:outline-none font-bold uppercase" readOnly={readOnly} />
@@ -295,7 +329,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
             </th>
           </tr>
           <tr>
-            <th colSpan={hasWeight ? 10 + vendors.length * vendorCols : 9 + vendors.length * vendorCols} className="text-left p-0 border border-[#000000] font-bold uppercase whitespace-nowrap bg-white">
+            <th colSpan={totalCols} className="text-left p-0 border border-[#000000] font-bold uppercase whitespace-nowrap bg-white">
               <div className="flex items-center">
                 <span className="pl-1 flex-shrink-0">PREPARED BY -</span>
                 <input type="text" value={header.preparedBy} onChange={e => updateHeader('preparedBy', e.target.value)} className="w-full p-1 bg-transparent focus:outline-none font-bold uppercase" readOnly={readOnly} />
@@ -303,7 +337,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
             </th>
           </tr>
           <tr>
-            <th colSpan={hasWeight ? 10 + vendors.length * vendorCols : 9 + vendors.length * vendorCols} className="text-left p-0 border border-[#000000] font-bold uppercase whitespace-nowrap bg-white">
+            <th colSpan={totalCols} className="text-left p-0 border border-[#000000] font-bold uppercase whitespace-nowrap bg-white">
               <div className="flex items-center">
                 <span className="pl-1 flex-shrink-0">DATE -</span>
                 <input type="text" value={header.date} onChange={e => updateHeader('date', e.target.value)} className="w-full p-1 bg-transparent focus:outline-none font-bold uppercase" readOnly={readOnly} />
@@ -311,7 +345,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
             </th>
           </tr>
           <tr>
-            <th colSpan={hasWeight ? 10 + vendors.length * vendorCols : 9 + vendors.length * vendorCols} className="text-left p-0 border border-[#000000] font-bold uppercase whitespace-nowrap bg-white">
+            <th colSpan={totalCols} className="text-left p-0 border border-[#000000] font-bold uppercase whitespace-nowrap bg-white">
               <div className="flex items-center">
                 <span className="pl-1 flex-shrink-0">INDENT DATE -</span>
                 <input type="text" value={header.indentDate} onChange={e => updateHeader('indentDate', e.target.value)} className="w-full p-1 bg-transparent focus:outline-none font-bold uppercase" readOnly={readOnly} />
@@ -352,22 +386,21 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
             </th>
           </tr>
           
-          {/* Main Table Headers */}
           <tr className="bg-white">
-            <th rowSpan={2} className="border border-[#000000] p-1 font-bold"><div className="vertical-text">INDENT NO.</div></th>
-            <th rowSpan={2} className="border border-[#000000] p-1 font-bold"><div className="vertical-text">SI NO.</div></th>
-            <th rowSpan={2} className="border border-[#000000] p-1 w-64 text-left font-bold">ITEM DESCRIPTION</th>
-            <th rowSpan={2} className="border border-[#000000] p-1"><div className="vertical-text">UOM</div></th>
-            <th rowSpan={2} className="border border-[#000000] p-1"><div className="vertical-text">QTY</div></th>
-            {hasWeight && <th rowSpan={2} className="border border-[#000000] p-1"><div className="vertical-text">WT</div></th>}
+            <th rowSpan={2} className="border border-[#000000] p-1 font-bold min-w-[30px]"><div className="vertical-text">INDENT NO.</div></th>
+            <th rowSpan={2} className="border border-[#000000] p-1 font-bold min-w-[30px]"><div className="vertical-text">SI NO.</div></th>
+            <th rowSpan={2} className="border border-[#000000] p-1 w-64 min-w-[150px] text-left font-bold">ITEM DESCRIPTION</th>
+            <th rowSpan={2} className="border border-[#000000] p-1 min-w-[30px]"><div className="vertical-text">UOM</div></th>
+            <th rowSpan={2} className="border border-[#000000] p-1 min-w-[30px]"><div className="vertical-text">QTY</div></th>
+            {hasWeight && <th rowSpan={2} className="border border-[#000000] p-1 min-w-[30px]"><div className="vertical-text">WT</div></th>}
             <th colSpan={3} className="border border-[#000000] p-1 bg-white">PREVIOUS PRICE</th>
             {vendors.map((v, i) => (
               <th key={i} colSpan={vendorCols} className="border border-[#000000] p-0 bg-white">
-                <div className="flex items-center justify-center gap-1 group overflow-hidden px-1 min-h-[30px]">
-                  <textarea 
+                <div className="flex items-center justify-center gap-1 group px-1 min-h-[30px]">
+                  <AutoExpandingTextarea 
                     value={v} 
-                    onChange={e => updateVendorName(v, e.target.value)} 
-                    className="w-full p-1 text-center bg-transparent focus:outline-none font-black uppercase overflow-hidden resize-none leading-none" 
+                    onChange={val => updateVendorName(v, val)} 
+                    className="w-full p-1 text-center bg-transparent focus:outline-none font-black uppercase leading-none" 
                     readOnly={readOnly} 
                     rows={2}
                   />
@@ -379,29 +412,37 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                 </div>
               </th>
             ))}
-            <th className="print-hidden border border-[#000000] p-1 uppercase text-[8px] w-8">Act</th>
+            <th rowSpan={2} className="print-hidden border border-[#000000] p-1 uppercase text-[8px] w-8">Act</th>
           </tr>
           <tr className="bg-white">
-            <th className="border border-[#000000] p-1 whitespace-nowrap min-w-[max-content]">VENDOR</th>
-            <th className="border border-[#000000] p-1 font-bold uppercase"><div className="vertical-text">RATE</div></th>
-            <th className="border border-[#000000] p-1 font-bold uppercase"><div className="vertical-text">DATE</div></th>
+            <th className="border border-[#000000] p-1 whitespace-nowrap min-w-[80px]">VENDOR</th>
+            <th className="border border-[#000000] p-1 font-bold uppercase min-w-[38px]"><div className="vertical-text">RATE</div></th>
+            <th className="border border-[#000000] p-1 font-bold uppercase min-w-[38px]"><div className="vertical-text">DATE</div></th>
             {vendors.map((_, i) => (
               <React.Fragment key={i}>
-                <th className="border border-[#000000] p-1 font-bold uppercase">MAKE</th>
-                <th className="border border-[#000000] p-1 font-bold uppercase"><div className="vertical-text">MRP</div></th>
-                <th className="border border-[#000000] p-1 font-bold uppercase"><div className="vertical-text">DIS</div></th>
-                <th className="border border-[#000000] p-1 font-bold uppercase"><div className="vertical-text">NET RATE</div></th>
-                <th className="border border-[#000000] p-1 font-bold uppercase"><div className="vertical-text">TOTAL</div></th>
+                <th className="border border-[#000000] p-1 font-bold uppercase min-w-[50px]">MAKE</th>
+                <th className="border border-[#000000] p-1 font-bold uppercase min-w-[38px]"><div className="vertical-text">MRP</div></th>
+                <th className="border border-[#000000] p-1 font-bold uppercase min-w-[32px]"><div className="vertical-text">DIS</div></th>
+                <th className="border border-[#000000] p-1 font-bold uppercase min-w-[42px]"><div className="vertical-text">NET RATE</div></th>
+                <th className="border border-[#000000] p-1 font-bold uppercase min-w-[50px]"><div className="vertical-text">TOTAL</div></th>
               </React.Fragment>
             ))}
           </tr>
         </thead>
         <tbody>
           {items.map((item: any, idx: number) => (
-            <tr key={idx} className="hover:bg-[#ffffff]" style={{ height: '30px' }}>
+            <tr key={idx} className="hover:bg-[#ffffff]">
               <td className="border border-[#000000] p-0 bg-[#ffffff]"><input type="text" value={item.indentNo || ''} onChange={e => updateItem(idx, 'indentNo', e.target.value)} className="w-full text-center p-1 font-bold bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>
               <td className="border border-[#000000] p-0 bg-[#ffffff]"><input type="text" value={item.siNo || ''} onChange={e => updateItem(idx, 'siNo', e.target.value)} className="w-full text-center p-1 bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>
-              <td className="border border-[#000000] p-0 bg-[#ffffff]"><textarea value={item.description || ''} onChange={e => updateItem(idx, 'description', e.target.value)} className="w-full text-left p-1 font-medium bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none resize-none min-h-[40px]" readOnly={readOnly} rows={2} /></td>
+              <td className="border border-[#000000] p-0 bg-[#ffffff]">
+                <AutoExpandingTextarea 
+                  value={item.description || ''} 
+                  onChange={val => updateItem(idx, 'description', val)} 
+                  className="w-full text-left p-1 font-medium bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" 
+                  readOnly={readOnly} 
+                  rows={1} 
+                />
+              </td>
               <td className="border border-[#000000] p-0 bg-[#ffffff]"><input type="text" value={item.uom || ''} onChange={e => updateItem(idx, 'uom', e.target.value)} className="w-full text-center p-1 uppercase bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>
               <td className="border border-[#000000] p-0 bg-[#ffffff]"><input type="text" value={item.qty || ''} onChange={e => updateItem(idx, 'qty', e.target.value)} className="w-full text-center p-1 font-bold bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>
               {hasWeight && <td className="border border-[#000000] p-0 bg-[#ffffff]"><input type="text" value={item.weight || ''} onChange={e => updateItem(idx, 'weight', e.target.value)} className="w-full text-center p-1 font-bold bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>}
@@ -421,7 +462,15 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                 const quote = item.vendorQuotes?.find((q: any) => q.vendorName === v);
                 return (
                   <React.Fragment key={vIdx}>
-                    <td className="border border-[#000000] p-0 bg-[#ffffff]"><textarea value={quote?.make || ''} onChange={e => updateQuote(idx, v, 'make', e.target.value)} className="w-full text-center p-1 italic bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none resize-none min-h-[40px]" readOnly={readOnly} rows={2} /></td>
+                    <td className="border border-[#000000] p-0 bg-[#ffffff]">
+                      <AutoExpandingTextarea 
+                        value={quote?.make || ''} 
+                        onChange={val => updateQuote(idx, v, 'make', val)} 
+                        className="w-full text-center p-1 italic bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" 
+                        readOnly={readOnly} 
+                        rows={1}
+                      />
+                    </td>
                     <td className="border border-[#000000] p-0 bg-[#ffffff]"><input type="text" value={quote?.mrp ?? ''} onChange={e => updateQuote(idx, v, 'mrp', e.target.value)} className="w-full text-center p-1 font-bold bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>
                     <td className="border border-[#000000] p-0 bg-[#ffffff]"><input type="text" value={quote?.discount ?? ''} onChange={e => updateQuote(idx, v, 'discount', e.target.value)} className="w-full text-center p-1 bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>
                     <td className="border border-[#000000] p-0 bg-[#ffffff]"><input type="text" value={quote?.netRate ?? ''} onChange={e => updateQuote(idx, v, 'netRate', e.target.value)} className="w-full text-center p-1 font-bold bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none" readOnly={readOnly} /></td>
@@ -439,10 +488,9 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
             </tr>
           ))}
 
-          {/* Add Row Button */}
           {!readOnly && (
             <tr className="bg-[#ffffff] hover:bg-[#ffffff] transition-colors print-hidden">
-              <td colSpan={hasWeight ? 10 + vendors.length * vendorCols : 9 + vendors.length * vendorCols} className="border border-[#000000] p-0 text-center">
+              <td colSpan={totalCols} className="border border-[#000000] p-0 text-center">
                 <button onClick={addItem} className="w-full h-full py-2 flex items-center justify-center gap-2 text-[#000000] hover:text-[#000000] font-bold text-xs uppercase cursor-pointer">
                   <PlusCircle className="w-4 h-4" /> Add Row
                 </button>
@@ -450,7 +498,6 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
             </tr>
           )}
 
-          {/* Totals */}
           <tr className="bg-[#ffffff]">
              <td colSpan={hasWeight ? 9 : 8} className="border border-[#000000]"></td>
              {vendors.map((v, i) => (
@@ -462,7 +509,6 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
              <td className="print-hidden border-[#000000] border"></td>
           </tr>
           
-          {/* GST */}
           <tr>
              <td colSpan={hasWeight ? 9 : 8} className="border border-[#000000]"></td>
              {vendors.map((v, i) => {
@@ -473,7 +519,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                let rate = 0;
                if (!isInclusive) {
                  if (status.includes('5%')) rate = 0.05;
-                 else rate = 0.18; // Default to 18% for Exclusive or 18% Extra
+                 else rate = 0.18;
                }
                const gst = total * rate;
                return (
@@ -490,7 +536,6 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
              <td className="print-hidden border-[#000000] border"></td>
           </tr>
 
-          {/* Grand Total */}
           <tr className="bg-[#ffffff]">
              <td colSpan={hasWeight ? 9 : 8} className="border border-[#000000]"></td>
              {vendors.map((v, i) => {
@@ -501,7 +546,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                let rate = 0;
                if (!isInclusive) {
                  if (status.includes('5%')) rate = 0.05;
-                 else rate = 0.18; // Default to 18% for Exclusive or 18% Extra
+                 else rate = 0.18;
                }
                const grandTotal = total * (1 + rate);
                return (
@@ -514,7 +559,6 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
              <td className="print-hidden border-[#000000] border"></td>
           </tr>
 
-          {/* Terms and Conditions */}
           <tr className="bg-[#ffffff]">
              <td colSpan={hasWeight ? 9 : 8} className="border border-[#000000]"></td>
              {vendors.map((v, i) => (
@@ -523,7 +567,6 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
              <td className="print-hidden border-[#000000] border"></td>
           </tr>
           
-          {/* Detailed Terms */}
           <tr>
              <td colSpan={hasWeight ? 9 : 8} className="border border-[#000000]"></td>
              {vendors.map((v, i) => {
@@ -532,7 +575,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                 <React.Fragment key={i}>
                   <td colSpan={2} className="border border-[#000000] p-1 italic text-center font-bold uppercase">DELIVERY PERIOD</td>
                   <td colSpan={3} className="border border-[#000000] p-0">
-                    <textarea value={firstQuote?.deliveryPeriod || ''} onChange={e => updateQuote(0, v, 'deliveryPeriod', e.target.value)} className="w-full text-center p-1 font-bold bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none resize-none min-h-[40px] uppercase" readOnly={readOnly} rows={2}/>
+                    <AutoExpandingTextarea value={firstQuote?.deliveryPeriod || ''} onChange={val => updateQuote(0, v, 'deliveryPeriod', val)} className="w-full text-center p-1 font-bold bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none uppercase" readOnly={readOnly} rows={1}/>
                   </td>
                 </React.Fragment>
                )
@@ -593,7 +636,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                 <React.Fragment key={i}>
                   <td colSpan={2} className="border border-[#000000] p-1 italic text-center font-bold uppercase">READY STOCK</td>
                   <td colSpan={3} className="border border-[#000000] p-0">
-                    <textarea value={firstQuote?.readyStock || ''} onChange={e => updateQuote(0, v, 'readyStock', e.target.value)} className="w-full text-center p-1 font-bold bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none resize-none min-h-[40px] uppercase" readOnly={readOnly} rows={2}/>
+                    <AutoExpandingTextarea value={firstQuote?.readyStock || ''} onChange={val => updateQuote(0, v, 'readyStock', val)} className="w-full text-center p-1 font-bold bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none uppercase" readOnly={readOnly} rows={1}/>
                   </td>
                 </React.Fragment>
                )
@@ -633,7 +676,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                 <React.Fragment key={i}>
                   <td colSpan={2} className="border border-[#000000] p-1 italic text-center font-bold uppercase">OTHER EXTRA</td>
                   <td colSpan={3} className="border border-[#000000] p-0">
-                    <textarea value={firstQuote?.extra || ''} onChange={e => updateQuote(0, v, 'extra', e.target.value)} className="w-full text-center p-1 font-bold bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none resize-none min-h-[40px] uppercase" readOnly={readOnly} rows={2}/>
+                    <AutoExpandingTextarea value={firstQuote?.extra || ''} onChange={val => updateQuote(0, v, 'extra', val)} className="w-full text-center p-1 font-bold bg-[#ffffff] focus:bg-[#ffffff] focus:outline-none uppercase" readOnly={readOnly} rows={1}/>
                   </td>
                 </React.Fragment>
                )
