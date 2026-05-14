@@ -40,3 +40,41 @@ model User {
   username String @unique
   password String
 }
+
+model CompanySettings {
+  id        Int      @id @default(1)
+  name      String   @default("My Company")
+  logo      String?  // Base64 or URL
+  cin       String?
+  gstin     String?
+  pan       String?
+  address   String?
+  email     String?
+  phone     String?
+  website   String?
+  factory_address String?
+  regd_office String?
+}
+
+model TermsTemplate {
+  id      Int    @id @default(autoincrement())
+  name    String @unique
+  tax     String?
+  packing String?
+  payment String?
+  freight String?
+  delivery String?
+  notes   String?
+}
+
+model PurchaseOrder {
+  id              Int      @id @default(autoincrement())
+  po_no           String   @unique
+  date            DateTime @default(now())
+  vendor_name     String
+  vendor_details  Json?    // Address, GSTIN, Mail, Ph
+  items           Json     // List of items
+  terms           Json?    // Snapshot of terms used
+  total_amount    Float    @default(0)
+  created_at      DateTime @default(now())
+}

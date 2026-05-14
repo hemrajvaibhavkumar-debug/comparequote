@@ -3,6 +3,9 @@ import Builder from './Builder';
 import SavedTables from './SavedTables';
 import ViewTable from './ViewTable';
 import Login from './Login';
+import POMaker from './components/POMaker/POMaker';
+import POSettings from './components/Settings/POSettings';
+import { Settings as SettingsIcon, FileText } from 'lucide-react';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem('admin_token');
@@ -29,9 +32,16 @@ export default function App() {
                   </span>
                   QuoteCompare
                 </Link>
-                <div className="hidden sm:flex space-x-1 ml-4">
+                <div className="hidden sm:flex space-x-1 ml-4 items-center">
                   <Link to="/" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-slate-100 transition-colors">Compare</Link>
                   <Link to="/saved" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-slate-100 transition-colors">Saved Tables</Link>
+                  <div className="h-4 w-px bg-slate-200 mx-2"></div>
+                  <Link to="/po-maker" className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-bold text-indigo-600 hover:bg-indigo-50 transition-colors">
+                    <FileText className="w-4 h-4" /> PO Maker
+                  </Link>
+                  <Link to="/settings" className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+                    <SettingsIcon className="w-4 h-4" /> Settings
+                  </Link>
                 </div>
               </div>
               <div className="flex items-center">
@@ -54,6 +64,8 @@ export default function App() {
             <Route path="/" element={<ProtectedRoute><Builder /></ProtectedRoute>} />
             <Route path="/saved" element={<ProtectedRoute><SavedTables /></ProtectedRoute>} />
             <Route path="/saved/:id" element={<ProtectedRoute><ViewTable /></ProtectedRoute>} />
+            <Route path="/po-maker" element={<ProtectedRoute><POMaker /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><POSettings /></ProtectedRoute>} />
           </Routes>
         </main>
       </div>

@@ -324,6 +324,97 @@ async function startServer() {
     }
   });
 
+  // --- PO Maker API ---
+
+  // Company Settings
+  app.get("/api/settings/company", authenticateToken, async (req, res) => {
+    try {
+      let settings = await prisma.companySettings.findFirst();
+      if (!settings) {
+        settings = await prisma.companySettings.create({ 
+          data: { 
+            id: 1, 
+            name: "HEMRAJ INDUSTRIES PRIVATE LIMITED",
+            cin: "U01111WB1991PTC051314",
+            gstin: "19AAACH8249K1Z4",
+            pan: "AAACH8249K",
+            email: "purchase@hemrajgroup.co.in",
+            phone: "+91 33 2229 8038 / 4064 9316",
+            website: "www.hemrajgroup.co.in",
+            regd_office: "46B Rafi Ahmed Kidwai Road, 1st Floor, Kolkata-700 016",
+            factory_address: "Vill. P.O. Chandul, G.T. Road, Burdwan (W.B.) Pin : 713141"
+          } 
+        });
+      }
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch settings" });
+    }
+  });
+
+  app.put("/api/settings/company", authenticateToken, async (req, res) => {
+    try {
+      const settings = await prisma.companySettings.upsert({
+        where: { id: 1 },
+        update: req.body,
+        create: { ...req.body, id: 1 },
+      });
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update settings" });
+    }
+  });
+
+  // Terms Templates
+  app.get("/api/settings/terms", authenticateToken, async (req, res) => {
+    try {
+      const templates = await prisma.termsTemplate.findMany();
+      res.json(templates);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch templates" });
+    }
+  });
+
+  app.post("/api/settings/terms", authenticateToken, async (req, res) => {
+    try {
+      const template = await prisma.termsTemplate.create({ data: req.body });
+      res.json(template);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create template" });
+    }
+  });
+
+  app.delete("/api/settings/terms/:id", authenticateToken, async (req, res) => {
+    try {
+      await prisma.termsTemplate.delete({ where: { id: Number(req.params.id) } });
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete template" });
+    }
+  });
+
+  // Purchase Orders
+  app.get("/api/po", authenticateToken, async (req, res) => {
+    try {
+      const pos = await prisma.purchaseOrder.findMany({
+        orderBy: { created_at: "desc" },
+        take: 50
+      });
+      res.json(pos);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch POs" });
+    }
+  });
+
+  app.post("/api/po", authenticateToken, async (req, res) => {
+    try {
+      const po = await prisma.purchaseOrder.create({ data: req.body });
+      res.json(po);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to save PO" });
+    }
+  });
+
   app.delete("/api/plants/:id", authenticateToken, async (req, res) => {
     try {
       await prisma.plant.delete({ where: { id: parseInt(req.params.id) } });
