@@ -365,10 +365,10 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
             }
           }
         `}</style>
-        <table className="comp-table text-[9px] text-[#000000] border-2 border-[#000000]">
+        <table className="comp-table text-[9px] text-black border-2 border-black">
           <thead>
-          <tr className="bg-slate-50">
-            <th colSpan={totalCols} className="text-left p-0 border border-[#000000] font-bold uppercase whitespace-nowrap">
+          <tr className="bg-white">
+            <th colSpan={totalCols} className="text-left p-0 border border-black font-bold uppercase whitespace-nowrap">
               <div className="flex items-center px-2 py-1">
                 <span className="flex-shrink-0 opacity-60">DOC NO. :</span>
                 <input type="text" value={header.docNo} onChange={e => updateHeader('docNo', e.target.value)} className="font-bold uppercase ml-2" readOnly={readOnly} />
@@ -376,15 +376,15 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
             </th>
           </tr>
           <tr className="bg-white">
-            <th colSpan={totalCols} className="text-left p-0 border border-[#000000] font-bold uppercase whitespace-nowrap">
+            <th colSpan={totalCols} className="text-left p-0 border border-black font-bold uppercase whitespace-nowrap">
               <div className="flex items-center px-2 py-1">
                 <span className="flex-shrink-0 opacity-60">PREPARED BY :</span>
                 <input type="text" value={header.preparedBy} onChange={e => updateHeader('preparedBy', e.target.value)} className="font-bold uppercase ml-2" readOnly={readOnly} />
               </div>
             </th>
           </tr>
-          <tr className="bg-slate-50">
-            <th colSpan={totalCols} className="text-left p-0 border border-[#000000] font-bold uppercase whitespace-nowrap">
+          <tr className="bg-white">
+            <th colSpan={totalCols} className="text-left p-0 border border-black font-bold uppercase whitespace-nowrap">
               <div className="flex items-center px-2 py-1">
                 <span className="flex-shrink-0 opacity-60">DATE :</span>
                 <input type="text" value={header.date} onChange={e => updateHeader('date', e.target.value)} className="font-bold uppercase ml-2" readOnly={readOnly} />
@@ -392,15 +392,15 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
             </th>
           </tr>
           <tr className="bg-white">
-            <th colSpan={totalCols} className="text-left p-0 border border-[#000000] font-bold uppercase whitespace-nowrap">
+            <th colSpan={totalCols} className="text-left p-0 border border-black font-bold uppercase whitespace-nowrap">
               <div className="flex items-center px-2 py-1">
                 <span className="flex-shrink-0 opacity-60">INDENT DATE :</span>
                 <input type="text" value={header.indentDate} onChange={e => updateHeader('indentDate', e.target.value)} className="font-bold uppercase ml-2" readOnly={readOnly} />
               </div>
             </th>
           </tr>
-          <tr className="bg-slate-50">
-            <th colSpan={hasWeight ? 9 : 8} className="text-left p-0 border border-[#000000] font-bold uppercase whitespace-nowrap">
+          <tr className="bg-white">
+            <th colSpan={hasWeight ? 9 : 8} className="text-left p-0 border border-black font-bold uppercase whitespace-nowrap">
               <div className="flex items-center px-2 py-1">
                 <span className="flex-shrink-0 opacity-60">PLANT NAME :</span>
                 <input type="text" value={header.plantName} onChange={e => updateHeader('plantName', e.target.value)} className="font-bold uppercase ml-2" readOnly={readOnly} />
@@ -410,7 +410,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
                const quoteDate = firstQuote?.quoteDate || new Date().toLocaleDateString('en-GB');
                return (
-                <th key={i} colSpan={vendorCols} className="text-center p-0 border border-[#000000] bg-blue-50/30 font-bold uppercase">
+                <th key={i} colSpan={vendorCols} className="text-center p-0 border border-black bg-white font-bold uppercase">
                   <div className="flex items-center justify-center py-1">
                      <span className="opacity-50">BY</span>
                      <input 
@@ -424,25 +424,25 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                 </th>
                );
             })}
-            <th className="print-hidden w-8 border-[#000000] border bg-white">
+            <th className="print-hidden w-8 border-black border bg-white">
               {!readOnly && (
-                <button onClick={addVendor} className="p-1 hover:text-indigo-600 text-[#000000] cursor-pointer" title="Add Vendor">
+                <button onClick={addVendor} className="p-1 hover:text-black text-black cursor-pointer" title="Add Vendor">
                   <PlusCircle className="w-4 h-4 mx-auto" />
                 </button>
               )}
             </th>
           </tr>
           
-          <tr className="bg-slate-100">
-            <th rowSpan={2} className="border border-[#000000] p-1 font-bold w-8"><div className="vertical-text">INDENT NO.</div></th>
-            <th rowSpan={2} className="border border-[#000000] p-1 font-bold w-6"><div className="vertical-text">SI NO.</div></th>
-            <th rowSpan={2} className="border border-[#000000] p-2 text-left font-bold min-w-[200px]">ITEM DESCRIPTION</th>
-            <th rowSpan={2} className="border border-[#000000] p-1 font-bold w-8"><div className="vertical-text">UOM</div></th>
-            <th rowSpan={2} className="border border-[#000000] p-1 font-bold w-8"><div className="vertical-text">QTY</div></th>
-            {hasWeight && <th rowSpan={2} className="border border-[#000000] p-1 font-bold w-8"><div className="vertical-text">WT</div></th>}
-            <th colSpan={3} className="border border-[#000000] p-1 bg-slate-200 font-bold">PREVIOUS PRICE</th>
+          <tr className="bg-white">
+            <th rowSpan={2} className="border border-black p-1 font-bold w-8"><div className="vertical-text">INDENT NO.</div></th>
+            <th rowSpan={2} className="border border-black p-1 font-bold w-6"><div className="vertical-text">SI NO.</div></th>
+            <th rowSpan={2} className="border border-black p-2 text-left font-bold min-w-[200px]">ITEM DESCRIPTION</th>
+            <th rowSpan={2} className="border border-black p-1 font-bold w-8"><div className="vertical-text">UOM</div></th>
+            <th rowSpan={2} className="border border-black p-1 font-bold w-8"><div className="vertical-text">QTY</div></th>
+            {hasWeight && <th rowSpan={2} className="border border-black p-1 font-bold w-8"><div className="vertical-text">WT</div></th>}
+            <th colSpan={3} className="border border-black p-1 bg-white font-bold">PREVIOUS PRICE</th>
             {vendors.map((v, i) => (
-              <th key={i} colSpan={vendorCols} className="border border-[#000000] p-0 bg-blue-100/50">
+              <th key={i} colSpan={vendorCols} className="border border-black p-0 bg-white">
                 <div className="flex items-center justify-center gap-1 group px-1 min-h-[30px]">
                   <AutoExpandingTextarea 
                     value={v} 
@@ -452,36 +452,36 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                     rows={1}
                   />
                   {!readOnly && (
-                    <button onClick={() => removeVendor(v)} className="print-hidden p-0.5 opacity-0 group-hover:opacity-100 hover:text-red-600 text-[#000000] cursor-pointer transition-opacity flex-shrink-0">
+                    <button onClick={() => removeVendor(v)} className="print-hidden p-0.5 opacity-0 group-hover:opacity-100 hover:text-black text-black cursor-pointer transition-opacity flex-shrink-0">
                       <Trash2 className="w-3 h-3" />
                     </button>
                   )}
                 </div>
               </th>
             ))}
-            <th rowSpan={2} className="print-hidden border border-[#000000] p-1 uppercase text-[8px] w-8">Act</th>
+            <th rowSpan={2} className="print-hidden border border-black p-1 uppercase text-[8px] w-8 text-black">Act</th>
           </tr>
-          <tr className="bg-slate-50">
-            <th className="border border-[#000000] p-1 font-bold text-[8px]">VENDOR</th>
-            <th className="border border-[#000000] p-1 font-bold text-[8px] w-10">RATE</th>
-            <th className="border border-[#000000] p-1 font-bold text-[8px] w-12">DATE</th>
+          <tr className="bg-white">
+            <th className="border border-black p-1 font-bold text-[8px] text-black">VENDOR</th>
+            <th className="border border-black p-1 font-bold text-[8px] w-10 text-black">RATE</th>
+            <th className="border border-black p-1 font-bold text-[8px] w-12 text-black">DATE</th>
             {vendors.map((_, i) => (
               <React.Fragment key={i}>
-                <th className="border border-[#000000] p-1 font-bold text-[8px] min-w-[50px]">MAKE</th>
-                <th className="border border-[#000000] p-1 font-bold text-[8px] w-10">MRP</th>
-                <th className="border border-[#000000] p-1 font-bold text-[8px] w-8">DIS%</th>
-                <th className="border border-[#000000] p-1 font-bold text-[8px] w-12">NET RATE</th>
-                <th className="border border-[#000000] p-1 font-bold text-[8px] w-14 bg-blue-50">TOTAL</th>
+                <th className="border border-black p-1 font-bold text-[8px] min-w-[50px] text-black">MAKE</th>
+                <th className="border border-black p-1 font-bold text-[8px] w-10 text-black">MRP</th>
+                <th className="border border-black p-1 font-bold text-[8px] w-8 text-black">DIS%</th>
+                <th className="border border-black p-1 font-bold text-[8px] w-12 text-black">NET RATE</th>
+                <th className="border border-black p-1 font-bold text-[8px] w-14 bg-white text-black">TOTAL</th>
               </React.Fragment>
             ))}
           </tr>
         </thead>
         <tbody>
           {items.map((item: any, idx: number) => (
-            <tr key={idx} className="hover:bg-slate-50/50">
-              <td className="border border-[#000000] p-0"><input type="text" value={item.indentNo || ''} onChange={e => updateItem(idx, 'indentNo', e.target.value)} className="text-center font-bold" readOnly={readOnly} /></td>
-              <td className="border border-[#000000] p-0"><input type="text" value={item.siNo || ''} onChange={e => updateItem(idx, 'siNo', e.target.value)} className="text-center" readOnly={readOnly} /></td>
-              <td className="border border-[#000000] p-0">
+            <tr key={idx} className="hover:bg-white">
+              <td className="border border-black p-0"><input type="text" value={item.indentNo || ''} onChange={e => updateItem(idx, 'indentNo', e.target.value)} className="text-center font-bold" readOnly={readOnly} /></td>
+              <td className="border border-black p-0"><input type="text" value={item.siNo || ''} onChange={e => updateItem(idx, 'siNo', e.target.value)} className="text-center" readOnly={readOnly} /></td>
+              <td className="border border-black p-0">
                 <AutoExpandingTextarea 
                   value={item.description || ''} 
                   onChange={val => updateItem(idx, 'description', val)} 
@@ -490,27 +490,27 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                   rows={1} 
                 />
               </td>
-              <td className="border border-[#000000] p-0"><input type="text" value={item.uom || ''} onChange={e => updateItem(idx, 'uom', e.target.value)} className="text-center uppercase" readOnly={readOnly} /></td>
-              <td className="border border-[#000000] p-0"><input type="text" value={item.qty || ''} onChange={e => updateItem(idx, 'qty', e.target.value)} className="text-center font-bold" readOnly={readOnly} /></td>
-              {hasWeight && <td className="border border-[#000000] p-0"><input type="text" value={item.weight || ''} onChange={e => updateItem(idx, 'weight', e.target.value)} className="text-center font-bold" readOnly={readOnly} /></td>}
-              <td className="border border-[#000000] p-0"><input type="text" value={item.previousPrice?.vendor || ''} onChange={e => updatePreviousPrice(idx, 'vendor', e.target.value)} className="text-center italic text-slate-500" readOnly={readOnly} /></td>
-              <td className="border border-[#000000] p-0"><input type="text" value={item.previousPrice?.rate || ''} onChange={e => updatePreviousPrice(idx, 'rate', e.target.value)} className="text-center" readOnly={readOnly} /></td>
-              <td className="border border-[#000000] p-0"><input type="text" value={item.previousPrice?.date || ''} onChange={e => updatePreviousPrice(idx, 'date', e.target.value)} className="text-center" readOnly={readOnly} /></td>
+              <td className="border border-black p-0"><input type="text" value={item.uom || ''} onChange={e => updateItem(idx, 'uom', e.target.value)} className="text-center uppercase" readOnly={readOnly} /></td>
+              <td className="border border-black p-0"><input type="text" value={item.qty || ''} onChange={e => updateItem(idx, 'qty', e.target.value)} className="text-center font-bold" readOnly={readOnly} /></td>
+              {hasWeight && <td className="border border-black p-0"><input type="text" value={item.weight || ''} onChange={e => updateItem(idx, 'weight', e.target.value)} className="text-center font-bold" readOnly={readOnly} /></td>}
+              <td className="border border-black p-0"><input type="text" value={item.previousPrice?.vendor || ''} onChange={e => updatePreviousPrice(idx, 'vendor', e.target.value)} className="text-center italic text-black" readOnly={readOnly} /></td>
+              <td className="border border-black p-0"><input type="text" value={item.previousPrice?.rate || ''} onChange={e => updatePreviousPrice(idx, 'rate', e.target.value)} className="text-center text-black" readOnly={readOnly} /></td>
+              <td className="border border-black p-0"><input type="text" value={item.previousPrice?.date || ''} onChange={e => updatePreviousPrice(idx, 'date', e.target.value)} className="text-center text-black" readOnly={readOnly} /></td>
               {vendors.map((v: string, vIdx: number) => {
                 const quote = item.vendorQuotes?.find((q: any) => q.vendorName === v);
                 return (
                   <React.Fragment key={vIdx}>
-                    <td className="border border-[#000000] p-0"><AutoExpandingTextarea value={quote?.make || ''} onChange={val => updateQuote(idx, v, 'make', val)} className="text-center italic" readOnly={readOnly} rows={1}/></td>
-                    <td className="border border-[#000000] p-0"><input type="text" value={quote?.mrp ?? ''} onChange={e => updateQuote(idx, v, 'mrp', e.target.value)} className="text-center" readOnly={readOnly} /></td>
-                    <td className="border border-[#000000] p-0"><input type="text" value={quote?.discount ?? ''} onChange={e => updateQuote(idx, v, 'discount', e.target.value)} className="text-center" readOnly={readOnly} /></td>
-                    <td className="border border-[#000000] p-0"><input type="text" value={quote?.netRate ?? ''} onChange={e => updateQuote(idx, v, 'netRate', e.target.value)} className="text-center font-bold" readOnly={readOnly} /></td>
-                    <td className="border border-[#000000] p-0 bg-blue-50/30"><input type="text" value={quote?.totalAmount ?? ''} onChange={e => updateQuote(idx, v, 'totalAmount', e.target.value)} className="text-center font-black text-blue-900" readOnly={readOnly} /></td>
+                    <td className="border border-black p-0"><AutoExpandingTextarea value={quote?.make || ''} onChange={val => updateQuote(idx, v, 'make', val)} className="text-center italic text-black" readOnly={readOnly} rows={1}/></td>
+                    <td className="border border-black p-0"><input type="text" value={quote?.mrp ?? ''} onChange={e => updateQuote(idx, v, 'mrp', e.target.value)} className="text-center text-black" readOnly={readOnly} /></td>
+                    <td className="border border-black p-0"><input type="text" value={quote?.discount ?? ''} onChange={e => updateQuote(idx, v, 'discount', e.target.value)} className="text-center text-black" readOnly={readOnly} /></td>
+                    <td className="border border-black p-0"><input type="text" value={quote?.netRate ?? ''} onChange={e => updateQuote(idx, v, 'netRate', e.target.value)} className="text-center font-bold text-black" readOnly={readOnly} /></td>
+                    <td className="border border-black p-0 bg-white"><input type="text" value={quote?.totalAmount ?? ''} onChange={e => updateQuote(idx, v, 'totalAmount', e.target.value)} className="text-center font-black text-black" readOnly={readOnly} /></td>
                   </React.Fragment>
                 )
               })}
-              <td className="print-hidden border border-[#000000] p-0 text-center">
+              <td className="print-hidden border border-black p-0 text-center">
                 {!readOnly && (
-                  <button onClick={() => removeItem(idx)} className="p-1 hover:text-red-600 text-slate-300 transition-colors" title="Remove Row">
+                  <button onClick={() => removeItem(idx)} className="p-1 hover:text-black text-black transition-colors" title="Remove Row">
                     <Trash2 className="w-3.5 h-3.5 mx-auto" />
                   </button>
                 )}
@@ -519,28 +519,28 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
           ))}
 
           {!readOnly && (
-            <tr className="bg-white hover:bg-slate-50 transition-colors print-hidden">
-              <td colSpan={totalCols} className="border border-[#000000] p-0 text-center">
-                <button onClick={addItem} className="w-full py-3 flex items-center justify-center gap-2 text-indigo-600 hover:text-indigo-700 font-bold text-[10px] uppercase tracking-widest cursor-pointer">
+            <tr className="bg-white hover:bg-white transition-colors print-hidden">
+              <td colSpan={totalCols} className="border border-black p-0 text-center">
+                <button onClick={addItem} className="w-full py-3 flex items-center justify-center gap-2 text-black hover:text-black font-bold text-[10px] uppercase tracking-widest cursor-pointer">
                   <PlusCircle className="w-4 h-4" /> Add New Item Row
                 </button>
               </td>
             </tr>
           )}
 
-          <tr className="bg-slate-50 font-bold">
-             <td colSpan={hasWeight ? 9 : 8} className="border border-[#000000] text-right px-4 uppercase text-[8px] opacity-50">Vendor Subtotal</td>
+          <tr className="bg-white font-bold">
+             <td colSpan={hasWeight ? 9 : 8} className="border border-black text-right px-4 uppercase text-[8px] text-black">Vendor Subtotal</td>
              {vendors.map((v, i) => (
                <React.Fragment key={i}>
-                 <td colSpan={4} className="border border-[#000000] text-right p-1 uppercase text-[8px]">TOTAL</td>
-                 <td className="border border-[#000000] text-center p-1 font-black bg-white">{calculateVendorTotal(v).toFixed(2)}</td>
+                 <td colSpan={4} className="border border-black text-right p-1 uppercase text-[8px] text-black">TOTAL</td>
+                 <td className="border border-black text-center p-1 font-black bg-white text-black">{calculateVendorTotal(v).toFixed(2)}</td>
                </React.Fragment>
              ))}
-             <td className="print-hidden border-[#000000] border"></td>
+             <td className="print-hidden border-black border"></td>
           </tr>
           
           <tr className="bg-white">
-             <td colSpan={hasWeight ? 9 : 8} className="border border-[#000000] text-right px-4 uppercase text-[8px] opacity-50">Taxation (GST)</td>
+             <td colSpan={hasWeight ? 9 : 8} className="border border-black text-right px-4 uppercase text-[8px] text-black">Taxation (GST)</td>
              {vendors.map((v, i) => {
                const total = calculateVendorTotal(v);
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
@@ -554,20 +554,20 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                const gst = total * rate;
                return (
                 <React.Fragment key={i}>
-                  <td colSpan={4} className="border border-[#000000] text-right p-1 text-[8px]">
+                  <td colSpan={4} className="border border-black text-right p-1 text-[8px] text-black">
                     {isInclusive ? 'GST STATUS' : `GST ${Math.round(rate * 100)}% EXTRA`}
                   </td>
-                  <td className="border border-[#000000] text-center p-1 font-bold">
+                  <td className="border border-black text-center p-1 font-bold text-black">
                     {isInclusive ? 'INCLUSIVE' : gst.toFixed(2)}
                   </td>
                 </React.Fragment>
                )
              })}
-             <td className="print-hidden border-[#000000] border"></td>
+             <td className="print-hidden border-black border"></td>
           </tr>
 
-          <tr className="bg-slate-100">
-             <td colSpan={hasWeight ? 9 : 8} className="border border-[#000000] text-right px-4 uppercase font-black tracking-widest text-[9px]">Grand Total Summary</td>
+          <tr className="bg-white">
+             <td colSpan={hasWeight ? 9 : 8} className="border border-black text-right px-4 uppercase font-black tracking-widest text-[9px] text-black">Grand Total Summary</td>
              {vendors.map((v, i) => {
                const total = calculateVendorTotal(v);
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
@@ -581,36 +581,36 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                const grandTotal = total * (1 + rate);
                return (
                 <React.Fragment key={i}>
-                  <td colSpan={4} className="border border-[#000000] text-right p-2 font-black text-indigo-700 text-[10px]">GRAND TOTAL</td>
-                  <td className="border border-[#000000] text-center p-2 font-black bg-indigo-50 text-indigo-900 text-[11px]">{grandTotal.toFixed(2)}</td>
+                  <td colSpan={4} className="border border-black text-right p-2 font-black text-black text-[10px]">GRAND TOTAL</td>
+                  <td className="border border-black text-center p-2 font-black bg-white text-black text-[11px]">{grandTotal.toFixed(2)}</td>
                 </React.Fragment>
                )
              })}
-             <td className="print-hidden border-[#000000] border"></td>
+             <td className="print-hidden border-black border"></td>
           </tr>
 
-          <tr className="bg-slate-900 !text-white">
-             <td colSpan={hasWeight ? 9 : 8} className="border border-[#000000] text-center font-bold uppercase text-[7px] tracking-[0.3em] opacity-40">Logistic Terms</td>
+          <tr className="bg-white text-black">
+             <td colSpan={hasWeight ? 9 : 8} className="border border-black text-center font-bold uppercase text-[7px] tracking-[0.3em] text-black">Logistic Terms</td>
              {vendors.map((v, i) => (
-                <td key={i} colSpan={vendorCols} className="border border-[#000000] text-center p-1.5 font-bold uppercase tracking-widest text-[8px]">COMMERCIAL TERMS</td>
+                <td key={i} colSpan={vendorCols} className="border border-black text-center p-1.5 font-bold uppercase tracking-widest text-[8px] text-black">COMMERCIAL TERMS</td>
              ))}
-             <td className="print-hidden border-[#000000] border"></td>
+             <td className="print-hidden border-black border"></td>
           </tr>
           
-          <tr className="bg-slate-50">
+          <tr className="bg-white">
              <td colSpan={hasWeight ? 9 : 8} className="border-none"></td>
              {vendors.map((v, i) => {
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
                return (
                 <React.Fragment key={i}>
-                  <td colSpan={2} className="border border-[#000000] p-1 italic text-right font-bold uppercase text-[7px] pr-2 opacity-50">DELIVERY</td>
-                  <td colSpan={3} className="border border-[#000000] p-0">
-                    <AutoExpandingTextarea value={firstQuote?.deliveryPeriod || ''} onChange={val => updateQuote(0, v, 'deliveryPeriod', val)} className="text-center font-bold uppercase text-[9px]" readOnly={readOnly} rows={1}/>
+                  <td colSpan={2} className="border border-black p-1 italic text-right font-bold uppercase text-[7px] pr-2 text-black">DELIVERY</td>
+                  <td colSpan={3} className="border border-black p-0">
+                    <AutoExpandingTextarea value={firstQuote?.deliveryPeriod || ''} onChange={val => updateQuote(0, v, 'deliveryPeriod', val)} className="text-center font-bold uppercase text-[9px] text-black" readOnly={readOnly} rows={1}/>
                   </td>
                 </React.Fragment>
                )
              })}
-             <td className="print-hidden border-[#000000] border"></td>
+             <td className="print-hidden border-black border"></td>
           </tr>
           <tr className="bg-white">
              <td colSpan={hasWeight ? 9 : 8} className="border-none"></td>
@@ -618,12 +618,12 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
                return (
                 <React.Fragment key={i}>
-                  <td colSpan={2} className="border border-[#000000] p-1 italic text-right font-bold uppercase text-[7px] pr-2 opacity-50">FREIGHT</td>
-                  <td colSpan={3} className="border border-[#000000] p-0">
+                  <td colSpan={2} className="border border-black p-1 italic text-right font-bold uppercase text-[7px] pr-2 text-black">FREIGHT</td>
+                  <td colSpan={3} className="border border-black p-0">
                     <select 
                       value={firstQuote?.freight || 'NILL'} 
                       onChange={e => updateQuote(0, v, 'freight', e.target.value)} 
-                      className="text-center font-bold uppercase cursor-pointer text-[9px]"
+                      className="text-center font-bold uppercase cursor-pointer text-[9px] text-black"
                       disabled={readOnly}
                     >
                       <option value="NILL">NILL</option>
@@ -633,30 +633,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                 </React.Fragment>
                )
              })}
-             <td className="print-hidden border-[#000000] border"></td>
-          </tr>
-          <tr className="bg-slate-50">
-             <td colSpan={hasWeight ? 9 : 8} className="border-none"></td>
-             {vendors.map((v, i) => {
-               const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
-               return (
-                <React.Fragment key={i}>
-                  <td colSpan={2} className="border border-[#000000] p-1 italic text-right font-bold uppercase text-[7px] pr-2 opacity-50">P & F</td>
-                  <td colSpan={3} className="border border-[#000000] p-0">
-                    <select 
-                      value={firstQuote?.packingAndForwarding || 'NILL'} 
-                      onChange={e => updateQuote(0, v, 'packingAndForwarding', e.target.value)} 
-                      className="text-center font-bold uppercase cursor-pointer text-[9px]"
-                      disabled={readOnly}
-                    >
-                      <option value="NILL">NILL</option>
-                      <option value="Extra">Extra</option>
-                    </select>
-                  </td>
-                </React.Fragment>
-               )
-             })}
-             <td className="print-hidden border-[#000000] border"></td>
+             <td className="print-hidden border-black border"></td>
           </tr>
           <tr className="bg-white">
              <td colSpan={hasWeight ? 9 : 8} className="border-none"></td>
@@ -664,27 +641,50 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
                return (
                 <React.Fragment key={i}>
-                  <td colSpan={2} className="border border-[#000000] p-1 italic text-right font-bold uppercase text-[7px] pr-2 opacity-50">STOCK</td>
-                  <td colSpan={3} className="border border-[#000000] p-0">
-                    <AutoExpandingTextarea value={firstQuote?.readyStock || ''} onChange={val => updateQuote(0, v, 'readyStock', val)} className="text-center font-bold uppercase text-[9px]" readOnly={readOnly} rows={1}/>
+                  <td colSpan={2} className="border border-black p-1 italic text-right font-bold uppercase text-[7px] pr-2 text-black">P & F</td>
+                  <td colSpan={3} className="border border-black p-0">
+                    <select 
+                      value={firstQuote?.packingAndForwarding || 'NILL'} 
+                      onChange={e => updateQuote(0, v, 'packingAndForwarding', e.target.value)} 
+                      className="text-center font-bold uppercase cursor-pointer text-[9px] text-black"
+                      disabled={readOnly}
+                    >
+                      <option value="NILL">NILL</option>
+                      <option value="Extra">Extra</option>
+                    </select>
                   </td>
                 </React.Fragment>
                )
              })}
-             <td className="print-hidden border-[#000000] border"></td>
+             <td className="print-hidden border-black border"></td>
           </tr>
-          <tr className="bg-slate-50">
+          <tr className="bg-white">
              <td colSpan={hasWeight ? 9 : 8} className="border-none"></td>
              {vendors.map((v, i) => {
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
                return (
                 <React.Fragment key={i}>
-                  <td colSpan={2} className="border border-[#000000] p-1 italic text-right font-bold uppercase text-[7px] pr-2 opacity-50">GST STATUS</td>
-                  <td colSpan={3} className="border border-[#000000] p-0">
+                  <td colSpan={2} className="border border-black p-1 italic text-right font-bold uppercase text-[7px] pr-2 text-black">STOCK</td>
+                  <td colSpan={3} className="border border-black p-0">
+                    <AutoExpandingTextarea value={firstQuote?.readyStock || ''} onChange={val => updateQuote(0, v, 'readyStock', val)} className="text-center font-bold uppercase text-[9px] text-black" readOnly={readOnly} rows={1}/>
+                  </td>
+                </React.Fragment>
+               )
+             })}
+             <td className="print-hidden border-black border"></td>
+          </tr>
+          <tr className="bg-white">
+             <td colSpan={hasWeight ? 9 : 8} className="border-none"></td>
+             {vendors.map((v, i) => {
+               const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
+               return (
+                <React.Fragment key={i}>
+                  <td colSpan={2} className="border border-black p-1 italic text-right font-bold uppercase text-[7px] pr-2 text-black">GST STATUS</td>
+                  <td colSpan={3} className="border border-black p-0">
                     <select 
                       value={firstQuote?.gstStatus || '18% Extra'} 
                       onChange={e => updateQuote(0, v, 'gstStatus', e.target.value)} 
-                      className="text-center font-bold uppercase cursor-pointer text-[9px]"
+                      className="text-center font-bold uppercase cursor-pointer text-[9px] text-black"
                       disabled={readOnly}
                     >
                       <option value="Exclusive">Exclusive (18%)</option>
@@ -696,7 +696,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                 </React.Fragment>
                )
              })}
-             <td className="print-hidden border-[#000000] border"></td>
+             <td className="print-hidden border-black border"></td>
           </tr>
           <tr className="bg-white">
              <td colSpan={hasWeight ? 9 : 8} className="border-none"></td>
@@ -704,14 +704,14 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
                return (
                 <React.Fragment key={i}>
-                  <td colSpan={2} className="border border-[#000000] p-1 italic text-right font-bold uppercase text-[7px] pr-2 opacity-50">OTHER EXTRA</td>
-                  <td colSpan={3} className="border border-[#000000] p-0">
-                    <AutoExpandingTextarea value={firstQuote?.extra || ''} onChange={val => updateQuote(0, v, 'extra', val)} className="text-center font-bold uppercase text-[9px]" readOnly={readOnly} rows={1}/>
+                  <td colSpan={2} className="border border-black p-1 italic text-right font-bold uppercase text-[7px] pr-2 text-black">OTHER EXTRA</td>
+                  <td colSpan={3} className="border border-black p-0">
+                    <AutoExpandingTextarea value={firstQuote?.extra || ''} onChange={val => updateQuote(0, v, 'extra', val)} className="text-center font-bold uppercase text-[9px] text-black" readOnly={readOnly} rows={1}/>
                   </td>
                 </React.Fragment>
                )
              })}
-             <td className="print-hidden border-[#000000] border"></td>
+             <td className="print-hidden border-black border"></td>
           </tr>
         </tbody>
       </table>

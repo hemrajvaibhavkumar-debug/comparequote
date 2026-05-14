@@ -35,35 +35,35 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-      <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl border border-slate-200">
+    <div className="min-h-screen flex items-center justify-center bg-white p-4">
+      <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl border border-black">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200 mb-4">
+          <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center shadow-lg mb-4">
             <Lock className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-800">Admin Login</h1>
-          <p className="text-slate-500 text-sm">QuoteCompare AI Dashboard</p>
+          <h1 className="text-2xl font-bold text-black">Admin Login</h1>
+          <p className="text-black/60 text-sm">QuoteCompare AI Dashboard</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Admin Password</label>
+            <label className="block text-xs font-bold text-black uppercase tracking-wider mb-2">Admin Password</label>
             <input 
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+              className="w-full px-4 py-3 bg-white border border-black rounded-xl focus:outline-none focus:ring-1 focus:ring-black transition-all text-black"
               placeholder="••••••••"
               required
             />
           </div>
 
-          {error && <p className="text-red-500 text-xs font-bold text-center">{error}</p>}
+          {error && <p className="text-black text-xs font-bold text-center bg-black/5 py-2 rounded">{error}</p>}
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3.5 bg-slate-800 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-900 transition-all flex items-center justify-center gap-2 shadow-xl"
+            className="w-full py-3.5 bg-black text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-black/90 transition-all flex items-center justify-center gap-2 shadow-xl"
           >
             {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Enter Dashboard'}
           </button>
