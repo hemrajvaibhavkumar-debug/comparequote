@@ -32,6 +32,21 @@ th, td {
   border: 1px solid #000 !important;
 }
 
+/* Custom Resize Handle Styling */
+.resize-x {
+  resize: horizontal;
+  overflow: auto;
+  min-height: 20px;
+}
+
+.resize-x::-webkit-resizer {
+  background-color: transparent;
+  background-image: linear-gradient(135deg, transparent 70%, #4f46e5 70%);
+  background-size: 10px 10px;
+  background-repeat: no-repeat;
+  background-position: bottom right;
+}
+
 @media print {
   @page {
     size: A3 landscape;

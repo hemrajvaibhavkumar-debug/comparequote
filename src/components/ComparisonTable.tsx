@@ -311,7 +311,11 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
               border: none !important;
               background: transparent !important;
               font-size: inherit !important;
+              color: #000 !important;
+              appearance: none !important;
             }
+            .resize-x { resize: none !important; overflow: visible !important; }
+            .resize-x::-webkit-resizer { display: none !important; visibility: hidden !important; }
             @page { 
               margin: 5mm; 
               size: landscape; 
@@ -389,14 +393,16 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
           <tr className="bg-white">
             <th rowSpan={2} className="border border-[#000000] p-1 font-bold min-w-[30px]"><div className="vertical-text">INDENT NO.</div></th>
             <th rowSpan={2} className="border border-[#000000] p-1 font-bold min-w-[30px]"><div className="vertical-text">SI NO.</div></th>
-            <th rowSpan={2} className="border border-[#000000] p-1 w-64 min-w-[150px] text-left font-bold">ITEM DESCRIPTION</th>
+            <th rowSpan={2} className="border border-[#000000] p-0 text-left font-bold">
+              <div className="p-1 min-w-[150px] w-64 resize-x overflow-hidden whitespace-nowrap">ITEM DESCRIPTION</div>
+            </th>
             <th rowSpan={2} className="border border-[#000000] p-1 min-w-[30px]"><div className="vertical-text">UOM</div></th>
             <th rowSpan={2} className="border border-[#000000] p-1 min-w-[30px]"><div className="vertical-text">QTY</div></th>
             {hasWeight && <th rowSpan={2} className="border border-[#000000] p-1 min-w-[30px]"><div className="vertical-text">WT</div></th>}
             <th colSpan={3} className="border border-[#000000] p-1 bg-white">PREVIOUS PRICE</th>
             {vendors.map((v, i) => (
               <th key={i} colSpan={vendorCols} className="border border-[#000000] p-0 bg-white">
-                <div className="flex items-center justify-center gap-1 group px-1 min-h-[30px]">
+                <div className="flex items-center justify-center gap-1 group px-1 min-h-[30px] resize-x overflow-hidden">
                   <AutoExpandingTextarea 
                     value={v} 
                     onChange={val => updateVendorName(v, val)} 
@@ -415,9 +421,15 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
             <th rowSpan={2} className="print-hidden border border-[#000000] p-1 uppercase text-[8px] w-8">Act</th>
           </tr>
           <tr className="bg-white">
-            <th className="border border-[#000000] p-1 whitespace-nowrap min-w-[80px]">VENDOR</th>
-            <th className="border border-[#000000] p-1 font-bold uppercase min-w-[38px]"><div className="vertical-text">RATE</div></th>
-            <th className="border border-[#000000] p-1 font-bold uppercase min-w-[38px]"><div className="vertical-text">DATE</div></th>
+            <th className="border border-[#000000] p-0">
+              <div className="p-1 whitespace-nowrap min-w-[80px] resize-x overflow-hidden">VENDOR</div>
+            </th>
+            <th className="border border-[#000000] p-0">
+              <div className="p-1 font-bold uppercase min-w-[38px] resize-x overflow-hidden"><div className="vertical-text">RATE</div></div>
+            </th>
+            <th className="border border-[#000000] p-0">
+              <div className="p-1 font-bold uppercase min-w-[38px] resize-x overflow-hidden"><div className="vertical-text">DATE</div></div>
+            </th>
             {vendors.map((_, i) => (
               <React.Fragment key={i}>
                 <th className="border border-[#000000] p-1 font-bold uppercase min-w-[50px]">MAKE</th>
