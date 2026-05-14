@@ -64,6 +64,7 @@ model TermsTemplate {
   payment String?
   freight String?
   delivery String?
+  contact_no String?
   notes   String?
 }
 

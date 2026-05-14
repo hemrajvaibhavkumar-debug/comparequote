@@ -65,6 +65,7 @@ export interface TermsTemplate {
   payment?: string;
   freight?: string;
   delivery?: string;
+  contact_no?: string;
   notes?: string;
 }
 
@@ -97,6 +98,7 @@ export interface PurchaseOrder {
     payment: string;
     freight: string;
     delivery: string;
+    contact_no?: string;
     notes?: string;
   };
   total_amount: number;

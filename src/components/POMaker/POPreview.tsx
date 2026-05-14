@@ -142,6 +142,7 @@ const POPreview: React.FC<POPreviewProps> = ({ po, settings }) => {
           <p><span className="font-bold">Payment Terms ::</span> {po.terms.payment}</p>
           <p><span className="font-bold">Freight ::</span> {po.terms.freight}</p>
           <p><span className="font-bold">Delivery Period ::</span> {po.terms.delivery}</p>
+          {po.terms.contact_no && <p><span className="font-bold">Contact No ::</span> {po.terms.contact_no}</p>}
         </div>
 
         {/* Standard Notes */}
