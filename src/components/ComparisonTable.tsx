@@ -468,7 +468,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
             <th className="border border-black p-1 font-bold w-12 text-black">DATE</th>
             {vendors.map((_, i) => (
               <React.Fragment key={i}>
-                <th className="border border-black p-1 font-bold min-w-[70px] text-black">MAKE</th>
+                <th className="border border-black p-1 font-bold min-w-[50px] text-black">MAKE</th>
                 <th className="border border-black p-1 font-bold w-10 text-black">MRP</th>
                 <th className="border border-black p-1 font-bold w-8 text-black">DIS%</th>
                 <th className="border border-black p-1 font-bold w-12 text-black">NET RATE</th>
@@ -511,7 +511,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
               })}
               <td className="print-hidden border border-black p-0 text-center">
                 {!readOnly && (
-                  <button onClick={() => removeItem(itemIndex)} className="p-1 hover:text-black text-black transition-colors" title="Remove Row">
+                  <button onClick={() => removeItem(idx)} className="p-1 hover:text-black text-black transition-colors" title="Remove Row">
                     <Trash2 className="w-3.5 h-3.5 mx-auto" />
                   </button>
                 )}
