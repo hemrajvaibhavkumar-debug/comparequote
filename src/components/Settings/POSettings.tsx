@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { CompanySettings, TermsTemplate } from '../../types';
-import { Save, Plus, Trash2, Building2, ClipboardList } from 'lucide-react';
+import { CompanySettings, TermsTemplate, VendorMaster } from '../../types';
+import { Save, Plus, Trash2, Building2, Users } from 'lucide-react';
 
 const POSettings: React.FC = () => {
   const [settings, setSettings] = useState<CompanySettings | null>(null);
   const [templates, setTemplates] = useState<TermsTemplate[]>([]);
+  const [vendors, setVendors] = useState<VendorMaster[]>([]);
   const [loading, setLoading] = useState(true);
   const [newTemplate, setNewTemplate] = useState<Partial<TermsTemplate>>({});
+  const [newVendor, setNewVendor] = useState<Partial<VendorMaster>>({});
 
   useEffect(() => {
     fetchSettings();
     fetchTemplates();
+    fetchVendors();
   }, []);
 
   const fetchSettings = async () => {
@@ -36,6 +39,20 @@ const POSettings: React.FC = () => {
     } catch (error) {
       console.error("Failed to fetch templates:", error);
       setTemplates([]);
+    }
+  };
+
+  const fetchVendors = async () => {
+    try {
+      const res = await fetch('/api/settings/vendors', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setVendors(Array.isArray(data) ? data : []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch vendors:", error);
     }
   };
 
@@ -76,10 +93,33 @@ const POSettings: React.FC = () => {
     fetchTemplates();
   };
 
+  const handleAddVendor = async () => {
+    if (!newVendor.name) return;
+    await fetch('/api/settings/vendors', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+      },
+      body: JSON.stringify(newVendor)
+    });
+    setNewVendor({});
+    fetchVendors();
+  };
+
+  const handleDeleteVendor = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this vendor?')) return;
+    await fetch(`/api/settings/vendors/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+    });
+    fetchVendors();
+  };
+
   if (loading) return <div className="p-8 text-center text-black">Loading settings...</div>;
 
   return (
-    <div className="p-8 max-w-6xl mx-auto space-y-8 bg-white">
+    <div className="p-8 max-w-6xl mx-auto space-y-8 bg-white pb-20">
       <div className="flex items-center gap-3 border-b border-black pb-4">
         <Building2 className="w-8 h-8 text-black" />
         <h1 className="text-3xl font-bold text-black">PO Maker Settings</h1>
@@ -87,7 +127,7 @@ const POSettings: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Company Settings Form */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-black space-y-4">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-black space-y-4 h-fit">
           <div className="flex items-center gap-2 mb-2">
             <h2 className="text-xl font-semibold text-black">Company Profile</h2>
           </div>
@@ -167,15 +207,15 @@ const POSettings: React.FC = () => {
         </div>
 
         {/* Terms Templates */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-black space-y-4">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-black space-y-4 h-fit">
           <div className="flex items-center gap-2 mb-2">
-            <h2 className="text-xl font-semibold text-black">Commercial Terms Templates</h2>
+            <h2 className="text-xl font-semibold text-black">Terms Templates</h2>
           </div>
           
           <div className="space-y-4 border-b border-black pb-4 mb-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-black">Template Name (e.g. Standard, Urgent)</label>
+                <label className="block text-sm font-medium text-black">Template Name</label>
                 <input 
                   type="text" 
                   className="mt-1 block w-full rounded-lg border border-black px-3 py-2 text-black"
@@ -208,7 +248,6 @@ const POSettings: React.FC = () => {
                   className="mt-1 block w-full rounded-lg border border-black px-3 py-2 text-black"
                   value={newTemplate.contact_no || ''}
                   onChange={e => setNewTemplate({...newTemplate, contact_no: e.target.value})}
-                  placeholder="e.g. +91 98765 43210"
                 />
               </div>
               <div className="col-span-2 text-right">
@@ -228,17 +267,109 @@ const POSettings: React.FC = () => {
               <div key={t.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-black">
                 <div>
                   <div className="font-semibold text-black">{t.name}</div>
-                  <div className="text-xs text-black/60">Tax: {t.tax} | Pay: {t.payment} {t.contact_no && `| Contact: ${t.contact_no}`}</div>
+                  <div className="text-xs text-black/60">Tax: {t.tax} | Pay: {t.payment}</div>
                 </div>
                 <button 
                   onClick={() => handleDeleteTemplate(t.id)}
-                  className="text-black hover:bg-black/10 p-2 rounded-lg transition border border-black"
+                  className="text-black hover:bg-black/10 p-2 rounded-lg transition"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             ))}
-            {templates.length === 0 && <div className="text-center py-4 text-black/40">No templates added yet.</div>}
+          </div>
+        </div>
+
+        {/* Vendor Master */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-black space-y-4 lg:col-span-2">
+          <div className="flex items-center gap-2 mb-2">
+            <Users className="w-6 h-6 text-black" />
+            <h2 className="text-xl font-semibold text-black">Vendor Master</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Add Vendor Form */}
+            <div className="md:col-span-1 space-y-4 border-r border-black pr-6">
+              <h3 className="font-medium text-black">Add New Vendor</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-bold text-black uppercase">Vendor Name</label>
+                  <input 
+                    type="text" 
+                    className="mt-1 block w-full rounded-lg border border-black px-3 py-2 text-sm text-black"
+                    value={newVendor.name || ''}
+                    onChange={e => setNewVendor({...newVendor, name: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-black uppercase">GSTIN</label>
+                  <input 
+                    type="text" 
+                    className="mt-1 block w-full rounded-lg border border-black px-3 py-2 text-sm text-black"
+                    value={newVendor.gstin || ''}
+                    onChange={e => setNewVendor({...newVendor, gstin: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-black uppercase">Mobile No</label>
+                  <input 
+                    type="text" 
+                    className="mt-1 block w-full rounded-lg border border-black px-3 py-2 text-sm text-black"
+                    value={newVendor.mobile_no || ''}
+                    onChange={e => setNewVendor({...newVendor, mobile_no: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-black uppercase">State</label>
+                  <input 
+                    type="text" 
+                    className="mt-1 block w-full rounded-lg border border-black px-3 py-2 text-sm text-black"
+                    value={newVendor.state || ''}
+                    onChange={e => setNewVendor({...newVendor, state: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-black uppercase">Address</label>
+                  <textarea 
+                    rows={2}
+                    className="mt-1 block w-full rounded-lg border border-black px-3 py-2 text-sm text-black"
+                    value={newVendor.address || ''}
+                    onChange={e => setNewVendor({...newVendor, address: e.target.value})}
+                  />
+                </div>
+                <button 
+                  onClick={handleAddVendor}
+                  className="w-full flex items-center justify-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-black/90 transition shadow-lg font-medium"
+                >
+                  <Plus className="w-4 h-4" /> Add to Master
+                </button>
+              </div>
+            </div>
+
+            {/* Vendor List */}
+            <div className="md:col-span-2">
+              <h3 className="font-medium text-black mb-4">Saved Vendors</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto pr-2">
+                {vendors.map(v => (
+                  <div key={v.id} className="p-4 bg-white rounded-xl border border-black group relative hover:shadow-md transition">
+                    <button 
+                      onClick={() => handleDeleteVendor(v.id)}
+                      className="absolute top-2 right-2 text-black hover:text-red-600 p-1 rounded-lg transition opacity-0 group-hover:opacity-100"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                    <div className="font-bold text-black truncate pr-6">{v.name}</div>
+                    <div className="text-[10px] text-black/60 mt-1 space-y-0.5">
+                      <div className="truncate">GST: {v.gstin || 'N/A'}</div>
+                      <div className="truncate">Mob: {v.mobile_no || 'N/A'}</div>
+                      <div className="truncate">State: {v.state || 'N/A'}</div>
+                      <div className="line-clamp-1">Add: {v.address || 'N/A'}</div>
+                    </div>
+                  </div>
+                ))}
+                {vendors.length === 0 && <div className="col-span-2 text-center py-8 text-black/40">No vendors added yet.</div>}
+              </div>
+            </div>
           </div>
         </div>
       </div>

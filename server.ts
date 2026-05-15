@@ -393,6 +393,36 @@ async function startServer() {
     }
   });
 
+  // Vendors
+  app.get("/api/settings/vendors", authenticateToken, async (req, res) => {
+    try {
+      const vendors = await prisma.vendorMaster.findMany({
+        orderBy: { name: "asc" },
+      });
+      res.json(vendors);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch vendors" });
+    }
+  });
+
+  app.post("/api/settings/vendors", authenticateToken, async (req, res) => {
+    try {
+      const vendor = await prisma.vendorMaster.create({ data: req.body });
+      res.json(vendor);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create vendor" });
+    }
+  });
+
+  app.delete("/api/settings/vendors/:id", authenticateToken, async (req, res) => {
+    try {
+      await prisma.vendorMaster.delete({ where: { id: Number(req.params.id) } });
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete vendor" });
+    }
+  });
+
   // Purchase Orders
   app.get("/api/po", authenticateToken, async (req, res) => {
     try {

@@ -1,18 +1,46 @@
 import React from 'react';
-import { PurchaseOrder, TermsTemplate, POItem } from '../../types';
-import { Plus, Trash2, ChevronDown } from 'lucide-react';
+import { PurchaseOrder, TermsTemplate, POItem, VendorMaster } from '../../types';
+import { Plus, Trash2 } from 'lucide-react';
 
 interface POFormProps {
   po: PurchaseOrder;
   setPo: React.Dispatch<React.SetStateAction<PurchaseOrder>>;
   templates: TermsTemplate[];
+  vendors: VendorMaster[];
 }
 
-const POForm: React.FC<POFormProps> = ({ po, setPo, templates }) => {
-  const updateVendor = (field: keyof PurchaseOrder['vendor_details'], value: string) => {
+const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
+  const updateVendorField = (field: keyof PurchaseOrder['vendor_details'], value: string) => {
     setPo(prev => ({
       ...prev,
       vendor_details: { ...prev.vendor_details, [field]: value }
+    }));
+  };
+
+  const handleVendorSelect = (vendorName: string) => {
+    if (vendorName === 'custom') {
+      setPo(prev => ({
+        ...prev,
+        vendor_name: '',
+        vendor_details: { address: '', gstin: '', mail: '', ph: '', state: '' }
+      }));
+      return;
+    }
+
+    const vendor = vendors.find(v => v.name === vendorName);
+    if (!vendor) return;
+
+    setPo(prev => ({
+      ...prev,
+      vendor_name: vendor.name,
+      vendor_details: {
+        ...prev.vendor_details,
+        address: vendor.address || '',
+        gstin: vendor.gstin || '',
+        state: vendor.state || '',
+        ph: vendor.mobile_no || '',
+        mail: '' // VendorMaster doesn't have email in the schema, but PO needs it.
+      }
     }));
   };
 
@@ -96,15 +124,32 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates }) => {
       <section className="bg-white p-6 rounded-xl shadow-sm border border-black space-y-4">
         <h2 className="text-lg font-bold border-b border-black pb-2">Vendor Details</h2>
         <div className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-black uppercase">Vendor Name</label>
-            <input 
-              type="text"
-              className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
-              value={po.vendor_name}
-              onChange={e => setPo({...po, vendor_name: e.target.value})}
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-black uppercase">Select Vendor</label>
+              <select 
+                className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black bg-white"
+                onChange={e => handleVendorSelect(e.target.value)}
+                value={po.vendor_name || ''}
+              >
+                <option value="">-- Select Vendor --</option>
+                <option value="custom">Manual Entry</option>
+                {vendors.map(v => (
+                  <option key={v.id} value={v.name}>{v.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-black uppercase">Vendor Name</label>
+              <input 
+                type="text"
+                className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
+                value={po.vendor_name}
+                onChange={e => setPo({...po, vendor_name: e.target.value})}
+              />
+            </div>
           </div>
+          
           <div className="grid grid-cols-2 gap-4">
              <div className="col-span-2">
                 <label className="block text-xs font-bold text-black uppercase">Address</label>
@@ -112,7 +157,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates }) => {
                   className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
                   rows={2}
                   value={po.vendor_details.address}
-                  onChange={e => updateVendor('address', e.target.value)}
+                  onChange={e => updateVendorField('address', e.target.value)}
                 />
              </div>
              <div>
@@ -121,7 +166,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates }) => {
                   type="text"
                   className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
                   value={po.vendor_details.gstin}
-                  onChange={e => updateVendor('gstin', e.target.value)}
+                  onChange={e => updateVendorField('gstin', e.target.value)}
                 />
              </div>
              <div>
@@ -130,7 +175,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates }) => {
                   type="text"
                   className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
                   value={po.vendor_details.state}
-                  onChange={e => updateVendor('state', e.target.value)}
+                  onChange={e => updateVendorField('state', e.target.value)}
                 />
              </div>
              <div>
@@ -139,8 +184,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates }) => {
                   type="email"
                   className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
                   value={po.vendor_details.mail}
-                  onChange={updateVendor.bind(null, 'mail')} // Small optimization
-                  onBlur={e => updateVendor('mail', e.target.value)} // ensure sync
+                  onChange={e => updateVendorField('mail', e.target.value)}
                 />
              </div>
              <div>
@@ -149,7 +193,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates }) => {
                   type="text"
                   className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
                   value={po.vendor_details.ph}
-                  onChange={e => updateVendor('ph', e.target.value)}
+                  onChange={e => updateVendorField('ph', e.target.value)}
                 />
              </div>
           </div>

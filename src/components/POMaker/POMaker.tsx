@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import POForm from './POForm';
 import POPreview from './POPreview';
-import { PurchaseOrder, CompanySettings, TermsTemplate } from '../../types';
-import { Save, Download, ArrowLeft } from 'lucide-react';
+import { PurchaseOrder, CompanySettings, TermsTemplate, VendorMaster } from '../../types';
+import { Save, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const POMaker: React.FC = () => {
@@ -20,10 +20,12 @@ const POMaker: React.FC = () => {
 
   const [settings, setSettings] = useState<CompanySettings | null>(null);
   const [templates, setTemplates] = useState<TermsTemplate[]>([]);
+  const [vendors, setVendors] = useState<VendorMaster[]>([]);
 
   useEffect(() => {
     fetchSettings();
     fetchTemplates();
+    fetchVendors();
   }, []);
 
   const fetchSettings = async () => {
@@ -43,6 +45,16 @@ const POMaker: React.FC = () => {
       setTemplates(Array.isArray(data) ? data : []);
     } else {
       setTemplates([]);
+    }
+  };
+
+  const fetchVendors = async () => {
+    const res = await fetch('/api/settings/vendors', {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setVendors(Array.isArray(data) ? data : []);
     }
   };
 
@@ -94,7 +106,7 @@ const POMaker: React.FC = () => {
       <div className="flex-1 flex overflow-hidden">
         {/* Left Pane - Form */}
         <div className="w-1/2 overflow-y-auto p-6 bg-white border-r border-black">
-          <POForm po={po} setPo={setPo} templates={templates} />
+          <POForm po={po} setPo={setPo} templates={templates} vendors={vendors} />
         </div>
 
         {/* Right Pane - Preview */}

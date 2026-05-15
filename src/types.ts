@@ -69,7 +69,16 @@ export interface TermsTemplate {
   notes?: string;
 }
 
-export interface POItem {
+export interface VendorMaster {
+  id: number;
+  name: string;
+  address?: string;
+  state?: string;
+  gstin?: string;
+  mobile_no?: string;
+}
+
+export interface PurchaseOrder {
   sn: number;
   itemName: string;
   qty: number;
