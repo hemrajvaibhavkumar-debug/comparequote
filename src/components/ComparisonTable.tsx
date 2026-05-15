@@ -144,24 +144,28 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
 
       currentQuote[field] = value;
 
-      const disc = parseFloat(currentQuote.discount) || 0;
+      const discVal = parseFloat(currentQuote.discount) || 0;
+      const mrpVal = parseFloat(currentQuote.mrp) || 0;
+      const nrVal = parseFloat(currentQuote.netRate) || 0;
       const qty = parseFloat(item.qty) || 0;
 
       if (field === 'mrp') {
-        const mrpVal = parseFloat(value) || 0;
-        if (disc === 0) {
+        const newVal = parseFloat(value) || 0;
+        if (discVal === 0) {
           currentQuote.netRate = value;
         } else {
-          currentQuote.netRate = (mrpVal * (1 - disc / 100)).toFixed(2);
+          currentQuote.netRate = (newVal * (1 - discVal / 100)).toFixed(2);
         }
       } else if (field === 'discount') {
-        const mrpVal = parseFloat(currentQuote.mrp) || 0;
-        const discVal = parseFloat(value) || 0;
-        currentQuote.netRate = (mrpVal * (1 - discVal / 100)).toFixed(2);
+        const newVal = parseFloat(value) || 0;
+        currentQuote.netRate = (mrpVal * (1 - newVal / 100)).toFixed(2);
       } else if (field === 'netRate') {
-        const nrVal = parseFloat(value) || 0;
-        if (disc === 0) {
+        const newVal = parseFloat(value) || 0;
+        if (discVal === 0) {
           currentQuote.mrp = value;
+        } else {
+          // Calculate MRP from Net Rate and Discount: NetRate = MRP * (1 - Disc/100) => MRP = NetRate / (1 - Disc/100)
+          currentQuote.mrp = (newVal / (1 - discVal / 100)).toFixed(2);
         }
       }
 

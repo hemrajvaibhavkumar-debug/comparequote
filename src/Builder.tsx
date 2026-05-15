@@ -310,15 +310,22 @@ const Builder: React.FC = () => {
             const disc = parseFloat(q.discount) || 0;
             const qty = Number(item.qty) || 0;
 
-            if (disc === 0) {
+            // Enforce Discount as Percentage
+            if (disc > 0 && mrp > 0) {
+              // If discount and MRP are present, netRate is always calculated from them
+              nr = mrp * (1 - disc / 100);
+            } else if (disc === 0) {
               // If no discount, sync MRP and NetRate
               if (nr > 0 && mrp === 0) mrp = nr;
               else if (mrp > 0 && nr === 0) nr = mrp;
+            } else if (nr > 0 && mrp > 0 && disc === 0) {
+               // Optional: calculate discount if missing? (Not requested, but keeping it simple)
             }
 
             return {
               ...q,
               mrp: Number(mrp.toFixed(2)),
+              discount: disc, // Keep the numeric percentage
               netRate: Number(nr.toFixed(2)),
               totalAmount: Number((nr * qty).toFixed(2))
             };

@@ -102,13 +102,14 @@ async function startServer() {
       ${userPrompt ? `- ADHERE STRICTLY to the "USER SPECIFIC INSTRUCTIONS" provided above.` : ""}
       ${isTextOnly ? "- Since this is TEXT-ONLY input, do NOT hallucinate or 'invent' any data. If a field (like MRP or Discount) is not explicitly mentioned, leave it as 0." : "- Find every Vendor Name and every Item mentioned across all sources."}
       - For each item, extract: Description, UOM, QTY, and any Previous Price if mentioned.
-      - For each vendor's quote on an item, extract: Make, MRP, Discount, Net Rate, and Quote Date.      
+      - For each vendor's quote on an item, extract: Make, MRP, Discount (as percentage, e.g., 10 for 10%), Net Rate, and Quote Date.      
       VENDOR IDENTIFICATION:
       - If you cannot find a clear Vendor Name for a piece of data, use "Unknown Vendor" instead of guessing.
       - Group items by the vendor they belong to.
 
       CRITICAL INSTRUCTION FOR PRICE PRECISION:
       - All extracted numerical values (MRP, Discount, Net Rate, Total Amount, Previous Price Rate) MUST be numbers (not strings).
+      - Discount MUST be extracted as a percentage (e.g., if a 10% discount is mentioned, return 10).
       - Round all numerical values to exactly 2 decimal places.
       - If a value is missing or unclear, use 0.
       
