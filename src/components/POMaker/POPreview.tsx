@@ -49,19 +49,52 @@ const POPreview: React.FC<POPreviewProps> = ({ po, settings }) => {
     pdf.save(`PO_${po.po_no || 'Draft'}.pdf`);
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="flex flex-col items-center gap-4">
-      <button 
-        onClick={handleDownload}
-        className="flex items-center gap-2 bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 transition shadow-lg font-bold text-sm"
-      >
-        <Download className="w-4 h-4" /> Download PDF
-      </button>
+      <div className="flex gap-4 print-hidden">
+        <button 
+          onClick={handlePrint}
+          className="flex items-center gap-2 bg-black text-white px-6 py-2 rounded-full hover:bg-black/90 transition shadow-lg font-bold text-sm"
+        >
+          <Download className="w-4 h-4" /> Print PO
+        </button>
+        <button 
+          onClick={handleDownload}
+          className="flex items-center gap-2 bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 transition shadow-lg font-bold text-sm"
+        >
+          <Download className="w-4 h-4" /> Download PDF
+        </button>
+      </div>
+
+      <style>{`
+        @media print {
+          .print-hidden { display: none !important; }
+          body * { visibility: hidden; }
+          .print-area, .print-area * { visibility: visible; }
+          .print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 210mm;
+            padding: 15mm;
+            margin: 0 !important;
+            box-shadow: none !important;
+          }
+          @page {
+            size: A4 portrait;
+            margin: 0;
+          }
+        }
+      `}</style>
 
       {/* A4 Paper Simulation */}
       <div 
         ref={printRef}
-        className="bg-white shadow-2xl origin-top relative"
+        className="bg-white shadow-2xl origin-top relative print-area"
         style={{
           width: '210mm',
           minHeight: '297mm',

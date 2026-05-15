@@ -86,6 +86,7 @@ const Builder: React.FC = () => {
   const [isExtracting, setIsExtracting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [files, setFiles] = useState<{ name: string; mimeType: string; data: string }[]>([]);
+  const [fontSize, setFontSize] = useState<number>(11);
   
   const tableRef = useRef<HTMLDivElement>(null);
 
@@ -101,7 +102,13 @@ const Builder: React.FC = () => {
   useEffect(() => {
     fetchMasters();
     generateDocNo();
+    const savedFontSize = localStorage.getItem('quote_table_font_size');
+    if (savedFontSize) setFontSize(parseInt(savedFontSize));
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('quote_table_font_size', fontSize.toString());
+  }, [fontSize]);
 
   const fetchMasters = async () => {
     try {
@@ -600,9 +607,23 @@ const Builder: React.FC = () => {
         </div>
 
         <div className="bg-white rounded-2xl border border-black shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-black flex justify-between items-center">
+          <div className="p-5 border-b border-black flex justify-between items-center print-hidden">
             <h2 className="text-sm font-bold text-black uppercase tracking-wider">Comparison Table</h2>
-            {isExtracting && <span className="flex items-center gap-2 text-black animate-pulse text-xs font-bold"><Loader2 className="w-3 h-3 animate-spin" /> AI Analyzing...</span>}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase text-black">Font Size: {fontSize}px</span>
+                <input 
+                  type="range" 
+                  min="8" 
+                  max="16" 
+                  step="0.5"
+                  value={fontSize} 
+                  onChange={e => setFontSize(parseFloat(e.target.value))} 
+                  className="w-32 h-1 bg-black rounded-lg appearance-none cursor-pointer accent-black"
+                />
+              </div>
+              {isExtracting && <span className="flex items-center gap-2 text-black animate-pulse text-xs font-bold"><Loader2 className="w-3 h-3 animate-spin" /> AI Analyzing...</span>}
+            </div>
           </div>
           <div className="p-5">
             {isExtracting ? (
@@ -612,7 +633,7 @@ const Builder: React.FC = () => {
                 <div className="h-20 bg-black/5 rounded-lg w-full"></div>
               </div>
             ) : (
-              <ComparisonTable data={data} setData={setData} header={header} setHeader={setHeader} tableRef={tableRef} />
+              <ComparisonTable data={data} setData={setData} header={header} setHeader={setHeader} tableRef={tableRef} fontSize={fontSize} />
             )}
           </div>
         </div>

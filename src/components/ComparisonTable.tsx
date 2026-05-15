@@ -9,6 +9,7 @@ interface ComparisonTableProps {
   setHeader?: React.Dispatch<React.SetStateAction<HeaderInfo>>;
   tableRef: React.RefObject<HTMLDivElement | null>;
   readOnly?: boolean;
+  fontSize?: number;
 }
 
 const AutoExpandingTextarea: React.FC<{
@@ -46,7 +47,7 @@ const AutoExpandingTextarea: React.FC<{
   );
 };
 
-export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData, header, setHeader, tableRef, readOnly = false }) => {
+export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData, header, setHeader, tableRef, readOnly = false, fontSize = 11 }) => {
   const vendors = data?.vendors || [];
   const items = data?.items || [];
   const vendorCols = 5; // MAKE, MRP, DIS, NET RATE, TOTAL AMOUNT
@@ -302,7 +303,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
             writing-mode: vertical-lr;
             transform: rotate(180deg);
             white-space: nowrap;
-            font-size: 10px;
+            font-size: ${Math.max(fontSize - 1, 8)}px;
             padding: 2px 0;
             line-height: 1;
             font-weight: 700;
@@ -357,7 +358,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
             th, td { 
               border: 0.4pt solid #000000 !important; 
               padding: 1px !important;
-              font-size: 10px !important;
+              font-size: ${fontSize - 1}px !important;
             }
             @page { 
               margin: 4mm; 
@@ -365,7 +366,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
             }
           }
         `}</style>
-        <table className="comp-table text-[11px] text-black border-2 border-black">
+        <table className="comp-table text-black border-2 border-black" style={{ fontSize: `${fontSize}px` }}>
           <thead>
           <tr className="bg-white">
             <th colSpan={totalCols} className="text-left p-0 border border-black font-bold uppercase whitespace-nowrap">
@@ -459,19 +460,19 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                 </div>
               </th>
             ))}
-            <th rowSpan={2} className="print-hidden border border-black p-1 uppercase text-[10px] w-8 text-black">Act</th>
+            <th rowSpan={2} className="print-hidden border border-black p-1 uppercase w-8 text-black" style={{ fontSize: `${fontSize - 1}px` }}>Act</th>
           </tr>
-          <tr className="bg-white">
-            <th className="border border-black p-1 font-bold text-[10px] text-black">VENDOR</th>
-            <th className="border border-black p-1 font-bold text-[10px] w-10 text-black">RATE</th>
-            <th className="border border-black p-1 font-bold text-[10px] w-12 text-black">DATE</th>
+          <tr className="bg-white" style={{ fontSize: `${fontSize - 1}px` }}>
+            <th className="border border-black p-1 font-bold text-black">VENDOR</th>
+            <th className="border border-black p-1 font-bold w-10 text-black">RATE</th>
+            <th className="border border-black p-1 font-bold w-12 text-black">DATE</th>
             {vendors.map((_, i) => (
               <React.Fragment key={i}>
-                <th className="border border-black p-1 font-bold text-[10px] min-w-[100px] text-black">MAKE</th>
-                <th className="border border-black p-1 font-bold text-[10px] w-10 text-black">MRP</th>
-                <th className="border border-black p-1 font-bold text-[10px] w-8 text-black">DIS%</th>
-                <th className="border border-black p-1 font-bold text-[10px] w-12 text-black">NET RATE</th>
-                <th className="border border-black p-1 font-bold text-[10px] w-14 bg-white text-black">TOTAL</th>
+                <th className="border border-black p-1 font-bold min-w-[70px] text-black">MAKE</th>
+                <th className="border border-black p-1 font-bold w-10 text-black">MRP</th>
+                <th className="border border-black p-1 font-bold w-8 text-black">DIS%</th>
+                <th className="border border-black p-1 font-bold w-12 text-black">NET RATE</th>
+                <th className="border border-black p-1 font-bold w-14 bg-white text-black">TOTAL</th>
               </React.Fragment>
             ))}
           </tr>
@@ -510,7 +511,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
               })}
               <td className="print-hidden border border-black p-0 text-center">
                 {!readOnly && (
-                  <button onClick={() => removeItem(idx)} className="p-1 hover:text-black text-black transition-colors" title="Remove Row">
+                  <button onClick={() => removeItem(itemIndex)} className="p-1 hover:text-black text-black transition-colors" title="Remove Row">
                     <Trash2 className="w-3.5 h-3.5 mx-auto" />
                   </button>
                 )}
@@ -521,26 +522,26 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
           {!readOnly && (
             <tr className="bg-white hover:bg-white transition-colors print-hidden">
               <td colSpan={totalCols} className="border border-black p-0 text-center">
-                <button onClick={addItem} className="w-full py-3 flex items-center justify-center gap-2 text-black hover:text-black font-bold text-[10px] uppercase tracking-widest cursor-pointer">
+                <button onClick={addItem} className="w-full py-3 flex items-center justify-center gap-2 text-black hover:text-black font-bold uppercase tracking-widest cursor-pointer" style={{ fontSize: `${fontSize - 1}px` }}>
                   <PlusCircle className="w-4 h-4" /> Add New Item Row
                 </button>
               </td>
             </tr>
           )}
 
-          <tr className="bg-white font-bold">
-             <td colSpan={hasWeight ? 9 : 8} className="border border-black text-right px-4 uppercase text-[10px] text-black">Vendor Subtotal</td>
+          <tr className="bg-white font-bold" style={{ fontSize: `${fontSize - 1}px` }}>
+             <td colSpan={hasWeight ? 9 : 8} className="border border-black text-right px-4 uppercase text-black">Vendor Subtotal</td>
              {vendors.map((v, i) => (
                <React.Fragment key={i}>
-                 <td colSpan={4} className="border border-black text-right p-1 uppercase text-[10px] text-black">TOTAL</td>
-                 <td className="border border-black text-center p-1 font-black bg-white text-black">{calculateVendorTotal(v).toFixed(2)}</td>
+                 <td colSpan={4} className="border border-black text-right p-1 uppercase text-black">TOTAL</td>
+                 <td className="border border-black text-center p-1 font-black bg-white text-black" style={{ fontSize: `${fontSize}px` }}>{calculateVendorTotal(v).toFixed(2)}</td>
                </React.Fragment>
              ))}
              <td className="print-hidden border-black border"></td>
           </tr>
           
-          <tr className="bg-white">
-             <td colSpan={hasWeight ? 9 : 8} className="border border-black text-right px-4 uppercase text-[10px] text-black">Taxation (GST)</td>
+          <tr className="bg-white" style={{ fontSize: `${fontSize - 1}px` }}>
+             <td colSpan={hasWeight ? 9 : 8} className="border border-black text-right px-4 uppercase text-black">Taxation (GST)</td>
              {vendors.map((v, i) => {
                const total = calculateVendorTotal(v);
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
@@ -554,10 +555,10 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                const gst = total * rate;
                return (
                 <React.Fragment key={i}>
-                  <td colSpan={4} className="border border-black text-right p-1 text-[10px] text-black">
+                  <td colSpan={4} className="border border-black text-right p-1 text-black">
                     {isInclusive ? 'GST STATUS' : `GST ${Math.round(rate * 100)}% EXTRA`}
                   </td>
-                  <td className="border border-black text-center p-1 font-bold text-black">
+                  <td className="border border-black text-center p-1 font-bold text-black" style={{ fontSize: `${fontSize}px` }}>
                     {isInclusive ? 'INCLUSIVE' : gst.toFixed(2)}
                   </td>
                 </React.Fragment>
@@ -567,7 +568,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
           </tr>
 
           <tr className="bg-white">
-             <td colSpan={hasWeight ? 9 : 8} className="border border-black text-right px-4 uppercase font-black tracking-widest text-[11px] text-black">Grand Total Summary</td>
+             <td colSpan={hasWeight ? 9 : 8} className="border border-black text-right px-4 uppercase font-black tracking-widest text-black" style={{ fontSize: `${fontSize}px` }}>Grand Total Summary</td>
              {vendors.map((v, i) => {
                const total = calculateVendorTotal(v);
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
@@ -581,8 +582,8 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                const grandTotal = total * (1 + rate);
                return (
                 <React.Fragment key={i}>
-                  <td colSpan={4} className="border border-black text-right p-2 font-black text-black text-[12px]">GRAND TOTAL</td>
-                  <td className="border border-black text-center p-2 font-black bg-white text-black text-[13px]">{grandTotal.toFixed(2)}</td>
+                  <td colSpan={4} className="border border-black text-right p-2 font-black text-black" style={{ fontSize: `${fontSize + 1}px` }}>GRAND TOTAL</td>
+                  <td className="border border-black text-center p-2 font-black bg-white text-black" style={{ fontSize: `${fontSize + 2}px` }}>{grandTotal.toFixed(2)}</td>
                 </React.Fragment>
                )
              })}
@@ -590,9 +591,9 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
           </tr>
 
           <tr className="bg-white text-black">
-             <td colSpan={hasWeight ? 9 : 8} className="border border-black text-center font-bold uppercase text-[9px] tracking-[0.3em] text-black">Logistic Terms</td>
+             <td colSpan={hasWeight ? 9 : 8} className="border border-black text-center font-bold uppercase tracking-[0.3em] text-black" style={{ fontSize: `${Math.max(fontSize - 2, 8)}px` }}>Logistic Terms</td>
              {vendors.map((v, i) => (
-                <td key={i} colSpan={vendorCols} className="border border-black text-center p-1.5 font-bold uppercase tracking-widest text-[10px] text-black">COMMERCIAL TERMS</td>
+                <td key={i} colSpan={vendorCols} className="border border-black text-center p-1.5 font-bold uppercase tracking-widest text-black" style={{ fontSize: `${fontSize - 1}px` }}>COMMERCIAL TERMS</td>
              ))}
              <td className="print-hidden border-black border"></td>
           </tr>
@@ -603,9 +604,9 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
                return (
                 <React.Fragment key={i}>
-                  <td colSpan={2} className="border border-black p-1 italic text-right font-bold uppercase text-[9px] pr-2 text-black">DELIVERY</td>
+                  <td colSpan={2} className="border border-black p-1 italic text-right font-bold uppercase pr-2 text-black" style={{ fontSize: `${Math.max(fontSize - 2, 8)}px` }}>DELIVERY</td>
                   <td colSpan={3} className="border border-black p-0">
-                    <AutoExpandingTextarea value={firstQuote?.deliveryPeriod || ''} onChange={val => updateQuote(0, v, 'deliveryPeriod', val)} className="text-center font-bold uppercase text-[11px] text-black" readOnly={readOnly} rows={1}/>
+                    <AutoExpandingTextarea value={firstQuote?.deliveryPeriod || ''} onChange={val => updateQuote(0, v, 'deliveryPeriod', val)} className="text-center font-bold uppercase text-black" style={{ fontSize: `${fontSize}px` }} readOnly={readOnly} rows={1}/>
                   </td>
                 </React.Fragment>
                )
@@ -618,12 +619,13 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
                return (
                 <React.Fragment key={i}>
-                  <td colSpan={2} className="border border-black p-1 italic text-right font-bold uppercase text-[9px] pr-2 text-black">FREIGHT</td>
+                  <td colSpan={2} className="border border-black p-1 italic text-right font-bold uppercase pr-2 text-black" style={{ fontSize: `${Math.max(fontSize - 2, 8)}px` }}>FREIGHT</td>
                   <td colSpan={3} className="border border-black p-0">
                     <select 
                       value={firstQuote?.freight || 'NILL'} 
                       onChange={e => updateQuote(0, v, 'freight', e.target.value)} 
-                      className="text-center font-bold uppercase cursor-pointer text-[11px] text-black"
+                      className="text-center font-bold uppercase cursor-pointer text-black"
+                      style={{ fontSize: `${fontSize}px` }}
                       disabled={readOnly}
                     >
                       <option value="NILL">NILL</option>
@@ -641,12 +643,13 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
                return (
                 <React.Fragment key={i}>
-                  <td colSpan={2} className="border border-black p-1 italic text-right font-bold uppercase text-[9px] pr-2 text-black">P & F</td>
+                  <td colSpan={2} className="border border-black p-1 italic text-right font-bold uppercase pr-2 text-black" style={{ fontSize: `${Math.max(fontSize - 2, 8)}px` }}>P & F</td>
                   <td colSpan={3} className="border border-black p-0">
                     <select 
                       value={firstQuote?.packingAndForwarding || 'NILL'} 
                       onChange={e => updateQuote(0, v, 'packingAndForwarding', e.target.value)} 
-                      className="text-center font-bold uppercase cursor-pointer text-[11px] text-black"
+                      className="text-center font-bold uppercase cursor-pointer text-black"
+                      style={{ fontSize: `${fontSize}px` }}
                       disabled={readOnly}
                     >
                       <option value="NILL">NILL</option>
@@ -664,9 +667,9 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
                return (
                 <React.Fragment key={i}>
-                  <td colSpan={2} className="border border-black p-1 italic text-right font-bold uppercase text-[9px] pr-2 text-black">STOCK</td>
+                  <td colSpan={2} className="border border-black p-1 italic text-right font-bold uppercase pr-2 text-black" style={{ fontSize: `${Math.max(fontSize - 2, 8)}px` }}>STOCK</td>
                   <td colSpan={3} className="border border-black p-0">
-                    <AutoExpandingTextarea value={firstQuote?.readyStock || ''} onChange={val => updateQuote(0, v, 'readyStock', val)} className="text-center font-bold uppercase text-[11px] text-black" readOnly={readOnly} rows={1}/>
+                    <AutoExpandingTextarea value={firstQuote?.readyStock || ''} onChange={val => updateQuote(0, v, 'readyStock', val)} className="text-center font-bold uppercase text-black" style={{ fontSize: `${fontSize}px` }} readOnly={readOnly} rows={1}/>
                   </td>
                 </React.Fragment>
                )
@@ -679,12 +682,13 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
                return (
                 <React.Fragment key={i}>
-                  <td colSpan={2} className="border border-black p-1 italic text-right font-bold uppercase text-[9px] pr-2 text-black">GST STATUS</td>
+                  <td colSpan={2} className="border border-black p-1 italic text-right font-bold uppercase pr-2 text-black" style={{ fontSize: `${Math.max(fontSize - 2, 8)}px` }}>GST STATUS</td>
                   <td colSpan={3} className="border border-black p-0">
                     <select 
                       value={firstQuote?.gstStatus || '18% Extra'} 
                       onChange={e => updateQuote(0, v, 'gstStatus', e.target.value)} 
-                      className="text-center font-bold uppercase cursor-pointer text-[11px] text-black"
+                      className="text-center font-bold uppercase cursor-pointer text-black"
+                      style={{ fontSize: `${fontSize}px` }}
                       disabled={readOnly}
                     >
                       <option value="Exclusive">Exclusive (18%)</option>
@@ -704,9 +708,9 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
                return (
                 <React.Fragment key={i}>
-                  <td colSpan={2} className="border border-black p-1 italic text-right font-bold uppercase text-[9px] pr-2 text-black">OTHER EXTRA</td>
+                  <td colSpan={2} className="border border-black p-1 italic text-right font-bold uppercase pr-2 text-black" style={{ fontSize: `${Math.max(fontSize - 2, 8)}px` }}>OTHER EXTRA</td>
                   <td colSpan={3} className="border border-black p-0">
-                    <AutoExpandingTextarea value={firstQuote?.extra || ''} onChange={val => updateQuote(0, v, 'extra', val)} className="text-center font-bold uppercase text-[11px] text-black" readOnly={readOnly} rows={1}/>
+                    <AutoExpandingTextarea value={firstQuote?.extra || ''} onChange={val => updateQuote(0, v, 'extra', val)} className="text-center font-bold uppercase text-black" style={{ fontSize: `${fontSize}px` }} readOnly={readOnly} rows={1}/>
                   </td>
                 </React.Fragment>
                )
