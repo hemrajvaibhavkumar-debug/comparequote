@@ -254,7 +254,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates }) => {
                defaultValue=""
              >
                <option value="" disabled>Apply Template</option>
-               {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+               {Array.isArray(templates) && templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
              </select>
           </div>
         </div>

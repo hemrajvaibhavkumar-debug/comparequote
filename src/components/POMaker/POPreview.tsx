@@ -12,6 +12,51 @@ interface POPreviewProps {
 const POPreview: React.FC<POPreviewProps> = ({ po, settings }) => {
   const printRef = useRef<HTMLDivElement>(null);
 
+  const COMPANY_METADATA = {
+    hemraj_ind: {
+      name: "HEMRAJ INDUSTRIES PRIVATE LIMITED",
+      subtitle: "Rice Mill, Solvent Extraction. Edible Oil Refinery. Captive Power Plant",
+      cin: settings?.cin || "U01111WB1991PTC051314",
+      regd_office: settings?.regd_office || "46B Rafi Ahmed Kidwai Road, 1st Floor, Kolkata-700 016",
+      factory: settings?.factory_address || "Vill. P.O. Chandul, G.T. Road, Burdwan (W.B.) Pin : 713141",
+      phone: settings?.phone || "+91 33 2229 8038 / 4064 9316",
+      email: "hemrajinds.kolkata@gmail.com, hemrajindustries@gmail.com",
+      website: settings?.website || "www.hemrajgroup.co.in",
+      logo: "/logo.png",
+      themeColor: "text-red-800",
+      borderColor: "border-red-800"
+    },
+    hemraj_rice: {
+      name: "HEMRAJ RICE MILL",
+      subtitle: "QUALITY RICE PROCESSORS",
+      cin: settings?.cin || "U01111WB1991PTC051314",
+      regd_office: "46B Rafi Ahmed Kidwai Road, 1st Floor, Kolkata-700 016",
+      factory: "Katwa, Burdwan Road, Burdwan - 713130",
+      phone: "033-4064 9316, 4062 4362",
+      email: "hemrajinds.kolkata@gmail.com",
+      website: "www.hemrajgroup.com",
+      logo: "/logo.png",
+      themeColor: "text-red-700",
+      borderColor: "border-red-700"
+    },
+    radhashyam: {
+      name: "RADHASHYAM INDUSTRIES PVT. LTD.",
+      subtitle: "SOLVENT EXTRACTION & EDIBLE OIL",
+      cin: "U74900WB2013PTC197187",
+      regd_office: "46B Rafi Ahmed Kidwai Road, 1st Floor, Kolkata-700 016",
+      factory: "Vill. P.O. Chandul, G.T. Road, Burdwan (W.B.) Pin : 713141",
+      phone: "+91 33 2229 8038 / 4064 9316 / 2265 4742",
+      email: "rsipl2014@gmail.com",
+      website: "www.hemrajgroup.co.in",
+      logo: "/logo.png", // Assume similar logo or place holder
+      themeColor: "text-red-900",
+      borderColor: "border-red-900",
+      isRSI: true
+    }
+  };
+
+  const currentMeta = COMPANY_METADATA[po.version || 'hemraj_ind'];
+
   const handleDownload = async () => {
     if (!printRef.current) return;
     const canvas = await html2canvas(printRef.current, { scale: 2 });
@@ -45,22 +90,64 @@ const POPreview: React.FC<POPreviewProps> = ({ po, settings }) => {
         }}
       >
         {/* Header */}
-        <div className="border-b-4 border-red-800 pb-2 mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <img src="/logo.png" alt="Logo" className="h-16 w-auto object-contain" />
-            <div>
-              <h1 className="text-2xl font-black text-red-800 tracking-tighter uppercase">
-                {settings?.name || 'HEMRAJ INDUSTRIES PRIVATE LIMITED'}
-              </h1>
-              <p className="text-[10px] font-bold text-gray-800">
-                Rice Mill, Solvent Extraction. Edible Oil Refinery. Captive Power Plant
-              </p>
+        <div className={`border-b-4 ${currentMeta.borderColor} pb-2 mb-6 flex items-center justify-between`}>
+          <div className="flex items-center gap-4 flex-1">
+            <div className="flex flex-col items-center shrink-0">
+               <img src={currentMeta.logo} alt="Logo" className="h-14 w-auto object-contain" />
+               {po.version === 'radhashyam' && <span className="text-[10px] font-black text-red-900 leading-none mt-1">RSI</span>}
+               {po.version === 'hemraj_rice' && (
+                 <div className="text-center">
+                    <span className="text-[8px] font-black text-red-700 block leading-tight">HEMRAJ</span>
+                    <span className="text-[8px] font-black text-orange-500 block leading-tight">GROUP</span>
+                 </div>
+               )}
+            </div>
+            
+            <div className="flex-1">
+              {po.version === 'hemraj_rice' ? (
+                <div className="flex items-center gap-2">
+                   <div className="h-px bg-red-700 flex-1 flex flex-col gap-0.5">
+                      <div className="h-px bg-red-700 w-full"></div>
+                      <div className="h-px bg-red-700 w-full"></div>
+                      <div className="h-px bg-red-700 w-full"></div>
+                   </div>
+                   <h1 className="text-3xl font-black text-red-700 tracking-tighter uppercase whitespace-nowrap">
+                     {currentMeta.name}
+                   </h1>
+                   <div className="h-px bg-red-700 flex-1 flex flex-col gap-0.5">
+                      <div className="h-px bg-red-700 w-full"></div>
+                      <div className="h-px bg-red-700 w-full"></div>
+                      <div className="h-px bg-red-700 w-full"></div>
+                   </div>
+                </div>
+              ) : (
+                <h1 className={`text-2xl font-black ${currentMeta.themeColor} tracking-tighter uppercase`}>
+                  {currentMeta.name}
+                </h1>
+              )}
+
+              {po.version === 'radhashyam' ? (
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="bg-[#559b3f] text-white px-3 py-0.5 text-[11px] font-black tracking-[0.2em] uppercase rounded-sm">
+                    {currentMeta.subtitle}
+                  </div>
+                </div>
+              ) : po.version !== 'hemraj_rice' && (
+                <p className="text-[10px] font-bold text-gray-800 mt-1">
+                  {currentMeta.subtitle}
+                </p>
+              )}
             </div>
           </div>
-          <div className="text-right">
+          <div className="text-right flex flex-col justify-end h-full">
              <p className="text-[10px] font-bold text-gray-800 uppercase">
-               CIN : {settings?.cin || 'U01111WB1991PTC051314'}
+               CIN : {currentMeta.cin}
              </p>
+             {po.version === 'radhashyam' && (
+                <div className="text-[8px] font-bold text-gray-600 mt-1 leading-tight max-w-[150px]">
+                  Regd. Office : 46B Rafi Ahmed Kidwai Road<br/>1st Floor, Kolkata-700 016
+                </div>
+             )}
           </div>
         </div>
 
@@ -157,7 +244,7 @@ const POPreview: React.FC<POPreviewProps> = ({ po, settings }) => {
               <p className="text-xs font-bold border-t border-black pt-1">Authorized Signatory</p>
            </div>
            <div className="text-right text-[10px]">
-              <p className="font-bold">For, {settings?.name || 'HEMRAJ INDUSTRIES PRIVATE LIMITED'}</p>
+              <p className="font-bold">For, {currentMeta.name}</p>
               <div className="h-12"></div>
               <p className="font-bold">GSTIN :: {settings?.gstin || '19AAACH8249K1Z4'}</p>
               <p className="font-bold">PAN NO :: {settings?.pan || 'AAACH8249K'}</p>
@@ -167,17 +254,19 @@ const POPreview: React.FC<POPreviewProps> = ({ po, settings }) => {
         {/* Footer */}
         <div className="absolute bottom-[10mm] left-[15mm] right-[15mm] border-t-2 border-black pt-2 text-[8px] text-center leading-tight">
            <p className="font-bold border-b border-black pb-1 mb-1 italic">
-             Regd. Office : {settings?.regd_office || '46B Rafi Ahmed Kidwai Road, 1st Floor, Kolkata-700 016'}
+             Regd. Office : {currentMeta.regd_office}
            </p>
            <p className="font-bold">
-             Fax : +91 33 2229 2340, Ph : {settings?.phone || '+91 33 2229 8038 / 4064 9316'}
+             Fax : +91 33 2229 2340, Ph : {currentMeta.phone}
            </p>
            <p>
-             E-mail : hemrajinds.kolkata@gmail.com, hemrajindustries@gmail.com, website : {settings?.website || 'www.hemrajgroup.co.in'}
+             E-mail : {currentMeta.email}, website : {currentMeta.website}
            </p>
-           <p className="mt-1 font-bold border-t border-black pt-1">
-             Factory : {settings?.factory_address || 'Vill. P.O. Chandul, G.T. Road, Burdwan (W.B.) Pin : 713141'}
-           </p>
+           {currentMeta.factory && (
+             <p className="mt-1 font-bold border-t border-black pt-1">
+               Factory : {currentMeta.factory}
+             </p>
+           )}
         </div>
       </div>
     </div>

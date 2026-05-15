@@ -84,6 +84,7 @@ export interface PurchaseOrder {
   po_no: string;
   date: string;
   vendor_name: string;
+  version?: 'hemraj_ind' | 'hemraj_rice' | 'radhashyam';
   vendor_details: {
     address: string;
     gstin: string;

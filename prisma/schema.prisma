@@ -73,6 +73,7 @@ model PurchaseOrder {
   po_no           String   @unique
   date            DateTime @default(now())
   vendor_name     String
+  version         String?  // hemraj_ind, hemraj_rice, radhashyam
   vendor_details  Json?    // Address, GSTIN, Mail, Ph
   items           Json     // List of items
   terms           Json?    // Snapshot of terms used

@@ -11,6 +11,7 @@ const POMaker: React.FC = () => {
     po_no: '',
     date: new Date().toISOString().split('T')[0],
     vendor_name: '',
+    version: 'hemraj_ind',
     vendor_details: { address: '', gstin: '', mail: '', ph: '', state: '' },
     items: [],
     terms: { tax: '', packing: '', payment: '', freight: '', delivery: '', contact_no: '', notes: '' },
@@ -37,8 +38,12 @@ const POMaker: React.FC = () => {
     const res = await fetch('/api/settings/terms', {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
     });
-    const data = await res.json();
-    setTemplates(data);
+    if (res.ok) {
+      const data = await res.json();
+      setTemplates(Array.isArray(data) ? data : []);
+    } else {
+      setTemplates([]);
+    }
   };
 
   const handleSave = async () => {
@@ -68,6 +73,15 @@ const POMaker: React.FC = () => {
           <h1 className="text-xl font-bold text-black">Purchase Order Maker</h1>
         </div>
         <div className="flex items-center gap-3">
+          <select 
+            className="bg-white border border-black rounded-lg px-3 py-2 text-sm font-bold"
+            value={po.version}
+            onChange={e => setPo({...po, version: e.target.value as any})}
+          >
+            <option value="hemraj_ind">Hemraj Industries</option>
+            <option value="hemraj_rice">Hemraj Rice Mill</option>
+            <option value="radhashyam">Radhashyam Industries</option>
+          </select>
           <button 
             onClick={handleSave}
             className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-black/90 transition font-medium"

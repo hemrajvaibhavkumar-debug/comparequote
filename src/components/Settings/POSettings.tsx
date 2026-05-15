@@ -23,11 +23,20 @@ const POSettings: React.FC = () => {
   };
 
   const fetchTemplates = async () => {
-    const res = await fetch('/api/settings/terms', {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
-    });
-    const data = await res.json();
-    setTemplates(data);
+    try {
+      const res = await fetch('/api/settings/terms', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTemplates(Array.isArray(data) ? data : []);
+      } else {
+        setTemplates([]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch templates:", error);
+      setTemplates([]);
+    }
   };
 
   const handleSaveSettings = async (e: React.FormEvent) => {
