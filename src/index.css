@@ -46,15 +46,16 @@ th, td {
 }
 
 /* Custom Resize Handle Styling */
-.resize-x {
-  resize: horizontal;
+.resize-both {
+  resize: both;
   overflow: auto;
   min-height: 20px;
+  min-width: 20px;
 }
 
-.resize-x::-webkit-resizer {
+.resize-both::-webkit-resizer {
   background-color: transparent;
-  background-image: linear-gradient(135deg, transparent 70%, #4f46e5 70%);
+  background-image: linear-gradient(135deg, transparent 70%, #000000 70%);
   background-size: 10px 10px;
   background-repeat: no-repeat;
   background-position: bottom right;
@@ -126,6 +127,15 @@ th, td {
 
   .bg-slate-50, .bg-slate-100 {
     background-color: white !important;
+  }
+
+  /* Hide resize handles in print */
+  .resize-both {
+    resize: none !important;
+    overflow: visible !important;
+  }
+  .resize-both::-webkit-resizer {
+    display: none !important;
   }
 
   /* Force the comparison table to be visible and clear */
