@@ -467,9 +467,9 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
             <th rowSpan={2} className="print-hidden border border-black p-1 uppercase w-8 text-black" style={{ fontSize: `${fontSize - 1}px` }}>Act</th>
           </tr>
           <tr className="bg-white" style={{ fontSize: `${fontSize - 1}px` }}>
-            <th className="border border-black p-1 font-bold text-black">VENDOR</th>
-            <th className="border border-black p-1 font-bold w-10 text-black">RATE</th>
-            <th className="border border-black p-1 font-bold w-12 text-black">DATE</th>
+            <th className="border border-black p-0 font-bold text-black min-w-[50px]"><div className="resize-x overflow-hidden p-1 min-w-full">VENDOR</div></th>
+            <th className="border border-black p-0 font-bold w-10 text-black"><div className="resize-x overflow-hidden p-1 min-w-full">RATE</div></th>
+            <th className="border border-black p-0 font-bold w-12 text-black"><div className="resize-x overflow-hidden p-1 min-w-full">DATE</div></th>
             {vendors.map((_, i) => (
               <React.Fragment key={i}>
                 <th className="border border-black p-1 font-bold min-w-[50px] text-black">MAKE</th>
@@ -498,9 +498,9 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
               <td className="border border-black p-0"><input type="text" value={item.uom || ''} onChange={e => updateItem(idx, 'uom', e.target.value)} className="text-center uppercase" readOnly={readOnly} /></td>
               <td className="border border-black p-0"><input type="text" value={item.qty || ''} onChange={e => updateItem(idx, 'qty', e.target.value)} className="text-center font-bold" readOnly={readOnly} /></td>
               {hasWeight && <td className="border border-black p-0"><input type="text" value={item.weight || ''} onChange={e => updateItem(idx, 'weight', e.target.value)} className="text-center font-bold" readOnly={readOnly} /></td>}
-              <td className="border border-black p-0"><input type="text" value={item.previousPrice?.vendor || ''} onChange={e => updatePreviousPrice(idx, 'vendor', e.target.value)} className="text-center italic text-black" readOnly={readOnly} /></td>
-              <td className="border border-black p-0"><input type="text" value={item.previousPrice?.rate || ''} onChange={e => updatePreviousPrice(idx, 'rate', e.target.value)} className="text-center text-black" readOnly={readOnly} /></td>
-              <td className="border border-black p-0"><input type="text" value={item.previousPrice?.date || ''} onChange={e => updatePreviousPrice(idx, 'date', e.target.value)} className="text-center text-black" readOnly={readOnly} /></td>
+              <td className="border border-black p-0"><div className="resize-x overflow-hidden min-w-full"><input type="text" value={item.previousPrice?.vendor || ''} onChange={e => updatePreviousPrice(idx, 'vendor', e.target.value)} className="text-center italic text-black" readOnly={readOnly} /></div></td>
+              <td className="border border-black p-0"><div className="resize-x overflow-hidden min-w-full"><input type="text" value={item.previousPrice?.rate || ''} onChange={e => updatePreviousPrice(idx, 'rate', e.target.value)} className="text-center text-black" readOnly={readOnly} /></div></td>
+              <td className="border border-black p-0"><div className="resize-x overflow-hidden min-w-full"><input type="text" value={item.previousPrice?.date || ''} onChange={e => updatePreviousPrice(idx, 'date', e.target.value)} className="text-center text-black" readOnly={readOnly} /></div></td>
               {vendors.map((v: string, vIdx: number) => {
                 const quote = item.vendorQuotes?.find((q: any) => q.vendorName === v);
                 return (
