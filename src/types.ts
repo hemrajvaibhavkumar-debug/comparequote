@@ -78,7 +78,7 @@ export interface VendorMaster {
   mobile_no?: string;
 }
 
-export interface PurchaseOrder {
+export interface POItem {
   sn: number;
   itemName: string;
   qty: number;

@@ -13,7 +13,7 @@ const POMaker: React.FC = () => {
     vendor_name: '',
     version: 'hemraj_ind',
     vendor_details: { address: '', gstin: '', mail: '', ph: '', state: '' },
-    items: [],
+    items: [{ sn: 1, itemName: '', qty: 0, uom: 'NOS', rate: 0, discount: 0, tax: 'GST @18%' }],
     terms: { tax: '', packing: '', payment: '', freight: '', delivery: '', contact_no: '', notes: '' },
     total_amount: 0
   });
@@ -111,7 +111,7 @@ const POMaker: React.FC = () => {
 
         {/* Right Pane - Preview */}
         <div className="w-1/2 overflow-y-auto p-8 bg-white border-black flex justify-center">
-          <POPreview po={po} settings={settings} />
+          <POPreview po={po} setPo={setPo} settings={settings} />
         </div>
       </div>
     </div>

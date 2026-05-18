@@ -1,16 +1,46 @@
 import React, { useRef } from 'react';
-import { PurchaseOrder, CompanySettings } from '../../types';
+import { PurchaseOrder, CompanySettings, POItem } from '../../types';
 import { Download } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
 interface POPreviewProps {
   po: PurchaseOrder;
+  setPo: React.Dispatch<React.SetStateAction<PurchaseOrder>>;
   settings: CompanySettings | null;
 }
 
-const POPreview: React.FC<POPreviewProps> = ({ po, settings }) => {
+const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
   const printRef = useRef<HTMLDivElement>(null);
+
+  const updatePO = (field: keyof PurchaseOrder, value: any) => {
+    setPo(prev => ({ ...prev, [field]: value }));
+  };
+
+  const updateVendor = (field: keyof PurchaseOrder['vendor_details'], value: string) => {
+    setPo(prev => ({
+      ...prev,
+      vendor_details: { ...prev.vendor_details, [field]: value }
+    }));
+  };
+
+  const updateItem = (index: number, field: keyof POItem, value: any) => {
+    setPo(prev => {
+      const newItems = [...prev.items];
+      newItems[index] = { ...newItems[index], [field]: value };
+      
+      // Calculate total amount
+      const total = newItems.reduce((acc, item) => acc + (Number(item.qty) * Number(item.rate)), 0);
+      return { ...prev, items: newItems, total_amount: total };
+    });
+  };
+
+  const updateTerms = (field: keyof PurchaseOrder['terms'], value: string) => {
+    setPo(prev => ({
+      ...prev,
+      terms: { ...prev.terms, [field]: value }
+    }));
+  };
 
   const COMPANY_METADATA = {
     hemraj_ind: {
@@ -53,8 +83,11 @@ const POPreview: React.FC<POPreviewProps> = ({ po, settings }) => {
     window.print();
   };
 
+  const inputClass = "bg-transparent hover:bg-black/5 focus:bg-blue-50 focus:outline-none transition-colors px-1 rounded -ml-1 inline-block text-black";
+  const labelClass = "font-bold text-gray-500 uppercase mb-1";
+
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div className="flex flex-col items-center gap-4 text-black">
       <div className="flex gap-4 print-hidden">
         <button 
           onClick={handlePrint}
@@ -88,13 +121,20 @@ const POPreview: React.FC<POPreviewProps> = ({ po, settings }) => {
             size: A4 portrait;
             margin: 0;
           }
+          input {
+            border: none !important;
+            padding: 0 !important;
+            background: transparent !important;
+            appearance: none !important;
+            color: black !important;
+          }
         }
       `}</style>
 
       {/* A4 Paper Simulation */}
       <div 
         ref={printRef}
-        className="bg-white shadow-2xl origin-top relative print-area"
+        className="bg-white shadow-2xl origin-top relative print-area text-black"
         style={{
           width: '210mm',
           minHeight: '297mm',
@@ -104,12 +144,12 @@ const POPreview: React.FC<POPreviewProps> = ({ po, settings }) => {
         }}
       >
         <div className="text-center mb-8">
-          <h2 className="inline-block border-b-2 border-black text-sm font-bold uppercase tracking-widest">
+          <h2 className="inline-block border-b-2 border-black text-sm font-bold uppercase tracking-widest text-black">
             Purchase Order
           </h2>
         </div>
 
-        <div className="flex justify-between items-start mb-6 text-sm">
+        <div className="flex justify-between items-start mb-6 text-sm text-black">
           <div>
             <p className="font-bold">PO NO:: <span className="font-normal">{po.po_no || 'HI /2026-27/00'}</span></p>
           </div>
@@ -118,7 +158,7 @@ const POPreview: React.FC<POPreviewProps> = ({ po, settings }) => {
           </div>
         </div>
 
-        <div className="mb-6 text-xs">
+        <div className="mb-6 text-xs text-black">
           <p className="font-bold text-gray-500 uppercase mb-1">To,</p>
           <p className="font-bold text-sm">{po.vendor_name || 'VENDOR NAME'}</p>
           <p className="whitespace-pre-wrap max-w-[300px]">{po.vendor_details.address}</p>
@@ -130,14 +170,20 @@ const POPreview: React.FC<POPreviewProps> = ({ po, settings }) => {
           </div>
         </div>
 
-        <p className="text-xs mb-4 italic">
-          Dear Sir/Madam, As per your Quotation Ref No.:-MAIL Ref Date:-{po.date} ,We are sending the order so please supply the materials on urgent basis:-
+        <p className="text-xs mb-4 italic text-black">
+          Dear Sir/Madam, As per your Quotation Ref No.:-MAIL Ref Date:-
+          <input 
+            className={`${inputClass} italic w-24`}
+            value={po.date}
+            onChange={e => updatePO('date', e.target.value)}
+          /> 
+          ,We are sending the order so please supply the materials on urgent basis:-
         </p>
 
         {/* Items Table */}
-        <table className="w-full border-collapse border border-black text-[10px] mb-6">
+        <table className="w-full border-collapse border border-black text-[10px] mb-6 text-black">
           <thead>
-            <tr className="bg-gray-100 uppercase">
+            <tr className="bg-gray-100 uppercase text-black">
               <th className="border border-black p-1 w-8 text-center font-bold">S/N</th>
               <th className="border border-black p-1 text-left font-bold">Item Name</th>
               <th className="border border-black p-1 w-14 text-center font-bold">Qnty</th>
@@ -149,7 +195,7 @@ const POPreview: React.FC<POPreviewProps> = ({ po, settings }) => {
           </thead>
           <tbody>
             {po.items.map((item, idx) => (
-              <tr key={idx}>
+              <tr key={idx} className="text-black">
                 <td className="border border-black p-1 text-center font-bold">{item.sn}</td>
                 <td className="border border-black p-1 uppercase">{item.itemName}</td>
                 <td className="border border-black p-1 text-center">{Number(item.qty).toFixed(2)}</td>
@@ -159,38 +205,44 @@ const POPreview: React.FC<POPreviewProps> = ({ po, settings }) => {
                 <td className="border border-black p-1 text-center whitespace-nowrap">{item.tax || 'GST @18%'}</td>
               </tr>
             ))}
-            {Array.from({ length: Math.max(0, 4 - po.items.length) }).map((_, i) => (
-              <tr key={`empty-${i}`} className="h-6">
-                <td className="border border-black p-1"></td>
-                <td className="border border-black p-1"></td>
-                <td className="border border-black p-1"></td>
-                <td className="border border-black p-1"></td>
-                <td className="border border-black p-1"></td>
-                <td className="border border-black p-1"></td>
-                <td className="border border-black p-1"></td>
-              </tr>
-            ))}
           </tbody>
         </table>
 
         {/* Commercial Terms */}
-        <div className="text-[10px] space-y-1 mb-6">
+        <div className="text-[10px] space-y-1 mb-6 text-black">
           <p className="font-bold text-xs underline mb-2">Commercial Terms::</p>
-          <p><span className="font-bold">Tax ::</span> {po.terms.tax}</p>
-          <p><span className="font-bold">Packing & Forwarding ::</span> {po.terms.packing}</p>
-          <p><span className="font-bold">Payment Terms ::</span> {po.terms.payment}</p>
-          <p><span className="font-bold">Freight ::</span> {po.terms.freight}</p>
-          <p><span className="font-bold">Delivery Period ::</span> {po.terms.delivery}</p>
-          {po.terms.contact_no && <p><span className="font-bold">Contact No ::</span> {po.terms.contact_no}</p>}
+          <div className="grid grid-cols-[150px_1fr] gap-y-1">
+            <span className="font-bold">Tax ::</span>
+            <span>{po.terms.tax}</span>
+            
+            <span className="font-bold">Packing & Forwarding ::</span>
+            <span>{po.terms.packing}</span>
+            
+            <span className="font-bold">Payment Terms ::</span>
+            <span>{po.terms.payment}</span>
+            
+            <span className="font-bold">Freight ::</span>
+            <span>{po.terms.freight}</span>
+            
+            <span className="font-bold">Delivery Period ::</span>
+            <span>{po.terms.delivery}</span>
+            
+            {po.terms.contact_no && (
+              <>
+                <span className="font-bold">Contact No ::</span>
+                <span>{po.terms.contact_no}</span>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Standard Notes */}
-        <div className="text-[10px] space-y-2 mb-12 uppercase italic font-bold">
+        <div className="text-[10px] space-y-2 mb-12 uppercase italic font-bold text-black">
            <p>NOTE 1 :: <span className="underline">E-Way bill is mandatory for Rs 50,000 and above Purchase Value , we can't accept material without it.</span></p>
            <p>NOTE 2 :: If we have any type of dispute from our required specification then, we will reject the material.</p>
         </div>
 
-        <div className="flex justify-between items-start mt-12">
+        <div className="flex justify-between items-start mt-12 text-black">
            <div className="text-left text-[10px]">
               <p className="font-bold">Yours faithfully,</p>
               <p className="font-black text-xs uppercase mt-1">{currentMeta.name}</p>
