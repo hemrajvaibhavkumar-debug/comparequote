@@ -92,6 +92,8 @@ export interface PurchaseOrder {
   id?: number;
   po_no: string;
   date: string;
+  quote_date?: string;
+  quote_ref_type?: 'MAIL' | 'WHATSAPP' | string;
   vendor_name: string;
   version?: 'hemraj_ind' | 'hemraj_rice' | 'radhashyam';
   vendor_details: {

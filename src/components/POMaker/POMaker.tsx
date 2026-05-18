@@ -10,6 +10,8 @@ const POMaker: React.FC = () => {
   const [po, setPo] = useState<PurchaseOrder>({
     po_no: '',
     date: new Date().toISOString().split('T')[0],
+    quote_date: new Date().toISOString().split('T')[0],
+    quote_ref_type: 'MAIL',
     vendor_name: '',
     version: 'hemraj_ind',
     vendor_details: { address: '', gstin: '', mail: '', ph: '', state: '' },

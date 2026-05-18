@@ -171,13 +171,17 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
         </div>
 
         <p className="text-xs mb-4 italic text-black">
-          Dear Sir/Madam, As per your Quotation Ref No.:-MAIL Ref Date:-
+          Dear Sir/Madam, As per your Quotation Ref No.:-
           <input 
-            className={`${inputClass} italic w-24`}
-            value={po.date}
-            onChange={e => updatePO('date', e.target.value)}
-          /> 
-          ,We are sending the order so please supply the materials on urgent basis:-
+            className="bg-transparent hover:bg-black/5 focus:bg-blue-50 focus:outline-none transition-colors italic w-[65px] text-black"
+            value={po.quote_ref_type || 'MAIL'}
+            onChange={e => updatePO('quote_ref_type', e.target.value.toUpperCase())}
+          /> Ref Date:-
+          <input 
+            className="bg-transparent hover:bg-black/5 focus:bg-blue-50 focus:outline-none transition-colors italic w-[70px] text-black"
+            value={po.quote_date || po.date}
+            onChange={e => updatePO('quote_date', e.target.value)}
+          />,We are sending the order so please supply the materials on urgent basis:-
         </p>
 
         {/* Items Table */}

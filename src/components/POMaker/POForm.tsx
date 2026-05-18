@@ -117,6 +117,28 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
               onChange={e => setPo({...po, date: e.target.value})}
             />
           </div>
+          <div className="grid grid-cols-2 gap-4 col-span-2">
+            <div>
+              <label className="block text-xs font-bold text-black uppercase">Quotation Ref Type</label>
+              <select 
+                className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black bg-white"
+                value={po.quote_ref_type || 'MAIL'}
+                onChange={e => setPo({...po, quote_ref_type: e.target.value})}
+              >
+                <option value="MAIL">MAIL</option>
+                <option value="WHATSAPP">WHATSAPP</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-black uppercase">Quotation Date</label>
+              <input 
+                type="date"
+                className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
+                value={po.quote_date}
+                onChange={e => setPo({...po, quote_date: e.target.value})}
+              />
+            </div>
+          </div>
         </div>
       </section>
 
