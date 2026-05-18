@@ -78,6 +78,30 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
     document.addEventListener('mouseup', onMouseUp);
   };
 
+  const startResizingHeight = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const td = (e.target as HTMLElement).parentElement as HTMLTableCellElement;
+    if (!td) return;
+    const tr = td.parentElement as HTMLTableRowElement;
+    if (!tr) return;
+    
+    const startY = e.pageY;
+    const startHeight = tr.offsetHeight;
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const newHeight = Math.max(startHeight + (moveEvent.pageY - startY), 20); // Min 20px
+      tr.style.height = `${newHeight}px`;
+    };
+
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
   const calculateVendorTotal = (vendorName: string) => {
     return items.reduce((sum, item) => {
       const quote = item.vendorQuotes?.find(q => q.vendorName === vendorName);
@@ -376,6 +400,21 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
             background-color: #3b82f6;
           }
 
+          .resizer-h {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 4px;
+            cursor: row-resize;
+            z-index: 10;
+            transition: background-color 0.2s;
+          }
+
+          .resizer-h:hover {
+            background-color: #3b82f6;
+          }
+
           @media print {
             .print-hidden { display: none !important; }
             body { 
@@ -575,10 +614,16 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
         </thead>
         <tbody>
           {items.map((item: any, idx: number) => (
-            <tr key={idx} className="hover:bg-white">
-              <td className="border border-black p-0"><input type="text" value={item.indentNo || ''} onChange={e => updateItem(idx, 'indentNo', e.target.value)} className="text-center font-bold" readOnly={readOnly} /></td>
-              <td className="border border-black p-0"><input type="text" value={item.siNo || ''} onChange={e => updateItem(idx, 'siNo', e.target.value)} className="text-center" readOnly={readOnly} /></td>
-              <td className="border border-black p-0">
+            <tr key={idx} className="hover:bg-white relative">
+              <td className="relative border border-black p-0">
+                <input type="text" value={item.indentNo || ''} onChange={e => updateItem(idx, 'indentNo', e.target.value)} className="text-center font-bold" readOnly={readOnly} />
+                <div className="resizer-h print-hidden" onMouseDown={startResizingHeight} />
+              </td>
+              <td className="relative border border-black p-0">
+                <input type="text" value={item.siNo || ''} onChange={e => updateItem(idx, 'siNo', e.target.value)} className="text-center" readOnly={readOnly} />
+                <div className="resizer-h print-hidden" onMouseDown={startResizingHeight} />
+              </td>
+              <td className="relative border border-black p-0">
                 <AutoExpandingTextarea 
                   value={item.description || ''} 
                   onChange={val => updateItem(idx, 'description', val)} 
@@ -586,31 +631,68 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
                   readOnly={readOnly} 
                   rows={1} 
                 />
+                <div className="resizer-h print-hidden" onMouseDown={startResizingHeight} />
               </td>
-              <td className="border border-black p-0"><input type="text" value={item.uom || ''} onChange={e => updateItem(idx, 'uom', e.target.value)} className="text-center uppercase" readOnly={readOnly} /></td>
-              <td className="border border-black p-0"><input type="text" value={item.qty || ''} onChange={e => updateItem(idx, 'qty', e.target.value)} className="text-center font-bold" readOnly={readOnly} /></td>
-              {hasWeight && <td className="border border-black p-0"><input type="text" value={item.weight || ''} onChange={e => updateItem(idx, 'weight', e.target.value)} className="text-center font-bold" readOnly={readOnly} /></td>}
-              <td className="border border-black p-0"><input type="text" value={item.previousPrice?.vendor || ''} onChange={e => updatePreviousPrice(idx, 'vendor', e.target.value)} className="text-center italic text-black" readOnly={readOnly} /></td>
-              <td className="border border-black p-0"><input type="text" value={item.previousPrice?.rate || ''} onChange={e => updatePreviousPrice(idx, 'rate', e.target.value)} className="text-center text-black" readOnly={readOnly} /></td>
-              <td className="border border-black p-0"><input type="text" value={item.previousPrice?.date || ''} onChange={e => updatePreviousPrice(idx, 'date', e.target.value)} className="text-center text-black" readOnly={readOnly} /></td>
+              <td className="relative border border-black p-0">
+                <input type="text" value={item.uom || ''} onChange={e => updateItem(idx, 'uom', e.target.value)} className="text-center uppercase" readOnly={readOnly} />
+                <div className="resizer-h print-hidden" onMouseDown={startResizingHeight} />
+              </td>
+              <td className="relative border border-black p-0">
+                <input type="text" value={item.qty || ''} onChange={e => updateItem(idx, 'qty', e.target.value)} className="text-center font-bold" readOnly={readOnly} />
+                <div className="resizer-h print-hidden" onMouseDown={startResizingHeight} />
+              </td>
+              {hasWeight && (
+                <td className="relative border border-black p-0">
+                  <input type="text" value={item.weight || ''} onChange={e => updateItem(idx, 'weight', e.target.value)} className="text-center font-bold" readOnly={readOnly} />
+                  <div className="resizer-h print-hidden" onMouseDown={startResizingHeight} />
+                </td>
+              )}
+              <td className="relative border border-black p-0">
+                <input type="text" value={item.previousPrice?.vendor || ''} onChange={e => updatePreviousPrice(idx, 'vendor', e.target.value)} className="text-center italic text-black" readOnly={readOnly} />
+                <div className="resizer-h print-hidden" onMouseDown={startResizingHeight} />
+              </td>
+              <td className="relative border border-black p-0">
+                <input type="text" value={item.previousPrice?.rate || ''} onChange={e => updatePreviousPrice(idx, 'rate', e.target.value)} className="text-center text-black" readOnly={readOnly} />
+                <div className="resizer-h print-hidden" onMouseDown={startResizingHeight} />
+              </td>
+              <td className="relative border border-black p-0">
+                <input type="text" value={item.previousPrice?.date || ''} onChange={e => updatePreviousPrice(idx, 'date', e.target.value)} className="text-center text-black" readOnly={readOnly} />
+                <div className="resizer-h print-hidden" onMouseDown={startResizingHeight} />
+              </td>
               {vendors.map((v: string, vIdx: number) => {
                 const quote = item.vendorQuotes?.find((q: any) => q.vendorName === v);
                 return (
                   <React.Fragment key={vIdx}>
-                    <td className="border border-black p-0"><AutoExpandingTextarea value={quote?.make || ''} onChange={val => updateQuote(idx, v, 'make', val)} className="text-center italic text-black" readOnly={readOnly} rows={1}/></td>
-                    <td className="border border-black p-0"><input type="text" value={quote?.mrp ?? ''} onChange={e => updateQuote(idx, v, 'mrp', e.target.value)} className="text-center text-black" readOnly={readOnly} /></td>
-                    <td className="border border-black p-0"><input type="text" value={quote?.discount ?? ''} onChange={e => updateQuote(idx, v, 'discount', e.target.value)} className="text-center text-black" readOnly={readOnly} /></td>
-                    <td className="border border-black p-0"><input type="text" value={quote?.netRate ?? ''} onChange={e => updateQuote(idx, v, 'netRate', e.target.value)} className="text-center font-bold text-black" readOnly={readOnly} /></td>
-                    <td className="border border-black p-0 bg-white"><input type="text" value={quote?.totalAmount ?? ''} onChange={e => updateQuote(idx, v, 'totalAmount', e.target.value)} className="text-center font-black text-black" readOnly={readOnly} /></td>
+                    <td className="relative border border-black p-0">
+                      <AutoExpandingTextarea value={quote?.make || ''} onChange={val => updateQuote(idx, v, 'make', val)} className="text-center italic text-black" readOnly={readOnly} rows={1}/>
+                      <div className="resizer-h print-hidden" onMouseDown={startResizingHeight} />
+                    </td>
+                    <td className="relative border border-black p-0">
+                      <input type="text" value={quote?.mrp ?? ''} onChange={e => updateQuote(idx, v, 'mrp', e.target.value)} className="text-center text-black" readOnly={readOnly} />
+                      <div className="resizer-h print-hidden" onMouseDown={startResizingHeight} />
+                    </td>
+                    <td className="relative border border-black p-0">
+                      <input type="text" value={quote?.discount ?? ''} onChange={e => updateQuote(idx, v, 'discount', e.target.value)} className="text-center text-black" readOnly={readOnly} />
+                      <div className="resizer-h print-hidden" onMouseDown={startResizingHeight} />
+                    </td>
+                    <td className="relative border border-black p-0">
+                      <input type="text" value={quote?.netRate ?? ''} onChange={e => updateQuote(idx, v, 'netRate', e.target.value)} className="text-center font-bold text-black" readOnly={readOnly} />
+                      <div className="resizer-h print-hidden" onMouseDown={startResizingHeight} />
+                    </td>
+                    <td className="relative border border-black p-0 bg-white">
+                      <input type="text" value={quote?.totalAmount ?? ''} onChange={e => updateQuote(idx, v, 'totalAmount', e.target.value)} className="text-center font-black text-black" readOnly={readOnly} />
+                      <div className="resizer-h print-hidden" onMouseDown={startResizingHeight} />
+                    </td>
                   </React.Fragment>
                 )
               })}
-              <td className="print-hidden border border-black p-0 text-center">
+              <td className="print-hidden border border-black p-0 text-center relative">
                 {!readOnly && (
                   <button onClick={() => removeItem(idx)} className="p-1 hover:text-black text-black transition-colors" title="Remove Row">
                     <Trash2 className="w-3.5 h-3.5 mx-auto" />
                   </button>
                 )}
+                <div className="resizer-h print-hidden" onMouseDown={startResizingHeight} />
               </td>
             </tr>
           ))}
