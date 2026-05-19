@@ -26,7 +26,7 @@ const POMaker: React.FC = () => {
       quote_date: new Date().toISOString().split('T')[0],
       quote_ref_type: 'MAIL',
       vendor_name: '',
-      version: 'hemraj_ind',
+      version: 'hemraj_rice',
       vendor_details: { address: '', gstin: '', mail: '', ph: '', state: '' },
       items: [{ sn: 1, itemName: '', qty: 0, uom: 'NOS', rate: 0, discount: 0, tax: 'GST @18%' }],
       terms: { tax: '', packing: '', payment: '', freight: '', delivery: '', contact_no: '', notes: '' },
@@ -151,8 +151,8 @@ const POMaker: React.FC = () => {
             value={po.version}
             onChange={e => setPo({...po, version: e.target.value as any})}
           >
-            <option value="hemraj_ind">Hemraj Industries</option>
             <option value="hemraj_rice">Hemraj Rice Mill</option>
+            <option value="hemraj_ind">Hemraj Industries</option>
             <option value="radhashyam">Radhashyam Industries</option>
           </select>
           <button 
