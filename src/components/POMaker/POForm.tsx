@@ -283,6 +283,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
                   >
                     <option value="FT">FT</option>
                     <option value="KG">KG</option>
+                    <option value="Mtr">Mtr</option>
                     <option value="PCS">PCS</option>
                     <option value="NOS">NOS</option>
                   </select>
