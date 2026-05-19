@@ -198,11 +198,11 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
             <tr className="bg-white uppercase text-black border-b-2 border-black">
               <th className="border border-black p-1 w-8 text-center font-bold">S/N</th>
               <th className="border border-black p-1 text-left font-bold">Item Name</th>
+              <th className="border border-black p-1 w-20 text-center font-bold">Make</th>
               <th className="border border-black p-1 w-14 text-center font-bold">Qnty</th>
               <th className="border border-black p-1 w-14 text-center font-bold">UOM</th>
               <th className="border border-black p-1 w-20 text-right font-bold">Rate</th>
               <th className="border border-black p-1 w-16 text-center font-bold">Dis%</th>
-              <th className="border border-black p-1 w-20 text-center font-bold">Tax</th>
             </tr>
           </thead>
           <tbody>
@@ -210,11 +210,11 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
               <tr key={idx} className="text-black">
                 <td className="border border-black p-1 text-center font-bold">{item.sn}</td>
                 <td className="border border-black p-1 uppercase">{item.itemName}</td>
+                <td className="border border-black p-1 text-center uppercase">{item.make}</td>
                 <td className="border border-black p-1 text-center">{Number(item.qty).toFixed(2)}</td>
                 <td className="border border-black p-1 text-center uppercase">{item.uom}</td>
                 <td className="border border-black p-1 text-right">{Number(item.rate).toFixed(2)}</td>
                 <td className="border border-black p-1 text-center">{Number(item.discount).toFixed(3)}</td>
-                <td className="border border-black p-1 text-center whitespace-nowrap">{item.tax || 'GST @18%'}</td>
               </tr>
             ))}
           </tbody>
@@ -223,12 +223,15 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
         {/* Commercial Terms */}
         <div className="text-[10px] space-y-1 mb-6 text-black">
           <p className="font-bold text-xs underline mb-2">Commercial Terms::</p>
-          <div className="grid grid-cols-[150px_1fr] gap-y-1">
+          <div className="grid grid-cols-[100px_1fr] gap-y-1">
             <span className="font-bold">Tax ::</span>
             <span>{po.terms.tax}</span>
             
-            <span className="font-bold">Packing & Forwarding ::</span>
+            <span className="font-bold">Packing ::</span>
             <span>{po.terms.packing}</span>
+
+            <span className="font-bold">Forwarding ::</span>
+            <span>{po.terms.notes}</span>
             
             <span className="font-bold">Payment Terms ::</span>
             <span>{po.terms.payment}</span>
@@ -254,12 +257,10 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
            <p>NOTE 2 :: If we have any type of dispute from our required specification then, we will reject the material.</p>
         </div>
 
-        <div className="flex justify-between items-start mt-12 text-black">
+        <div className="flex justify-between items-end mt-32 text-black">
            <div className="text-left text-[10px]">
               <p className="font-bold">Yours faithfully,</p>
               <p className="font-black text-xs uppercase mt-1">{currentMeta.name}</p>
-              <div className="h-16"></div>
-              <p className="font-bold text-xs uppercase tracking-widest">Authorized Signatory</p>
            </div>
            <div className="text-right text-[11px] font-black">
               <p>GSTIN ::{currentMeta.gstin}</p>

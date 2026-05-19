@@ -28,7 +28,7 @@ const POMaker: React.FC = () => {
       vendor_name: '',
       version: 'hemraj_rice',
       vendor_details: { address: '', gstin: '', mail: '', ph: '', state: '' },
-      items: [{ sn: 1, itemName: '', qty: 0, uom: 'NOS', rate: 0, discount: 0, tax: 'GST @18%' }],
+      items: [{ sn: 1, make: '', itemName: '', qty: 0, uom: 'NOS', rate: 0, discount: 0, tax: 'GST @18%' }],
       terms: { tax: '', packing: '', payment: '', freight: '', delivery: '', contact_no: '', notes: '' },
       total_amount: 0
     };
@@ -53,6 +53,29 @@ const POMaker: React.FC = () => {
       localStorage.setItem('po_maker_draft', JSON.stringify(po));
     }
   }, [po, editId]);
+
+  // Handle Automatic PO Number Formatting
+  useEffect(() => {
+    if (!editId) {
+      const prefix = po.version === 'hemraj_rice' ? 'HRM' : po.version === 'hemraj_ind' ? 'HI' : 'RS';
+      const now = new Date();
+      // Financial year logic: if month < 4 (April), year is prevYear-currentYear, else currentYear-nextYear
+      const isBeforeApril = now.getMonth() < 3;
+      const startYear = isBeforeApril ? now.getFullYear() - 1 : now.getFullYear();
+      const endYearShort = (startYear + 1).toString().slice(-2);
+      const yearRange = `${startYear}-${endYearShort}`;
+      
+      const currentPO = po.po_no || '';
+      const parts = currentPO.split('/');
+      const existingSerial = parts.length > 2 ? parts[2] : '';
+      
+      const newPONo = `${prefix}/${yearRange}/${existingSerial}`;
+      
+      if (po.po_no !== newPONo) {
+        setPo(prev => ({ ...prev, po_no: newPONo }));
+      }
+    }
+  }, [po.version]);
 
   const fetchPO = async (id: string) => {
     try {

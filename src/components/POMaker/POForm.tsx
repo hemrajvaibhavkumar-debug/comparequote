@@ -47,6 +47,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
   const addItem = () => {
     const newItem: POItem = {
       sn: po.items.length + 1,
+      make: '',
       itemName: '',
       qty: 0,
       uom: 'NOS',
@@ -96,16 +97,18 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
     <div className="space-y-8 pb-20">
       {/* Header Info */}
       <section className="bg-white p-6 rounded-xl shadow-sm border border-black space-y-4">
-        <h2 className="text-lg font-bold border-b border-black pb-2">PO Information</h2>
+        <div className="flex items-center justify-between border-b border-black pb-2">
+          <h2 className="text-lg font-bold">PO Information</h2>
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold text-black uppercase">PO Number</label>
             <input 
               type="text"
               className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
-              value={po.po_no}
+              value={po.po_no || ''}
               onChange={e => setPo({...po, po_no: e.target.value})}
-              placeholder="e.g. HI/2026-27/89"
+              placeholder="e.g. HRM/2026-27/01"
             />
           </div>
           <div>
@@ -113,7 +116,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
             <input 
               type="date"
               className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
-              value={po.date}
+              value={po.date || ''}
               onChange={e => setPo({...po, date: e.target.value})}
             />
           </div>
@@ -127,6 +130,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
               >
                 <option value="MAIL">MAIL</option>
                 <option value="WHATSAPP">WHATSAPP</option>
+                <option value="VERBAL">VERBAL</option>
               </select>
             </div>
             <div>
@@ -134,7 +138,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
               <input 
                 type="date"
                 className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
-                value={po.quote_date}
+                value={po.quote_date || ''}
                 onChange={e => setPo({...po, quote_date: e.target.value})}
               />
             </div>
@@ -166,7 +170,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
               <input 
                 type="text"
                 className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
-                value={po.vendor_name}
+                value={po.vendor_name || ''}
                 onChange={e => setPo({...po, vendor_name: e.target.value})}
               />
             </div>
@@ -178,7 +182,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
                 <textarea 
                   className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
                   rows={2}
-                  value={po.vendor_details.address}
+                  value={po.vendor_details.address || ''}
                   onChange={e => updateVendorField('address', e.target.value)}
                 />
              </div>
@@ -187,7 +191,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
                 <input 
                   type="text"
                   className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
-                  value={po.vendor_details.gstin}
+                  value={po.vendor_details.gstin || ''}
                   onChange={e => updateVendorField('gstin', e.target.value)}
                 />
              </div>
@@ -196,7 +200,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
                 <input 
                   type="text"
                   className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
-                  value={po.vendor_details.state}
+                  value={po.vendor_details.state || ''}
                   onChange={e => updateVendorField('state', e.target.value)}
                 />
              </div>
@@ -205,7 +209,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
                 <input 
                   type="email"
                   className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
-                  value={po.vendor_details.mail}
+                  value={po.vendor_details.mail || ''}
                   onChange={e => updateVendorField('mail', e.target.value)}
                 />
              </div>
@@ -214,7 +218,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
                 <input 
                   type="text"
                   className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
-                  value={po.vendor_details.ph}
+                  value={po.vendor_details.ph || ''}
                   onChange={e => updateVendorField('ph', e.target.value)}
                 />
              </div>
@@ -243,13 +247,22 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
                 <Trash2 className="w-3 h-3" />
               </button>
               <div className="grid grid-cols-12 gap-3">
-                <div className="col-span-7">
+                <div className="col-span-6">
                   <label className="block text-[10px] font-bold text-black uppercase">Item Name / Description</label>
                   <input 
                     type="text"
                     className="w-full border border-black rounded px-2 py-1 text-sm text-black"
-                    value={item.itemName}
+                    value={item.itemName || ''}
                     onChange={e => updateItem(index, 'itemName', e.target.value)}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-[10px] font-bold text-black uppercase">Make</label>
+                  <input 
+                    type="text"
+                    className="w-full border border-black rounded px-2 py-1 text-sm text-black"
+                    value={item.make || ''}
+                    onChange={e => updateItem(index, 'make', e.target.value)}
                   />
                 </div>
                 <div className="col-span-2">
@@ -257,15 +270,15 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
                   <input 
                     type="number"
                     className="w-full border border-black rounded px-2 py-1 text-sm text-black"
-                    value={item.qty}
+                    value={item.qty || 0}
                     onChange={e => updateItem(index, 'qty', e.target.value)}
                   />
                 </div>
-                <div className="col-span-1">
+                <div className="col-span-2">
                   <label className="block text-[10px] font-bold text-black uppercase">UOM</label>
                   <select 
                     className="w-full border border-black rounded px-1 py-1 text-sm bg-white text-black"
-                    value={item.uom}
+                    value={item.uom || 'NOS'}
                     onChange={e => updateItem(index, 'uom', e.target.value)}
                   >
                     <option value="FT">FT</option>
@@ -279,27 +292,18 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
                   <input 
                     type="number"
                     className="w-full border border-black rounded px-2 py-1 text-sm text-black"
-                    value={item.rate}
+                    value={item.rate || 0}
                     onChange={e => updateItem(index, 'rate', e.target.value)}
                   />
                 </div>
-                <div className="col-span-1">
+                <div className="col-span-2">
                   <label className="block text-[10px] font-bold text-black uppercase">Dis%</label>
                   <input 
                     type="number"
                     step="0.001"
                     className="w-full border border-black rounded px-2 py-1 text-sm text-black"
-                    value={item.discount}
+                    value={item.discount || 0}
                     onChange={e => updateItem(index, 'discount', e.target.value)}
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-bold text-black uppercase">Tax</label>
-                  <input 
-                    type="text"
-                    className="w-full border border-black rounded px-2 py-1 text-sm text-black"
-                    value={item.tax}
-                    onChange={e => updateItem(index, 'tax', e.target.value)}
                   />
                 </div>
               </div>
@@ -329,7 +333,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
             <label className="block text-xs font-bold text-black uppercase">Tax</label>
             <select 
               className="mt-1 w-full border border-black rounded-lg px-3 py-2 bg-white text-black"
-              value={po.terms.tax}
+              value={po.terms.tax || ''}
               onChange={e => setPo({...po, terms: { ...po.terms, tax: e.target.value }})}
             >
               <option value="">Select Tax</option>
@@ -340,7 +344,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-bold text-black uppercase">Packing & Forwarding</label>
+            <label className="block text-xs font-bold text-black uppercase">Packing</label>
             <div className="flex gap-2">
               <select 
                 className="mt-1 w-1/3 border border-black rounded-lg px-2 py-2 bg-white text-xs text-black"
@@ -354,15 +358,41 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
                 <option value="" disabled>Select Option</option>
                 <option value="Nil">Nil</option>
                 <option value="Extra">Extra</option>
+                <option value="CUSTOM">Custom...</option>
+              </select>
+              <input 
+                type="text"
+                className="mt-1 flex-1 border border-black rounded-lg px-3 py-2 text-black text-sm"
+                value={po.terms.packing || ''}
+                onChange={e => setPo({...po, terms: { ...po.terms, packing: e.target.value }})}
+                placeholder="e.g. Nil, Extra"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-black uppercase">Forwarding</label>
+            <div className="flex gap-2">
+              <select 
+                className="mt-1 w-1/3 border border-black rounded-lg px-2 py-2 bg-white text-xs text-black"
+                onChange={e => {
+                  if (e.target.value !== 'CUSTOM') {
+                    setPo({...po, terms: { ...po.terms, notes: e.target.value || '' }});
+                  }
+                }}
+                defaultValue=""
+              >
+                <option value="" disabled>Select Option</option>
+                <option value="Nil">Nil</option>
+                <option value="Extra">Extra</option>
                 <option value="Free Upto Kolkata/Burdwan">Free Upto Kolkata/Burdwan</option>
                 <option value="CUSTOM">Custom...</option>
               </select>
               <input 
                 type="text"
                 className="mt-1 flex-1 border border-black rounded-lg px-3 py-2 text-black text-sm"
-                value={po.terms.packing}
-                onChange={e => setPo({...po, terms: { ...po.terms, packing: e.target.value }})}
-                placeholder="e.g. Nil, Extra, or Free Upto Kolkata"
+                value={po.terms.notes || ''}
+                onChange={e => setPo({...po, terms: { ...po.terms, notes: e.target.value }})}
+                placeholder="e.g. Free Upto Kolkata"
               />
             </div>
           </div>
@@ -386,7 +416,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
               <input 
                 type="text"
                 className="mt-1 flex-1 border border-black rounded-lg px-3 py-2 text-xs text-black"
-                value={po.terms.payment}
+                value={po.terms.payment || ''}
                 onChange={e => setPo({...po, terms: { ...po.terms, payment: e.target.value }})}
                 placeholder="100% Against PI or custom"
               />
@@ -396,7 +426,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
             <label className="block text-xs font-bold text-black uppercase">Freight</label>
             <select 
               className="mt-1 w-full border border-black rounded-lg px-3 py-2 bg-white text-black"
-              value={po.terms.freight}
+              value={po.terms.freight || ''}
               onChange={e => setPo({...po, terms: { ...po.terms, freight: e.target.value }})}
             >
               <option value="">Select Freight</option>
@@ -424,7 +454,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
               <input 
                 type="text"
                 className="mt-1 flex-1 border border-black rounded-lg px-3 py-2 text-black"
-                value={po.terms.delivery}
+                value={po.terms.delivery || ''}
                 onChange={e => setPo({...po, terms: { ...po.terms, delivery: e.target.value }})}
                 placeholder="Immediate or enter custom period"
               />

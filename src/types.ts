@@ -80,6 +80,7 @@ export interface VendorMaster {
 
 export interface POItem {
   sn: number;
+  make: string;
   itemName: string;
   qty: number;
   uom: string;
