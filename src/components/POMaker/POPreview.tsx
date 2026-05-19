@@ -87,7 +87,7 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
     <span
       contentEditable
       suppressContentEditableWarning
-      className={`hover:bg-black/5 focus:bg-blue-50 focus:outline-none px-0.5 rounded transition-colors inline-block ${className}`}
+      className={`hover:bg-black/5 focus:bg-blue-50 focus:outline-none px-0.5 rounded transition-colors inline-block text-black ${className}`}
       onBlur={(e) => onChange(e.currentTarget.textContent || '')}
       onKeyDown={(e) => {
         if (e.key === 'Enter') {
@@ -169,10 +169,10 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
 
         <div className="flex justify-between items-start mb-6 text-sm text-black">
           <div>
-            <p className="font-bold text-black">PO NO:: <span className="font-normal">{po.po_no || 'HI /2026-27/00'}</span></p>
+            <p className="font-bold text-black">PO NO:: <span className="font-normal text-black">{po.po_no || 'HI /2026-27/00'}</span></p>
           </div>
           <div>
-            <p className="font-bold text-black">Date : <span className="font-normal">{po.date}</span></p>
+            <p className="font-bold text-black">Date : <span className="font-normal text-black">{po.date}</span></p>
           </div>
         </div>
 
@@ -181,10 +181,10 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
           <p className="font-bold text-sm text-black">{po.vendor_name || 'VENDOR NAME'}</p>
           <p className="whitespace-pre-wrap max-w-[300px] text-black">{po.vendor_details.address}</p>
           <div className="mt-2 space-y-0.5 text-black">
-            <p><span className="font-bold">STATE :</span> {po.vendor_details.state}</p>
-            <p><span className="font-bold">GSTIN :</span> {po.vendor_details.gstin}</p>
-            <p><span className="font-bold">Mail ID :</span> {po.vendor_details.mail}</p>
-            <p><span className="font-bold">Ph :</span> {po.vendor_details.ph}</p>
+            <p><span className="font-bold text-black">STATE :</span> {po.vendor_details.state}</p>
+            <p><span className="font-bold text-black">GSTIN :</span> {po.vendor_details.gstin}</p>
+            <p><span className="font-bold text-black">Mail ID :</span> {po.vendor_details.mail}</p>
+            <p><span className="font-bold text-black">Ph :</span> {po.vendor_details.ph}</p>
           </div>
         </div>
 
@@ -195,7 +195,7 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
         {/* Items Table */}
         <table className="w-full border-collapse border border-black text-[10px] mb-6 text-black">
           <thead>
-            <tr className="bg-gray-100 uppercase text-black">
+            <tr className="bg-white uppercase text-black border-b-2 border-black">
               <th className="border border-black p-1 w-8 text-center font-bold">S/N</th>
               <th className="border border-black p-1 text-left font-bold">Item Name</th>
               <th className="border border-black p-1 w-14 text-center font-bold">Qnty</th>

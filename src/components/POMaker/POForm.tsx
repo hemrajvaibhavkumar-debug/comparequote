@@ -341,27 +341,29 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
           </div>
           <div>
             <label className="block text-xs font-bold text-black uppercase">Packing & Forwarding</label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex gap-2">
               <select 
-                className="mt-1 w-full border border-black rounded-lg px-2 py-2 bg-white text-xs text-black"
+                className="mt-1 w-1/3 border border-black rounded-lg px-2 py-2 bg-white text-xs text-black"
+                onChange={e => {
+                  if (e.target.value !== 'CUSTOM') {
+                    setPo({...po, terms: { ...po.terms, packing: e.target.value }});
+                  }
+                }}
+                defaultValue=""
+              >
+                <option value="" disabled>Select Option</option>
+                <option value="Nil">Nil</option>
+                <option value="Extra">Extra</option>
+                <option value="Free Upto Kolkata/Burdwan">Free Upto Kolkata/Burdwan</option>
+                <option value="CUSTOM">Custom...</option>
+              </select>
+              <input 
+                type="text"
+                className="mt-1 flex-1 border border-black rounded-lg px-3 py-2 text-black text-sm"
                 value={po.terms.packing}
                 onChange={e => setPo({...po, terms: { ...po.terms, packing: e.target.value }})}
-              >
-                <option value="">Packing</option>
-                <option value="Nil">Nil</option>
-                <option value="Extra">Extra</option>
-                <option value="Charge Nil">Charge Nil</option>
-              </select>
-              <select 
-                className="mt-1 w-full border border-black rounded-lg px-2 py-2 bg-white text-xs text-black"
-                value={po.terms.notes || ''} 
-                onChange={e => setPo({...po, terms: { ...po.terms, notes: e.target.value }})}
-              >
-                <option value="">Forwarding</option>
-                <option value="Extra">Extra</option>
-                <option value="Nil">Nil</option>
-                <option value="Free upto West Burdwan/Kolkata">Free Upto Kolkata/Burdwan</option>
-              </select>
+                placeholder="e.g. Nil, Extra, or Free Upto Kolkata"
+              />
             </div>
           </div>
           <div>
