@@ -83,8 +83,24 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
     window.print();
   };
 
-  const inputClass = "bg-transparent hover:bg-black/5 focus:bg-blue-50 focus:outline-none transition-colors px-1 rounded -ml-1 inline-block text-black";
-  const labelClass = "font-bold text-gray-500 uppercase mb-1";
+  const EditableText = ({ value, onChange, className = "" }: { value: string, onChange: (val: string) => void, className?: string }) => (
+    <span
+      contentEditable
+      suppressContentEditableWarning
+      className={`hover:bg-black/5 focus:bg-blue-50 focus:outline-none px-0.5 rounded transition-colors inline-block ${className}`}
+      onBlur={(e) => onChange(e.currentTarget.textContent || '')}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          e.currentTarget.blur();
+        }
+      }}
+    >
+      {value}
+    </span>
+  );
+
+  const labelClass = "font-bold text-black uppercase mb-1";
 
   return (
     <div className="flex flex-col items-center gap-4 text-black">
@@ -107,7 +123,7 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
         @media print {
           .print-hidden { display: none !important; }
           body * { visibility: hidden; }
-          .print-area, .print-area * { visibility: visible; }
+          .print-area, .print-area * { visibility: visible; color: black !important; }
           .print-area {
             position: absolute;
             left: 0;
@@ -116,6 +132,7 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
             padding: 15mm;
             margin: 0 !important;
             box-shadow: none !important;
+            background: white !important;
           }
           @page {
             size: A4 portrait;
@@ -140,7 +157,8 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
           minHeight: '297mm',
           padding: '15mm',
           paddingTop: '40mm', // Space for pre-printed letterhead
-          fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+          fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+          color: 'black'
         }}
       >
         <div className="text-center mb-8">
@@ -151,18 +169,18 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
 
         <div className="flex justify-between items-start mb-6 text-sm text-black">
           <div>
-            <p className="font-bold">PO NO:: <span className="font-normal">{po.po_no || 'HI /2026-27/00'}</span></p>
+            <p className="font-bold text-black">PO NO:: <span className="font-normal">{po.po_no || 'HI /2026-27/00'}</span></p>
           </div>
           <div>
-            <p className="font-bold">Date : <span className="font-normal">{po.date}</span></p>
+            <p className="font-bold text-black">Date : <span className="font-normal">{po.date}</span></p>
           </div>
         </div>
 
         <div className="mb-6 text-xs text-black">
-          <p className="font-bold text-gray-500 uppercase mb-1">To,</p>
-          <p className="font-bold text-sm">{po.vendor_name || 'VENDOR NAME'}</p>
-          <p className="whitespace-pre-wrap max-w-[300px]">{po.vendor_details.address}</p>
-          <div className="mt-2 space-y-0.5">
+          <p className="font-bold text-black uppercase mb-1">To,</p>
+          <p className="font-bold text-sm text-black">{po.vendor_name || 'VENDOR NAME'}</p>
+          <p className="whitespace-pre-wrap max-w-[300px] text-black">{po.vendor_details.address}</p>
+          <div className="mt-2 space-y-0.5 text-black">
             <p><span className="font-bold">STATE :</span> {po.vendor_details.state}</p>
             <p><span className="font-bold">GSTIN :</span> {po.vendor_details.gstin}</p>
             <p><span className="font-bold">Mail ID :</span> {po.vendor_details.mail}</p>
@@ -170,18 +188,8 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
           </div>
         </div>
 
-        <p className="text-xs mb-4 italic text-black">
-          Dear Sir/Madam, As per your Quotation Ref No.:-
-          <input 
-            className="bg-transparent hover:bg-black/5 focus:bg-blue-50 focus:outline-none transition-colors italic w-[65px] text-black"
-            value={po.quote_ref_type || 'MAIL'}
-            onChange={e => updatePO('quote_ref_type', e.target.value.toUpperCase())}
-          /> Ref Date:-
-          <input 
-            className="bg-transparent hover:bg-black/5 focus:bg-blue-50 focus:outline-none transition-colors italic w-[70px] text-black"
-            value={po.quote_date || po.date}
-            onChange={e => updatePO('quote_date', e.target.value)}
-          />,We are sending the order so please supply the materials on urgent basis:-
+        <p className="text-xs mb-4 italic text-black leading-relaxed">
+          Dear Sir/Madam, As per your Quotation Ref No.:-<EditableText value={po.quote_ref_type || 'MAIL'} onChange={val => updatePO('quote_ref_type', val.toUpperCase())} /> Ref Date:-<EditableText value={po.quote_date || po.date} onChange={val => updatePO('quote_date', val)} />,We are sending the order so please supply the materials on urgent basis:-
         </p>
 
         {/* Items Table */}

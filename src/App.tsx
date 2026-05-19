@@ -5,7 +5,8 @@ import ViewTable from './ViewTable';
 import Login from './Login';
 import POMaker from './components/POMaker/POMaker';
 import POSettings from './components/Settings/POSettings';
-import { Settings as SettingsIcon, FileText } from 'lucide-react';
+import SavedPOs from './SavedPOs';
+import { Settings as SettingsIcon, FileText, Database } from 'lucide-react';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem('admin_token');
@@ -39,6 +40,9 @@ export default function App() {
                   <Link to="/po-maker" className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-bold text-black hover:bg-black/10 transition-colors underline decoration-2 underline-offset-4">
                     <FileText className="w-4 h-4" /> PO Maker
                   </Link>
+                  <Link to="/saved-pos" className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-black hover:bg-black/10 transition-colors">
+                    <Database className="w-4 h-4" /> Saved POs
+                  </Link>
                   <Link to="/settings" className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-black hover:bg-black/10 transition-colors">
                     <SettingsIcon className="w-4 h-4" /> Settings
                   </Link>
@@ -65,6 +69,7 @@ export default function App() {
             <Route path="/saved" element={<ProtectedRoute><SavedTables /></ProtectedRoute>} />
             <Route path="/saved/:id" element={<ProtectedRoute><ViewTable /></ProtectedRoute>} />
             <Route path="/po-maker" element={<ProtectedRoute><POMaker /></ProtectedRoute>} />
+            <Route path="/saved-pos" element={<ProtectedRoute><SavedPOs /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><POSettings /></ProtectedRoute>} />
           </Routes>
         </main>

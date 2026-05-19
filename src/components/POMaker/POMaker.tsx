@@ -3,10 +3,14 @@ import POForm from './POForm';
 import POPreview from './POPreview';
 import { PurchaseOrder, CompanySettings, TermsTemplate, VendorMaster } from '../../types';
 import { Save, ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const POMaker: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const editId = queryParams.get('edit');
+
   const [po, setPo] = useState<PurchaseOrder>({
     po_no: '',
     date: new Date().toISOString().split('T')[0],
@@ -28,7 +32,24 @@ const POMaker: React.FC = () => {
     fetchSettings();
     fetchTemplates();
     fetchVendors();
-  }, []);
+    if (editId) {
+      fetchPO(editId);
+    }
+  }, [editId]);
+
+  const fetchPO = async (id: string) => {
+    try {
+      const res = await fetch(`/api/po/${id}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPo(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch PO', err);
+    }
+  };
 
   const fetchSettings = async () => {
     const res = await fetch('/api/settings/company', {
@@ -65,16 +86,19 @@ const POMaker: React.FC = () => {
       alert('Please enter PO No and Vendor Name');
       return;
     }
-    const res = await fetch('/api/po', {
-      method: 'POST',
+    const method = editId ? 'PUT' : 'POST';
+    const url = editId ? `/api/po/${editId}` : '/api/po';
+
+    const res = await fetch(url, {
+      method,
       headers: { 
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
       },
       body: JSON.stringify(po)
     });
-    if (res.ok) alert('PO saved successfully!');
-    else alert('Failed to save PO');
+    if (res.ok) alert(`PO ${editId ? 'updated' : 'saved'} successfully!`);
+    else alert(`Failed to ${editId ? 'update' : 'save'} PO`);
   };
 
   return (

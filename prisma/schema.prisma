@@ -72,6 +72,8 @@ model PurchaseOrder {
   id              Int      @id @default(autoincrement())
   po_no           String   @unique
   date            DateTime @default(now())
+  quote_date      String?  
+  quote_ref_type  String?  
   vendor_name     String
   version         String?  // hemraj_ind, hemraj_rice, radhashyam
   vendor_details  Json?    // Address, GSTIN, Mail, Ph

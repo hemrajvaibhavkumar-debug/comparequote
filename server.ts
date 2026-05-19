@@ -439,10 +439,49 @@ async function startServer() {
 
   app.post("/api/po", authenticateToken, async (req, res) => {
     try {
-      const po = await prisma.purchaseOrder.create({ data: req.body });
+      const data = { ...req.body };
+      if (data.date) data.date = new Date(data.date);
+      const po = await prisma.purchaseOrder.create({ data });
       res.json(po);
     } catch (error) {
-      res.status(500).json({ error: "Failed to save PO" });
+      console.error("[Backend] PO Save Error:", error);
+      res.status(500).json({ error: "Failed to save PO", details: String(error) });
+    }
+  });
+
+  app.get("/api/po/:id", authenticateToken, async (req, res) => {
+    try {
+      const po = await prisma.purchaseOrder.findUnique({ where: { id: Number(req.params.id) } });
+      if (!po) return res.status(404).json({ error: "PO not found" });
+      res.json(po);
+    } catch (error) {
+      console.error("[Backend] PO Fetch Error:", error);
+      res.status(500).json({ error: "Failed to fetch PO" });
+    }
+  });
+
+  app.put("/api/po/:id", authenticateToken, async (req, res) => {
+    try {
+      // Remove id from body to avoid primary key update attempt
+      const { id, created_at, ...data } = req.body;
+      if (data.date) data.date = new Date(data.date);
+      const po = await prisma.purchaseOrder.update({
+        where: { id: Number(req.params.id) },
+        data
+      });
+      res.json(po);
+    } catch (error) {
+      console.error("[Backend] PO Update Error:", error);
+      res.status(500).json({ error: "Failed to update PO", details: String(error) });
+    }
+  });
+
+  app.delete("/api/po/:id", authenticateToken, async (req, res) => {
+    try {
+      await prisma.purchaseOrder.delete({ where: { id: Number(req.params.id) } });
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete PO" });
     }
   });
 
