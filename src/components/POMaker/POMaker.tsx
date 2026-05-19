@@ -11,17 +11,27 @@ const POMaker: React.FC = () => {
   const queryParams = new URLSearchParams(location.search);
   const editId = queryParams.get('edit');
 
-  const [po, setPo] = useState<PurchaseOrder>({
-    po_no: '',
-    date: new Date().toISOString().split('T')[0],
-    quote_date: new Date().toISOString().split('T')[0],
-    quote_ref_type: 'MAIL',
-    vendor_name: '',
-    version: 'hemraj_ind',
-    vendor_details: { address: '', gstin: '', mail: '', ph: '', state: '' },
-    items: [{ sn: 1, itemName: '', qty: 0, uom: 'NOS', rate: 0, discount: 0, tax: 'GST @18%' }],
-    terms: { tax: '', packing: '', payment: '', freight: '', delivery: '', contact_no: '', notes: '' },
-    total_amount: 0
+  const [po, setPo] = useState<PurchaseOrder>(() => {
+    const saved = localStorage.getItem('po_maker_draft');
+    if (saved && !editId) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Error parsing saved PO draft", e);
+      }
+    }
+    return {
+      po_no: '',
+      date: new Date().toISOString().split('T')[0],
+      quote_date: new Date().toISOString().split('T')[0],
+      quote_ref_type: 'MAIL',
+      vendor_name: '',
+      version: 'hemraj_ind',
+      vendor_details: { address: '', gstin: '', mail: '', ph: '', state: '' },
+      items: [{ sn: 1, itemName: '', qty: 0, uom: 'NOS', rate: 0, discount: 0, tax: 'GST @18%' }],
+      terms: { tax: '', packing: '', payment: '', freight: '', delivery: '', contact_no: '', notes: '' },
+      total_amount: 0
+    };
   });
 
   const [settings, setSettings] = useState<CompanySettings | null>(null);
@@ -36,6 +46,13 @@ const POMaker: React.FC = () => {
       fetchPO(editId);
     }
   }, [editId]);
+
+  // Auto-save draft
+  useEffect(() => {
+    if (!editId) {
+      localStorage.setItem('po_maker_draft', JSON.stringify(po));
+    }
+  }, [po, editId]);
 
   const fetchPO = async (id: string) => {
     try {
@@ -97,8 +114,20 @@ const POMaker: React.FC = () => {
       },
       body: JSON.stringify(po)
     });
-    if (res.ok) alert(`PO ${editId ? 'updated' : 'saved'} successfully!`);
+    if (res.ok) {
+      alert(`PO ${editId ? 'updated' : 'saved'} successfully!`);
+      if (!editId) {
+        localStorage.removeItem('po_maker_draft');
+      }
+    }
     else alert(`Failed to ${editId ? 'update' : 'save'} PO`);
+  };
+
+  const handleClearDraft = () => {
+    if (window.confirm("Clear current draft?")) {
+      localStorage.removeItem('po_maker_draft');
+      window.location.reload();
+    }
   };
 
   return (
@@ -111,6 +140,12 @@ const POMaker: React.FC = () => {
           <h1 className="text-xl font-bold text-black">Purchase Order Maker</h1>
         </div>
         <div className="flex items-center gap-3">
+          <button 
+            onClick={handleClearDraft}
+            className="text-xs font-bold text-black hover:underline px-2"
+          >
+            RESET DRAFT
+          </button>
           <select 
             className="bg-white border border-black rounded-lg px-3 py-2 text-sm font-bold"
             value={po.version}
