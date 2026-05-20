@@ -50,6 +50,10 @@ async function extractTextFromPDF(buffer: Buffer): Promise<string> {
 async function startServer() {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "" });
+  const groq = new OpenAI({
+    apiKey: process.env.GROQ_API_KEY || "",
+    baseURL: "https://api.groq.com/openai/v1"
+  });
   const app = express();
   const PORT = 3000;
 
@@ -421,6 +425,63 @@ async function startServer() {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to delete vendor" });
+    }
+  });
+
+  // Bulk Item Extraction using Groq
+  app.post("/api/extract-po-items", authenticateToken, async (req, res) => {
+    try {
+      const { text } = req.body;
+      if (!text || text.trim().length === 0) {
+        return res.status(400).json({ error: "No text provided for extraction" });
+      }
+
+      console.log(`[AI] Bulk Item Extraction requested with Groq...`);
+
+      const prompt = `You are an expert procurement assistant. Extract items from the following raw text (which may be pasted from a spreadsheet) into a structured JSON array.
+      
+      STRICT JSON FORMAT:
+      {
+        "items": [
+          {
+            "itemName": "Description of item",
+            "make": "Brand/Make",
+            "qty": 10.00,
+            "uom": "NOS", 
+            "rate": 500.00,
+            "discount": 0.00,
+            "tax": "GST @18%"
+          }
+        ]
+      }
+
+      INSTRUCTIONS:
+      - Item Name: Full description.
+      - Make: Brand if mentioned, else empty string.
+      - Qty: Number.
+      - UOM: Unit of measure (e.g., NOS, PCS, KG, Mtr, FT). Default to "NOS" if unclear.
+      - Rate: Unit price as a number.
+      - Discount: Percentage as a number (e.g., 5 for 5%). Default to 0.
+      - Tax: Valid values: "GST @18%", "GST @5%", "Nil". Default to "GST @18%".
+      - Return ONLY valid JSON. No conversational text.
+      - If multiple items are found, extract all of them.
+      - If a field is missing, use defaults specified above.`;
+
+      const response = await groq.chat.completions.create({
+        model: "llama-3-8b-8192",
+        messages: [
+          { role: "system", content: "You are a precise data extraction tool. You only output valid JSON." },
+          { role: "user", content: `${prompt}\n\nRAW TEXT TO EXTRACT FROM:\n${text}` }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.1,
+      });
+
+      const result = JSON.parse(response.choices[0].message.content || '{"items": []}');
+      res.json(result);
+    } catch (err: any) {
+      console.error("[Groq Error]:", err.message || err);
+      res.status(500).json({ error: "Failed to extract items with Groq" });
     }
   });
 

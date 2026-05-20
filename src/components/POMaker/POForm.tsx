@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { PurchaseOrder, TermsTemplate, POItem, VendorMaster } from '../../types';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, ClipboardPaste, Loader2 } from 'lucide-react';
 
 interface POFormProps {
   po: PurchaseOrder;
@@ -10,6 +10,10 @@ interface POFormProps {
 }
 
 const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
+  const [bulkText, setBulkText] = useState('');
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [showBulkPaste, setShowBulkPaste] = useState(false);
+
   const updateVendorField = (field: keyof PurchaseOrder['vendor_details'], value: string) => {
     setPo(prev => ({
       ...prev,
@@ -67,31 +71,73 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
     });
   };
 
+  const calculateItemAmount = (item: Partial<POItem>) => {
+    const qty = parseFloat(String(item.qty)) || 0;
+    const rate = parseFloat(String(item.rate)) || 0;
+    const discount = parseFloat(String(item.discount)) || 0;
+    const taxStr = String(item.tax);
+    const taxMatch = taxStr.match(/(\d+)%/);
+    const taxPercent = taxMatch ? parseFloat(taxMatch[1]) : 0;
+
+    const discountedRate = rate * (1 - discount / 100);
+    const amountWithTax = (qty * discountedRate) * (1 + taxPercent / 100);
+    return Number(amountWithTax.toFixed(2));
+  };
+
   const updateItem = (index: number, field: keyof POItem, value: any) => {
     setPo(prev => {
       const newItems = [...prev.items];
       const item = { ...newItems[index], [field]: value };
-      
-      // Calculate item amount
-      const qty = parseFloat(String(item.qty)) || 0;
-      const rate = parseFloat(String(item.rate)) || 0;
-      const discount = parseFloat(String(item.discount)) || 0;
-      const taxStr = String(item.tax);
-      
-      // Robust tax parsing: extracts any number before %
-      const taxMatch = taxStr.match(/(\d+)%/);
-      const taxPercent = taxMatch ? parseFloat(taxMatch[1]) : 0;
-
-      const discountedRate = rate * (1 - discount / 100);
-      const amountWithTax = (qty * discountedRate) * (1 + taxPercent / 100);
-      item.amount = Number(amountWithTax.toFixed(2));
-      
+      item.amount = calculateItemAmount(item);
       newItems[index] = item;
       
-      // Calculate total amount
-      const total = newItems.reduce((acc, item) => acc + Number(item.amount), 0);
+      const total = newItems.reduce((acc, it) => acc + Number(it.amount), 0);
       return { ...prev, items: newItems, total_amount: Number(total.toFixed(2)) };
     });
+  };
+
+  const handleBulkExtract = async () => {
+    if (!bulkText.trim()) return;
+    setIsExtracting(true);
+    try {
+      const res = await fetch('/api/extract-po-items', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+        },
+        body: JSON.stringify({ text: bulkText })
+      });
+      if (!res.ok) throw new Error("Extraction failed");
+      const data = await res.json();
+      
+      if (data.items && Array.isArray(data.items)) {
+        const newItems = data.items.map((item: any, idx: number) => {
+          const processedItem = {
+            ...item,
+            sn: po.items.length + idx + 1,
+            qty: Number(item.qty) || 0,
+            rate: Number(item.rate) || 0,
+            discount: Number(item.discount) || 0,
+            tax: item.tax || 'GST @18%'
+          };
+          processedItem.amount = calculateItemAmount(processedItem);
+          return processedItem as POItem;
+        });
+
+        setPo(prev => {
+          const updatedItems = [...prev.items, ...newItems];
+          const total = updatedItems.reduce((acc, it) => acc + Number(it.amount), 0);
+          return { ...prev, items: updatedItems, total_amount: Number(total.toFixed(2)) };
+        });
+        setBulkText('');
+        setShowBulkPaste(false);
+      }
+    } catch (err) {
+      alert("Failed to extract items. Please try again.");
+    } finally {
+      setIsExtracting(false);
+    }
   };
 
   const updateFreightAmount = (val: number) => {
@@ -255,13 +301,59 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
       <section className="bg-white p-6 rounded-xl shadow-sm border border-black space-y-4">
         <div className="flex items-center justify-between border-b border-black pb-2">
           <h2 className="text-lg font-bold">Items</h2>
-          <button 
-            onClick={addItem}
-            className="flex items-center gap-1 text-sm bg-black text-white px-3 py-1 rounded-lg hover:bg-black/90"
-          >
-            <Plus className="w-4 h-4" /> Add Item
-          </button>
+          <div className="flex gap-2">
+             <button 
+               onClick={() => setShowBulkPaste(!showBulkPaste)}
+               className="flex items-center gap-1 text-sm border border-black text-black px-3 py-1 rounded-lg hover:bg-black/5"
+             >
+               <ClipboardPaste className="w-4 h-4" /> Bulk Paste
+             </button>
+             <button 
+               onClick={addItem}
+               className="flex items-center gap-1 text-sm bg-black text-white px-3 py-1 rounded-lg hover:bg-black/90"
+             >
+               <Plus className="w-4 h-4" /> Add Item
+             </button>
+          </div>
         </div>
+
+        {showBulkPaste && (
+          <div className="p-4 bg-gray-50 border border-black rounded-lg space-y-3">
+             <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase">Paste Spreadsheet Data</h3>
+                <p className="text-[10px] text-gray-500 italic">Example: "Item Description, Brand, 10 PCS, 500.00"</p>
+             </div>
+             <textarea 
+               className="w-full border border-black rounded-lg px-3 py-2 text-sm bg-white"
+               rows={4}
+               placeholder="Paste items from Excel or Sheets here..."
+               value={bulkText}
+               onChange={e => setBulkText(e.target.value)}
+             />
+             <div className="flex justify-end gap-2">
+                <button 
+                  onClick={() => setShowBulkPaste(false)}
+                  className="text-xs font-bold px-3 py-1"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleBulkExtract}
+                  disabled={isExtracting || !bulkText.trim()}
+                  className="flex items-center gap-2 bg-black text-white text-xs font-bold px-4 py-1.5 rounded-lg disabled:opacity-50"
+                >
+                  {isExtracting ? (
+                    <>
+                      <Loader2 className="w-3 h-3 animate-spin" /> Processing with Groq...
+                    </>
+                  ) : (
+                    'Extract Items'
+                  )}
+                </button>
+             </div>
+          </div>
+        )}
+
         <div className="space-y-4">
           {po.items.map((item, index) => (
             <div key={index} className="p-4 bg-white rounded-lg border border-black relative group">
@@ -356,7 +448,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
               </div>
             </div>
           ))}
-          {po.items.length === 0 && <div className="text-center py-4 text-black text-sm">No items added.</div>}
+          {po.items.length === 0 && !showBulkPaste && <div className="text-center py-4 text-black text-sm">No items added.</div>}
           {po.items.length > 0 && (
             <div className="flex justify-end pt-2">
                <div className="text-right">
