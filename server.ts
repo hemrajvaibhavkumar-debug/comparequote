@@ -468,7 +468,7 @@ async function startServer() {
       - If a field is missing, use defaults specified above.`;
 
       const response = await groq.chat.completions.create({
-        model: "llama-3-8b-8192",
+        model: "llama-3.3-70b-versatile",
         messages: [
           { role: "system", content: "You are a precise data extraction tool. You only output valid JSON." },
           { role: "user", content: `${prompt}\n\nRAW TEXT TO EXTRACT FROM:\n${text}` }
