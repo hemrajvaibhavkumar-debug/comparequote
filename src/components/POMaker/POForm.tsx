@@ -39,7 +39,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
         gstin: vendor.gstin || '',
         state: vendor.state || '',
         ph: vendor.mobile_no || '',
-        mail: '' // VendorMaster doesn't have email in the schema, but PO needs it.
+        mail: vendor.email || ''
       }
     }));
   };
@@ -73,13 +73,14 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
       const item = { ...newItems[index], [field]: value };
       
       // Calculate item amount
-      const qty = Number(item.qty) || 0;
-      const rate = Number(item.rate) || 0;
-      const discount = Number(item.discount) || 0;
+      const qty = parseFloat(String(item.qty)) || 0;
+      const rate = parseFloat(String(item.rate)) || 0;
+      const discount = parseFloat(String(item.discount)) || 0;
       const taxStr = String(item.tax);
-      let taxPercent = 0;
-      if (taxStr.includes('18%')) taxPercent = 18;
-      else if (taxStr.includes('5%')) taxPercent = 5;
+      
+      // Robust tax parsing: extracts any number before %
+      const taxMatch = taxStr.match(/(\d+)%/);
+      const taxPercent = taxMatch ? parseFloat(taxMatch[1]) : 0;
 
       const discountedRate = rate * (1 - discount / 100);
       const amountWithTax = (qty * discountedRate) * (1 + taxPercent / 100);
@@ -89,7 +90,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
       
       // Calculate total amount
       const total = newItems.reduce((acc, item) => acc + Number(item.amount), 0);
-      return { ...prev, items: newItems, total_amount: total };
+      return { ...prev, items: newItems, total_amount: Number(total.toFixed(2)) };
     });
   };
 

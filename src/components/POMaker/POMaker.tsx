@@ -67,7 +67,8 @@ const POMaker: React.FC = () => {
       
       const currentPO = po.po_no || '';
       const parts = currentPO.split('/');
-      const existingSerial = parts.length > 2 ? parts[2] : '';
+      // Extract the last part as the serial number, if it looks like a number
+      const existingSerial = parts.length > 0 ? parts[parts.length - 1] : '';
       
       const newPONo = `${prefix}/${yearRange}/${existingSerial}`;
       

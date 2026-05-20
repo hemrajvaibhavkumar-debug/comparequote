@@ -63,7 +63,7 @@ th, td {
 
 @media print {
   @page {
-    size: A3 landscape;
+    size: auto;
     margin: 10mm;
   }
 

@@ -76,6 +76,7 @@ export interface VendorMaster {
   state?: string;
   gstin?: string;
   mobile_no?: string;
+  email?: string;
 }
 
 export interface POItem {

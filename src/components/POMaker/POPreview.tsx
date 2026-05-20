@@ -27,11 +27,22 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
   const updateItem = (index: number, field: keyof POItem, value: any) => {
     setPo(prev => {
       const newItems = [...prev.items];
-      newItems[index] = { ...newItems[index], [field]: value };
+      const item = { ...newItems[index], [field]: value };
       
-      // Calculate total amount
-      const total = newItems.reduce((acc, item) => acc + (Number(item.qty) * Number(item.rate)), 0);
-      return { ...prev, items: newItems, total_amount: total };
+      const qty = parseFloat(String(item.qty)) || 0;
+      const rate = parseFloat(String(item.rate)) || 0;
+      const discount = parseFloat(String(item.discount)) || 0;
+      const taxStr = String(item.tax);
+      const taxMatch = taxStr.match(/(\d+)%/);
+      const taxPercent = taxMatch ? parseFloat(taxMatch[1]) : 0;
+
+      const discountedRate = rate * (1 - discount / 100);
+      const amountWithTax = (qty * discountedRate) * (1 + taxPercent / 100);
+      item.amount = Number(amountWithTax.toFixed(2));
+      
+      newItems[index] = item;
+      const total = newItems.reduce((acc, item) => acc + Number(item.amount), 0);
+      return { ...prev, items: newItems, total_amount: Number(total.toFixed(2)) };
     });
   };
 
@@ -122,28 +133,42 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
       <style>{`
         @media print {
           .print-hidden { display: none !important; }
-          body * { visibility: hidden; }
-          .print-area, .print-area * { visibility: visible; color: black !important; }
+          body { 
+            margin: 0 !important; 
+            padding: 0 !important; 
+            background: white !important;
+            width: 100% !important;
+          }
+          body * { visibility: hidden !important; }
+          .print-area, .print-area * { visibility: visible !important; color: black !important; }
+          
           .print-area {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 210mm;
-            padding: 15mm;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
             margin: 0 !important;
+            padding: 0 !important;
             box-shadow: none !important;
             background: white !important;
+            display: block !important;
           }
+
           @page {
             size: A4 portrait;
-            margin: 0;
+            /* Browser margins: Top=40mm (Letterhead), Sides=15mm, Bottom=50mm (Footer/Sign) */
+            margin: 40mm 15mm 50mm 15mm;
           }
-          input {
-            border: none !important;
-            padding: 0 !important;
-            background: transparent !important;
-            appearance: none !important;
-            color: black !important;
+
+          tr { 
+            break-inside: avoid !important; 
+            page-break-inside: avoid !important; 
+          }
+          
+          .no-break, .signature-section { 
+            break-inside: avoid !important; 
+            page-break-inside: avoid !important; 
+            display: block !important;
           }
         }
       `}</style>
@@ -151,16 +176,24 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
       {/* A4 Paper Simulation */}
       <div 
         ref={printRef}
-        className="bg-white shadow-2xl origin-top relative print-area text-black"
+        className="bg-white shadow-2xl origin-top relative print-area text-black overflow-hidden"
         style={{
           width: '210mm',
           minHeight: '297mm',
-          padding: '15mm',
-          paddingTop: '40mm', // Space for pre-printed letterhead
+          paddingLeft: '15mm',
+          paddingRight: '15mm',
+          paddingTop: '0', 
+          paddingBottom: '50mm', 
           fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-          color: 'black'
+          color: 'black',
+          margin: '0 auto'
         }}
       >
+        {/* Visual helper for reserved header space (not printed) */}
+        <div className="w-full h-[40mm] border-b border-dashed border-red-200 pointer-events-none print-hidden flex items-center justify-center mb-4 shrink-0">
+           <span className="text-[8px] text-red-300 uppercase tracking-widest font-bold">Reserved Header Space (40mm)</span>
+        </div>
+
         <div className="text-center mb-8">
           <h2 className="inline-block border-b-2 border-black text-sm font-bold uppercase tracking-widest text-black">
             Purchase Order
@@ -240,7 +273,7 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
         </table>
 
         {/* Commercial Terms */}
-        <div className="text-[10px] space-y-1 mb-6 text-black">
+        <div className="text-[10px] space-y-1 mb-6 text-black no-break">
           <p className="font-bold text-xs underline mb-2">Commercial Terms::</p>
           <div className="grid grid-cols-[100px_1fr] gap-y-1">
             <span className="font-bold">Tax ::</span>
@@ -271,20 +304,27 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
         </div>
 
         {/* Standard Notes */}
-        <div className="text-[10px] space-y-2 mb-12 uppercase italic font-bold text-black">
+        <div className="text-[10px] space-y-2 mb-8 uppercase italic font-bold text-black no-break">
            <p>NOTE 1 :: <span className="underline">E-Way bill is mandatory for Rs 50,000 and above Purchase Value , we can't accept material without it.</span></p>
            <p>NOTE 2 :: If we have any type of dispute from our required specification then, we will reject the material.</p>
         </div>
 
-        <div className="flex justify-between items-end mt-32 text-black">
-           <div className="text-left text-[10px]">
-              <p className="font-bold">Yours faithfully,</p>
-              <p className="font-black text-xs uppercase mt-1">{currentMeta.name}</p>
-           </div>
-           <div className="text-right text-[11px] font-black">
-              <p>GSTIN ::{currentMeta.gstin}</p>
-              <p className="mt-1">PAN :: {currentMeta.pan}</p>
-           </div>
+        <div className="signature-section">
+          <div className="flex justify-between items-end mt-12 text-black">
+             <div className="text-left text-[10px]">
+                <p className="font-bold">Yours faithfully,</p>
+                <p className="font-black text-xs uppercase mt-1">{currentMeta.name}</p>
+             </div>
+             <div className="text-right text-[11px] font-black">
+                <p>GSTIN ::{currentMeta.gstin}</p>
+                <p className="mt-1">PAN :: {currentMeta.pan}</p>
+             </div>
+          </div>
+        </div>
+
+        {/* Visual helper for reserved space (not printed) */}
+        <div className="absolute bottom-0 left-0 right-0 h-[50mm] border-t border-dashed border-red-200 pointer-events-none print-hidden flex items-center justify-center">
+           <span className="text-[8px] text-red-300 uppercase tracking-widest font-bold">Reserved Footer Space (50mm)</span>
         </div>
       </div>
     </div>
