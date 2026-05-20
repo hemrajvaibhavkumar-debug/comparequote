@@ -87,6 +87,7 @@ export interface POItem {
   rate: number;
   discount: number;
   tax: string;
+  amount: number;
 }
 
 export interface PurchaseOrder {
@@ -110,6 +111,7 @@ export interface PurchaseOrder {
     packing: string;
     payment: string;
     freight: string;
+    freight_amount?: number;
     delivery: string;
     contact_no?: string;
     notes?: string;

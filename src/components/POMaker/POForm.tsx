@@ -53,7 +53,8 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
       uom: 'NOS',
       rate: 0,
       discount: 0,
-      tax: 'GST @18%'
+      tax: 'GST @18%',
+      amount: 0
     };
     setPo(prev => ({ ...prev, items: [...prev.items, newItem] }));
   };
@@ -61,19 +62,42 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
   const removeItem = (index: number) => {
     setPo(prev => {
       const newItems = prev.items.filter((_, i) => i !== index).map((item, i) => ({ ...item, sn: i + 1 }));
-      return { ...prev, items: newItems };
+      const total = newItems.reduce((acc, item) => acc + Number(item.amount), 0);
+      return { ...prev, items: newItems, total_amount: total };
     });
   };
 
   const updateItem = (index: number, field: keyof POItem, value: any) => {
     setPo(prev => {
       const newItems = [...prev.items];
-      newItems[index] = { ...newItems[index], [field]: value };
+      const item = { ...newItems[index], [field]: value };
+      
+      // Calculate item amount
+      const qty = Number(item.qty) || 0;
+      const rate = Number(item.rate) || 0;
+      const discount = Number(item.discount) || 0;
+      const taxStr = String(item.tax);
+      let taxPercent = 0;
+      if (taxStr.includes('18%')) taxPercent = 18;
+      else if (taxStr.includes('5%')) taxPercent = 5;
+
+      const discountedRate = rate * (1 - discount / 100);
+      const amountWithTax = (qty * discountedRate) * (1 + taxPercent / 100);
+      item.amount = Number(amountWithTax.toFixed(2));
+      
+      newItems[index] = item;
       
       // Calculate total amount
-      const total = newItems.reduce((acc, item) => acc + (Number(item.qty) * Number(item.rate)), 0);
+      const total = newItems.reduce((acc, item) => acc + Number(item.amount), 0);
       return { ...prev, items: newItems, total_amount: total };
     });
+  };
+
+  const updateFreightAmount = (val: number) => {
+    setPo(prev => ({
+      ...prev,
+      terms: { ...prev.terms, freight_amount: val }
+    }));
   };
 
   const applyTemplate = (templateId: string) => {
@@ -307,10 +331,39 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
                     onChange={e => updateItem(index, 'discount', e.target.value)}
                   />
                 </div>
+                <div className="col-span-2">
+                  <label className="block text-[10px] font-bold text-black uppercase">Tax</label>
+                  <select 
+                    className="w-full border border-black rounded px-1 py-1 text-sm bg-white text-black"
+                    value={item.tax || 'GST @18%'}
+                    onChange={e => updateItem(index, 'tax', e.target.value)}
+                  >
+                    <option value="GST @18%">18%</option>
+                    <option value="GST @5%">5%</option>
+                    <option value="Nil">Nil</option>
+                  </select>
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-[10px] font-bold text-black uppercase">Amount</label>
+                  <input 
+                    type="number"
+                    className="w-full border border-black rounded px-2 py-1 text-sm text-black font-bold"
+                    value={item.amount || 0}
+                    readOnly
+                  />
+                </div>
               </div>
             </div>
           ))}
           {po.items.length === 0 && <div className="text-center py-4 text-black text-sm">No items added.</div>}
+          {po.items.length > 0 && (
+            <div className="flex justify-end pt-2">
+               <div className="text-right">
+                  <p className="text-xs font-bold text-black uppercase">Total Item Amount</p>
+                  <p className="text-lg font-black text-black">₹{po.total_amount.toLocaleString()}</p>
+               </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -331,7 +384,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-black uppercase">Tax</label>
+            <label className="block text-xs font-bold text-black uppercase">Tax (Summary)</label>
             <select 
               className="mt-1 w-full border border-black rounded-lg px-3 py-2 bg-white text-black"
               value={po.terms.tax || ''}
@@ -425,16 +478,31 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors }) => {
           </div>
           <div>
             <label className="block text-xs font-bold text-black uppercase">Freight</label>
-            <select 
-              className="mt-1 w-full border border-black rounded-lg px-3 py-2 bg-white text-black"
-              value={po.terms.freight || ''}
-              onChange={e => setPo({...po, terms: { ...po.terms, freight: e.target.value }})}
-            >
-              <option value="">Select Freight</option>
-              <option value="Extra">Extra</option>
-              <option value="Including">Including</option>
-              <option value="Nil">Nil</option>
-            </select>
+            <div className="flex gap-2">
+              <select 
+                className="mt-1 w-1/2 border border-black rounded-lg px-3 py-2 bg-white text-black"
+                value={po.terms.freight || ''}
+                onChange={e => setPo({...po, terms: { ...po.terms, freight: e.target.value }})}
+              >
+                <option value="">Select Freight</option>
+                <option value="Extra">Extra</option>
+                <option value="Including">Including</option>
+                <option value="Nil">Nil</option>
+              </select>
+              <input 
+                type="number"
+                className="mt-1 flex-1 border border-black rounded-lg px-3 py-2 text-black"
+                value={po.terms.freight_amount || 0}
+                onChange={e => updateFreightAmount(Number(e.target.value))}
+                placeholder="Freight Amount"
+              />
+            </div>
+          </div>
+          <div className="col-span-2">
+            <div className="bg-black text-white p-4 rounded-lg flex justify-between items-center">
+               <span className="font-bold uppercase text-sm">Grand Total Amount</span>
+               <span className="text-2xl font-black">₹{(po.total_amount + (po.terms.freight_amount || 0)).toLocaleString()}</span>
+            </div>
           </div>
           <div className="col-span-2">
             <label className="block text-xs font-bold text-black uppercase">Delivery Period</label>

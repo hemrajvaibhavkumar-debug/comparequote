@@ -87,7 +87,7 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
     <span
       contentEditable
       suppressContentEditableWarning
-      className={`hover:bg-black/5 focus:bg-blue-50 focus:outline-none px-0.5 rounded transition-colors inline-block text-black ${className}`}
+      className={`hover:underline focus:bg-blue-50 focus:outline-none px-0.5 rounded transition-colors inline-block text-black ${className}`}
       onBlur={(e) => onChange(e.currentTarget.textContent || '')}
       onKeyDown={(e) => {
         if (e.key === 'Enter') {
@@ -202,7 +202,9 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
               <th className="border border-black p-1 w-14 text-center font-bold">Qnty</th>
               <th className="border border-black p-1 w-14 text-center font-bold">UOM</th>
               <th className="border border-black p-1 w-20 text-right font-bold">Rate</th>
-              <th className="border border-black p-1 w-16 text-center font-bold">Dis%</th>
+              <th className="border border-black p-1 w-12 text-center font-bold">Dis%</th>
+              <th className="border border-black p-1 w-16 text-center font-bold">Tax</th>
+              <th className="border border-black p-1 w-24 text-right font-bold">Amount</th>
             </tr>
           </thead>
           <tbody>
@@ -214,9 +216,26 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
                 <td className="border border-black p-1 text-center">{Number(item.qty).toFixed(2)}</td>
                 <td className="border border-black p-1 text-center uppercase">{item.uom}</td>
                 <td className="border border-black p-1 text-right">{Number(item.rate).toFixed(2)}</td>
-                <td className="border border-black p-1 text-center">{Number(item.discount).toFixed(3)}</td>
+                <td className="border border-black p-1 text-center">{Number(item.discount).toFixed(2)}%</td>
+                <td className="border border-black p-1 text-center">{item.tax}</td>
+                <td className="border border-black p-1 text-right font-bold">{Number(item.amount).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
               </tr>
             ))}
+            {/* Summary Rows */}
+            <tr className="text-black font-bold">
+              <td colSpan={8} className="border border-black p-1 text-right uppercase">Total Item Amount</td>
+              <td className="border border-black p-1 text-right">{Number(po.total_amount).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+            </tr>
+            {po.terms.freight_amount ? (
+              <tr className="text-black font-bold">
+                <td colSpan={8} className="border border-black p-1 text-right uppercase">Freight Amount</td>
+                <td className="border border-black p-1 text-right">{Number(po.terms.freight_amount).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+              </tr>
+            ) : null}
+            <tr className="text-black font-black">
+              <td colSpan={8} className="border border-black p-1 text-right uppercase text-xs">Grand Total Amount</td>
+              <td className="border border-black p-1 text-right text-xs">₹{(Number(po.total_amount) + Number(po.terms.freight_amount || 0)).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+            </tr>
           </tbody>
         </table>
 
@@ -237,7 +256,7 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
             <span>{po.terms.payment}</span>
             
             <span className="font-bold">Freight ::</span>
-            <span>{po.terms.freight}</span>
+            <span>{po.terms.freight} {po.terms.freight_amount ? `- ₹${Number(po.terms.freight_amount).toLocaleString()}` : ''}</span>
             
             <span className="font-bold">Delivery Period ::</span>
             <span>{po.terms.delivery}</span>

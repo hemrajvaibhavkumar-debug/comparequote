@@ -28,8 +28,8 @@ const POMaker: React.FC = () => {
       vendor_name: '',
       version: 'hemraj_rice',
       vendor_details: { address: '', gstin: '', mail: '', ph: '', state: '' },
-      items: [{ sn: 1, make: '', itemName: '', qty: 0, uom: 'NOS', rate: 0, discount: 0, tax: 'GST @18%' }],
-      terms: { tax: '', packing: '', payment: '', freight: '', delivery: '', contact_no: '', notes: '' },
+      items: [{ sn: 1, make: '', itemName: '', qty: 0, uom: 'NOS', rate: 0, discount: 0, tax: 'GST @18%', amount: 0 }],
+      terms: { tax: '', packing: '', payment: '', freight: '', freight_amount: 0, delivery: '', contact_no: '', notes: '' },
       total_amount: 0
     };
   });
