@@ -20,7 +20,7 @@ const Builder: React.FC = () => {
     return saved ? JSON.parse(saved) : {
       docNo: '',
       preparedBy: '',
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }),
       indentDate: '',
       plantName: ''
     };
@@ -192,7 +192,7 @@ const Builder: React.FC = () => {
 
   const clearDraft = () => {
     if (window.confirm("Are you sure you want to clear the current draft?")) {
-      const freshHeader = { docNo: '', preparedBy: '', date: new Date().toISOString().split('T')[0], indentDate: '', plantName: '' };
+      const freshHeader = { docNo: '', preparedBy: '', date: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }), indentDate: '', plantName: '' };
       const freshData = { items: [], vendors: [] };
       setHeader(freshHeader);
       setData(freshData);
@@ -548,15 +548,6 @@ const Builder: React.FC = () => {
                   <option value="">Select Plant</option>
                   {dbPlants.map(opt => <option key={opt.id} value={opt.id}>{opt.name}</option>)}
                 </select>
-              </div>
-              <div>
-                <label className="text-[10px] font-bold text-black uppercase">Date</label>
-                <input 
-                  type="date" 
-                  value={header.date} 
-                  onChange={e => setHeader({...header, date: e.target.value})} 
-                  className="w-full mt-1 px-4 py-2 bg-white border border-black rounded-lg text-sm text-black" 
-                />
               </div>
               <div>
                 <label className="text-[10px] font-bold text-black uppercase">Indent Date</label>

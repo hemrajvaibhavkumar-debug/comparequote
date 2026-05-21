@@ -486,6 +486,36 @@ async function startServer() {
   });
 
   // Purchase Orders
+  app.get("/api/po/latest", authenticateToken, async (req, res) => {
+    try {
+      const { version } = req.query;
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const isBeforeApril = month < 3;
+      const startYear = isBeforeApril ? year - 1 : year;
+      const startOfYear = new Date(startYear, 3, 1); // April 1st
+      const endOfYear = new Date(startYear + 1, 2, 31, 23, 59, 59); // March 31st next year
+
+      const latest = await prisma.purchaseOrder.findFirst({
+        where: {
+          version: String(version),
+          created_at: {
+            gte: startOfYear,
+            lte: endOfYear
+          }
+        },
+        orderBy: {
+          created_at: 'desc'
+        },
+        select: { po_no: true }
+      });
+      res.json({ latest: latest?.po_no || null });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch latest PO" });
+    }
+  });
+
   app.get("/api/po", authenticateToken, async (req, res) => {
     try {
       const pos = await prisma.purchaseOrder.findMany({

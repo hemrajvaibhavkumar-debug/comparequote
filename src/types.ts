@@ -96,6 +96,7 @@ export interface PurchaseOrder {
   po_no: string;
   date: string;
   quote_date?: string;
+  quote_doc_no?: string;
   quote_ref_type?: 'MAIL' | 'WHATSAPP' | string;
   vendor_name: string;
   version?: 'hemraj_ind' | 'hemraj_rice' | 'radhashyam';
@@ -111,11 +112,14 @@ export interface PurchaseOrder {
     tax: string;
     packing: string;
     payment: string;
+    payment_milestones?: { percentage: number; description: string }[];
     freight: string;
     freight_amount?: number;
+    freight_tax?: string; // e.g. "GST @18%", "GST @5%", "Nil"
     delivery: string;
     contact_no?: string;
     notes?: string;
+    manual_notes?: string[];
   };
   total_amount: number;
 }

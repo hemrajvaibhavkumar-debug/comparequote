@@ -109,6 +109,28 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
     }, 0);
   };
 
+  const calculateVendorTax = (vendorName: string) => {
+    return items.reduce((sum, item) => {
+      const quote = item.vendorQuotes?.find(q => q.vendorName === vendorName);
+      if (!quote) return sum;
+      const amount = Number(quote.totalAmount) || 0;
+      const status = quote.gstStatus || '18% Extra';
+      const isInclusive = status.toLowerCase() === 'inclusive';
+      let taxRate = 0;
+      if (!isInclusive) {
+        if (status.includes('5%')) taxRate = 0.05;
+        else if (status.includes('12%')) taxRate = 0.12;
+        else if (status.includes('18%') || status.toLowerCase() === 'exclusive') taxRate = 0.18;
+        else if (status.includes('28%')) taxRate = 0.28;
+      }
+      return sum + (amount * taxRate);
+    }, 0);
+  };
+
+  const calculateVendorGrandTotal = (vendorName: string) => {
+    return calculateVendorTotal(vendorName) + calculateVendorTax(vendorName);
+  };
+
   const updateVendorName = (oldName: string, newName: string) => {
     if (readOnly || !newName || oldName === newName) return;
     setData((prev: any) => {
@@ -146,6 +168,8 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
       if (field === 'qty' || field === 'weight') {
         const newQty = parseFloat(item.qty) || 0;
         const newWeight = parseFloat(item.weight) || 0;
+        // Logic fix: only fallback to qty if weight is explicitly 0 and we are NOT editing weight, 
+        // or if weight was never intended to be used.
         const multiplier = newWeight > 0 ? newWeight : newQty;
 
         if (item.vendorQuotes) {
@@ -267,7 +291,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
         previousPrice: { vendor: '', rate: '', date: '' },
         vendorQuotes: prev.vendors.map((v: string) => ({
           vendorName: v, make: '', mrp: '', discount: '', netRate: '', totalAmount: '', deliveryPeriod: '', readyStock: '', packingAndForwarding: 'NILL', freight: 'NILL', gstStatus: '18% Extra', extra: '',
-          quoteDate: new Date().toLocaleDateString('en-GB')
+          quoteDate: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
         }))
       });
       return { ...prev, items: newItems };
@@ -303,7 +327,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
             freight: 'NILL',
             gstStatus: '18% Extra',
             extra: '',
-            quoteDate: new Date().toLocaleDateString('en-GB')
+            quoteDate: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
           }
         ]
       }))
@@ -721,23 +745,14 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
           <tr className="bg-white" style={{ fontSize: `${fontSize - 1}px` }}>
              <td colSpan={hasWeight ? 9 : 8} className="border border-black text-right px-4 uppercase text-black">Taxation (GST)</td>
              {vendors.map((v, i) => {
-               const total = calculateVendorTotal(v);
-               const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
-               const status = firstQuote?.gstStatus || '18% Extra';
-               const isInclusive = status.toLowerCase() === 'inclusive';
-               let rate = 0;
-               if (!isInclusive) {
-                 if (status.includes('5%')) rate = 0.05;
-                 else rate = 0.18;
-               }
-               const gst = total * rate;
+               const gst = calculateVendorTax(v);
                return (
                 <React.Fragment key={i}>
-                  <td colSpan={4} className="border border-black text-right p-1 text-black">
-                    {isInclusive ? 'GST STATUS' : `GST ${Math.round(rate * 100)}% EXTRA`}
+                  <td colSpan={4} className="border border-black text-right p-1 text-black uppercase">
+                    TAX AMOUNT
                   </td>
                   <td className="border border-black text-center p-1 font-bold text-black" style={{ fontSize: `${fontSize}px` }}>
-                    {isInclusive ? 'INCLUSIVE' : gst.toFixed(2)}
+                    {gst > 0 ? gst.toFixed(2) : 'INCLUSIVE'}
                   </td>
                 </React.Fragment>
                )
@@ -748,16 +763,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
           <tr className="bg-white">
              <td colSpan={hasWeight ? 9 : 8} className="border border-black text-right px-4 uppercase font-black tracking-widest text-black" style={{ fontSize: `${fontSize}px` }}>Grand Total Summary</td>
              {vendors.map((v, i) => {
-               const total = calculateVendorTotal(v);
-               const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
-               const status = firstQuote?.gstStatus || '18% Extra';
-               const isInclusive = status.toLowerCase() === 'inclusive';
-               let rate = 0;
-               if (!isInclusive) {
-                 if (status.includes('5%')) rate = 0.05;
-                 else rate = 0.18;
-               }
-               const grandTotal = total * (1 + rate);
+               const grandTotal = calculateVendorGrandTotal(v);
                return (
                 <React.Fragment key={i}>
                   <td colSpan={4} className="border border-black text-right p-2 font-black text-black" style={{ fontSize: `${fontSize + 1}px` }}>GRAND TOTAL</td>

@@ -22,14 +22,14 @@ const POMaker: React.FC = () => {
     }
     return {
       po_no: '',
-      date: new Date().toISOString().split('T')[0],
-      quote_date: new Date().toISOString().split('T')[0],
+      date: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }),
+      quote_date: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }),
       quote_ref_type: 'MAIL',
       vendor_name: '',
       version: 'hemraj_rice',
       vendor_details: { address: '', gstin: '', mail: '', ph: '', state: '' },
       items: [{ sn: 1, make: '', itemName: '', qty: 0, uom: 'NOS', rate: 0, discount: 0, tax: 'GST @18%', amount: 0 }],
-      terms: { tax: '', packing: '', payment: '', freight: '', freight_amount: 0, delivery: '', contact_no: '', notes: '' },
+      terms: { tax: '', packing: '', payment: '', payment_milestones: [], freight: '', freight_amount: 0, freight_tax: 'GST @18%', delivery: '', contact_no: '', notes: '', manual_notes: [] },
       total_amount: 0
     };
   });
@@ -37,13 +37,49 @@ const POMaker: React.FC = () => {
   const [settings, setSettings] = useState<CompanySettings | null>(null);
   const [templates, setTemplates] = useState<TermsTemplate[]>([]);
   const [vendors, setVendors] = useState<VendorMaster[]>([]);
+  const [comparisons, setComparisons] = useState<any[]>([]);
+
+  const generatePONo = async (version: string) => {
+    try {
+      const res = await fetch(`/api/po/latest?version=${version}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+      });
+      const { latest } = await res.json();
+      
+      const prefix = version === 'hemraj_rice' ? 'HRM' : version === 'hemraj_ind' ? 'HI' : 'RS';
+      const now = new Date();
+      const isBeforeApril = now.getMonth() < 3;
+      const startYear = isBeforeApril ? now.getFullYear() - 1 : now.getFullYear();
+      const endYearShort = (startYear + 1).toString().slice(-2);
+      const yearRange = `${startYear}-${endYearShort}`;
+
+      let serial = 1;
+      if (latest) {
+        const parts = latest.split('/');
+        const lastPart = parts[parts.length - 1];
+        const lastSerial = parseInt(lastPart);
+        if (!isNaN(lastSerial)) {
+          serial = lastSerial + 1;
+        }
+      }
+
+      const formattedSerial = serial.toString().padStart(2, '0');
+      const newPONo = `${prefix}/${yearRange}/${formattedSerial}`;
+      setPo(prev => ({ ...prev, po_no: newPONo }));
+    } catch (e) {
+      console.error("Error generating PO No", e);
+    }
+  };
 
   useEffect(() => {
     fetchSettings();
     fetchTemplates();
     fetchVendors();
+    fetchComparisons();
     if (editId) {
       fetchPO(editId);
+    } else if (!po.po_no) {
+      generatePONo(po.version || 'hemraj_rice');
     }
   }, [editId]);
 
@@ -54,26 +90,18 @@ const POMaker: React.FC = () => {
     }
   }, [po, editId]);
 
-  // Handle Automatic PO Number Formatting
+  // Handle Automatic PO Number Prefix/Year Formatting on Version Change
   useEffect(() => {
     if (!editId) {
       const prefix = po.version === 'hemraj_rice' ? 'HRM' : po.version === 'hemraj_ind' ? 'HI' : 'RS';
-      const now = new Date();
-      // Financial year logic: if month < 4 (April), year is prevYear-currentYear, else currentYear-nextYear
-      const isBeforeApril = now.getMonth() < 3;
-      const startYear = isBeforeApril ? now.getFullYear() - 1 : now.getFullYear();
-      const endYearShort = (startYear + 1).toString().slice(-2);
-      const yearRange = `${startYear}-${endYearShort}`;
+      // Only auto-generate if the PO number is empty or starts with one of the standard prefixes but NOT the current one
+      // This allows manual overrides to persist if they don't look like our standard PO numbers, 
+      // or if they already match the current prefix (no need to re-fetch).
+      const currentPrefix = po.po_no?.split('/')[0];
+      const standardPrefixes = ['HRM', 'HI', 'RS'];
       
-      const currentPO = po.po_no || '';
-      const parts = currentPO.split('/');
-      // Extract the last part as the serial number, if it looks like a number
-      const existingSerial = parts.length > 0 ? parts[parts.length - 1] : '';
-      
-      const newPONo = `${prefix}/${yearRange}/${existingSerial}`;
-      
-      if (po.po_no !== newPONo) {
-        setPo(prev => ({ ...prev, po_no: newPONo }));
+      if (!po.po_no || (standardPrefixes.includes(currentPrefix) && currentPrefix !== prefix)) {
+        generatePONo(po.version || 'hemraj_rice');
       }
     }
   }, [po.version]);
@@ -119,6 +147,20 @@ const POMaker: React.FC = () => {
     if (res.ok) {
       const data = await res.json();
       setVendors(Array.isArray(data) ? data : []);
+    }
+  };
+
+  const fetchComparisons = async () => {
+    try {
+      const res = await fetch('/api/comparisons?limit=100', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setComparisons(data);
+      }
+    } catch (e) {
+      console.error("Error fetching comparisons", e);
     }
   };
 
@@ -191,7 +233,14 @@ const POMaker: React.FC = () => {
       <div className="flex-1 flex overflow-hidden">
         {/* Left Pane - Form */}
         <div className="w-1/2 overflow-y-auto p-6 bg-white border-r border-black">
-          <POForm po={po} setPo={setPo} templates={templates} vendors={vendors} />
+          <POForm 
+            po={po} 
+            setPo={setPo} 
+            templates={templates} 
+            vendors={vendors} 
+            comparisons={comparisons}
+            onGeneratePONo={() => generatePONo(po.version || 'hemraj_rice')} 
+          />
         </div>
 
         {/* Right Pane - Preview */}
