@@ -30,7 +30,23 @@ export default function SavedTables() {
       })
       .then(data => {
         if (Array.isArray(data)) {
-          setTables(data);
+          // Sort by doc_no descending, handling the serial number
+          const sorted = [...data].sort((a, b) => {
+            const getParts = (doc: string) => {
+              const parts = (doc || "").split("-");
+              const prefix = parts[0] || "";
+              const serial = parseInt(parts[parts.length - 1]) || 0;
+              return { prefix, serial };
+            };
+            const da = getParts(a.doc_no);
+            const db = getParts(b.doc_no);
+            
+            // First compare prefixes (lexicographically, e.g., C0626 > C0526)
+            if (da.prefix !== db.prefix) return db.prefix.localeCompare(da.prefix);
+            // Then compare serial numbers numerically
+            return db.serial - da.serial;
+          });
+          setTables(sorted);
         }
         setLoading(false);
       })

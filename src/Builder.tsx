@@ -42,6 +42,28 @@ const Builder: React.FC = () => {
     return saved ? JSON.parse(saved) : { items: [], vendors: [] };
   });
 
+  const [inputText, setInputText] = useState('');
+  const [extractionPrompt, setExtractionPrompt] = useState('');
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [files, setFiles] = useState<{ name: string; mimeType: string; data: string }[]>([]);
+  const [fontSize, setFontSize] = useState<number>(11);
+  
+  const tableRef = useRef<HTMLDivElement>(null);
+
+  // Auto-save effect
+  useEffect(() => {
+    localStorage.setItem('quote_draft_header', JSON.stringify(header));
+  }, [header]);
+
+  useEffect(() => {
+    localStorage.setItem('quote_draft_data', JSON.stringify(data));
+  }, [data]);
+
+  useEffect(() => {
+    localStorage.setItem('quote_table_font_size', fontSize.toString());
+  }, [fontSize]);
+
   const generateDocNo = async (force = false) => {
     // Only generate if docNo is empty, unless forced
     if (header.docNo && !force) return;
@@ -81,34 +103,13 @@ const Builder: React.FC = () => {
     }
   };
 
-  const [inputText, setInputText] = useState('');
-  const [extractionPrompt, setExtractionPrompt] = useState('');
-  const [isExtracting, setIsExtracting] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [files, setFiles] = useState<{ name: string; mimeType: string; data: string }[]>([]);
-  const [fontSize, setFontSize] = useState<number>(11);
-  
-  const tableRef = useRef<HTMLDivElement>(null);
-
-  // Auto-save effect
-  useEffect(() => {
-    localStorage.setItem('quote_draft_header', JSON.stringify(header));
-  }, [header]);
-
-  useEffect(() => {
-    localStorage.setItem('quote_draft_data', JSON.stringify(data));
-  }, [data]);
-
   useEffect(() => {
     fetchMasters();
+    // Always try to fetch/generate latest Doc No on mount if it's currently empty
     generateDocNo();
     const savedFontSize = localStorage.getItem('quote_table_font_size');
     if (savedFontSize) setFontSize(parseInt(savedFontSize));
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem('quote_table_font_size', fontSize.toString());
-  }, [fontSize]);
 
   const fetchMasters = async () => {
     try {

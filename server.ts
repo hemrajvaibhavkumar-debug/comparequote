@@ -595,8 +595,8 @@ async function startServer() {
         update: { 
           data: data as any, 
           executive_id: executive_id ? parseInt(executive_id) : null,
-          plant_id: plant_id ? parseInt(plant_id) : null,
-          created_at: new Date() 
+          plant_id: plant_id ? parseInt(plant_id) : null
+          // Removed created_at: new Date() to keep original creation time
         },
         create: { 
           doc_no, 
@@ -618,21 +618,31 @@ async function startServer() {
       const startOfYear = new Date(year, 0, 1);
       const endOfYear = new Date(year, 11, 31, 23, 59, 59);
 
-      const latest = await prisma.comparison.findFirst({
+      // Fetch all doc numbers for the current year
+      const records = await prisma.comparison.findMany({
         where: {
           created_at: {
             gte: startOfYear,
             lte: endOfYear
           }
         },
-        orderBy: {
-          created_at: 'desc'
-        },
         select: {
           doc_no: true
         }
       });
-      res.json({ latest: latest?.doc_no || null });
+
+      if (records.length === 0) return res.json({ latest: null });
+
+      // Find the one with the highest numeric serial number
+      const latest = records.reduce((prev, curr) => {
+        const getSerial = (doc: string) => {
+          const parts = (doc || "").split('-');
+          return parseInt(parts[parts.length - 1]) || 0;
+        };
+        return getSerial(curr.doc_no) > getSerial(prev.doc_no) ? curr : prev;
+      });
+
+      res.json({ latest: latest.doc_no });
     } catch (err) {
       res.status(500).json({ error: String(err) });
     }
@@ -643,7 +653,7 @@ async function startServer() {
       const limit = parseInt(req.query.limit as string) || 25;
       const comparisons = await prisma.comparison.findMany({
         take: limit,
-        orderBy: { created_at: "desc" },
+        orderBy: { id: "desc" }, // Sort by ID descending to show most recently created first by default
         include: {
           executive: true,
           plant: true
