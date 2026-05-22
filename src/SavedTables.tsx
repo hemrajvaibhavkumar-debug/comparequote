@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, Filter, Calendar, User, Factory, ChevronRight, FileText, Trash2, Eye } from 'lucide-react';
+import { Link, Navigate } from 'react-router-dom';
+import { Search, Filter, Calendar, User, Factory, ChevronRight, FileText, Trash2, Eye, ShieldCheck } from 'lucide-react';
+import { useAuth } from './context/AuthContext';
 
 export default function SavedTables() {
   const [tables, setTables] = useState<any[]>([]);
@@ -8,22 +9,26 @@ export default function SavedTables() {
   const [search, setSearch] = useState('');
   const [filterPlant, setFilterPlant] = useState('');
   const [filterPreparedBy, setFilterPreparedBy] = useState('');
+  
+  const { token, user, logout } = useAuth();
+  const canView = user?.role === 'SUPERADMIN' || user?.permissions.includes('VIEW_SAVED_TABLES');
 
   useEffect(() => {
-    fetchTables();
-  }, []);
+    if (canView) {
+      fetchTables();
+    }
+  }, [canView]);
 
   const fetchTables = () => {
     setLoading(true);
     fetch('/api/comparisons', {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+        'Authorization': `Bearer ${token}`
       }
     })
       .then(res => {
-        if (res.status === 403) {
-          localStorage.removeItem('admin_token');
-          window.location.href = '/login';
+        if (res.status === 401 || res.status === 403) {
+          logout();
           throw new Error("Session expired. Please log in again.");
         }
         return res.json();
@@ -64,7 +69,7 @@ export default function SavedTables() {
       const res = await fetch(`/api/comparisons/${id}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
       if (res.ok) {
@@ -76,6 +81,17 @@ export default function SavedTables() {
       alert("Error deleting table.");
     }
   };
+
+  if (!canView) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center">
+        <ShieldCheck className="w-16 h-16 text-gray-400 mb-4" />
+        <h2 className="text-2xl font-bold text-black uppercase tracking-tight">Access Restricted</h2>
+        <p className="text-gray-500 mt-2 max-w-md">You do not have the 'VIEW_SAVED_TABLES' permission required to access this database.</p>
+        <Link to="/" className="mt-8 px-6 py-2 bg-black text-white rounded-lg font-bold text-xs uppercase tracking-widest">Back to Dashboard</Link>
+      </div>
+    );
+  }
 
   const filteredTables = tables.filter(t => {
     const header = t.data?.header || {};

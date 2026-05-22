@@ -4,9 +4,11 @@ import { ComparisonTable } from './components/ComparisonTable';
 import { Download, Eye } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import { useAuth } from './context/AuthContext';
 
 export default function ViewTable() {
   const { id } = useParams();
+  const { token, logout } = useAuth();
   const [record, setRecord] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -21,13 +23,12 @@ export default function ViewTable() {
   useEffect(() => {
     fetch(`/api/comparisons/${id}`, {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+        'Authorization': `Bearer ${token}`
       }
     })
       .then(res => {
-        if (res.status === 403) {
-          localStorage.removeItem('admin_token');
-          window.location.href = '/login';
+        if (res.status === 401 || res.status === 403) {
+          logout();
           throw new Error("Session expired. Please log in again.");
         }
         return res.json();
@@ -42,7 +43,7 @@ export default function ViewTable() {
         console.error(err);
         setLoading(false);
       });
-  }, [id]);
+  }, [id, token]);
 
   const handleUpdate = async () => {
     setIsSaving(true);
@@ -55,7 +56,7 @@ export default function ViewTable() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(payload)
       });
@@ -66,6 +67,11 @@ export default function ViewTable() {
         result = text ? JSON.parse(text) : {};
       } catch (e) {
         throw new Error("Server returned an invalid response. Please check if the server is running.");
+      }
+
+      if (res.status === 401 || res.status === 403) {
+        logout();
+        return;
       }
 
       if (!res.ok) throw new Error(result.error || "Failed to update");

@@ -9,6 +9,7 @@ import pg from "pg";
 import { ComparisonDataSchema, SaveComparisonSchema } from "./src/schemas.ts";
 import jwt from "jsonwebtoken";
 import { rateLimit } from "express-rate-limit";
+import bcrypt from "bcryptjs";
 
 import OpenAI from "openai";
 import pdf from "pdf-extraction";
@@ -57,10 +58,40 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // Auto-Seeder for SuperAdmin
+  const seedAdmin = async () => {
+    try {
+      const userCount = await prisma.user.count();
+      if (userCount === 0) {
+        const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 10);
+        await prisma.user.create({
+          data: {
+            username: 'admin',
+            password: hashedPassword,
+            role: 'SUPERADMIN',
+            permissions: [
+              "ACCESS_COMPARE", 
+              "VIEW_SAVED_TABLES", 
+              "ACCESS_PO_MAKER", 
+              "VIEW_SAVED_POS", 
+              "MANAGE_SETTINGS", 
+              "MANAGE_USERS",
+              "APPROVE_PO"
+            ]
+          }
+        });
+        console.log("[Auth] SuperAdmin account seeded: username 'admin'");
+      }
+    } catch (e) {
+      console.error("[Auth] Seeder failed", e);
+    }
+  };
+  await seedAdmin();
+
   app.use(express.json({ limit: "100mb" }));
   app.use(express.urlencoded({ limit: "100mb", extended: true }));
 
-  // JWT Middleware
+  // JWT Middleware (Enhanced for RBAC)
   const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
@@ -74,14 +105,98 @@ async function startServer() {
     });
   };
 
-  // Auth Route
-  app.post("/api/login", loginLimiter, (req, res) => {
-    const { password } = req.body;
-    if (password === ADMIN_PASSWORD) {
-      const token = jwt.sign({ role: "admin" }, JWT_SECRET, { expiresIn: "24h" });
-      return res.json({ token });
+  const requirePermission = (permission: string) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+      const user = (req as any).user;
+      if (user.role === 'SUPERADMIN') return next();
+      
+      const permissions = user.permissions || [];
+      if (permissions.includes(permission)) {
+        return next();
+      }
+      res.status(403).json({ error: `Permission denied: ${permission}` });
+    };
+  };
+
+  // Refactored Login Route
+  app.post("/api/login", loginLimiter, async (req, res) => {
+    const { username, password } = req.body;
+    try {
+      // Compatibility for legacy password-only login (if user only sends password, assume admin)
+      const targetUsername = username || 'admin';
+      
+      const user = await prisma.user.findUnique({ where: { username: targetUsername } });
+      if (!user) return res.status(401).json({ error: "Invalid credentials" });
+
+      const isValid = await bcrypt.compare(password, user.password);
+      if (!isValid) return res.status(401).json({ error: "Invalid credentials" });
+
+      const token = jwt.sign({ 
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        permissions: user.permissions
+      }, JWT_SECRET, { expiresIn: "24h" });
+      
+      return res.json({ token, role: user.role, permissions: user.permissions });
+    } catch (error) {
+      res.status(500).json({ error: "Internal server error" });
     }
-    res.status(401).json({ error: "Invalid password" });
+  });
+
+  // User Management API (SuperAdmin Only)
+  app.get("/api/users", authenticateToken, requirePermission("MANAGE_USERS"), async (req, res) => {
+    try {
+      const users = await prisma.user.findMany({
+        select: { id: true, username: true, role: true, permissions: true, created_at: true }
+      });
+      res.json(users);
+    } catch (e) {
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+
+  app.post("/api/users", authenticateToken, requirePermission("MANAGE_USERS"), async (req, res) => {
+    try {
+      const { username, password, role, permissions } = req.body;
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const user = await prisma.user.create({
+        data: { username, password: hashedPassword, role, permissions }
+      });
+      res.json({ success: true, id: user.id });
+    } catch (e) {
+      res.status(500).json({ error: "Failed to create user. Username might be taken." });
+    }
+  });
+
+  app.put("/api/users/:id", authenticateToken, requirePermission("MANAGE_USERS"), async (req, res) => {
+    try {
+      const { password, role, permissions } = req.body;
+      const updateData: any = { role, permissions };
+      if (password) {
+        updateData.password = await bcrypt.hash(password, 10);
+      }
+      await prisma.user.update({
+        where: { id: parseInt(req.params.id) },
+        data: updateData
+      });
+      res.json({ success: true });
+    } catch (e) {
+      res.status(500).json({ error: "Failed to update user" });
+    }
+  });
+
+  app.delete("/api/users/:id", authenticateToken, requirePermission("MANAGE_USERS"), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const user = await prisma.user.findUnique({ where: { id } });
+      if (user?.role === 'SUPERADMIN') return res.status(403).json({ error: "Cannot delete SuperAdmin" });
+      
+      await prisma.user.delete({ where: { id } });
+      res.json({ success: true });
+    } catch (e) {
+      res.status(500).json({ error: "Failed to delete user" });
+    }
   });
 
   app.post("/api/extract", extractLimiter, async (req, res) => {
@@ -573,6 +688,29 @@ async function startServer() {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to delete PO" });
+    }
+  });
+
+  // Approval Workflow
+  app.put("/api/po/:id/status", authenticateToken, requirePermission("APPROVE_PO"), async (req, res) => {
+    try {
+      const { status } = req.body;
+      const user = (req as any).user;
+      
+      const updateData: any = { status };
+      if (status === 'APPROVED') {
+        updateData.approved_by = user.username;
+        updateData.approved_at = new Date();
+      }
+      
+      const po = await prisma.purchaseOrder.update({
+        where: { id: Number(req.params.id) },
+        data: updateData
+      });
+      res.json(po);
+    } catch (error) {
+      console.error("[Backend] PO Status Update Error:", error);
+      res.status(500).json({ error: "Failed to update PO status" });
     }
   });
 

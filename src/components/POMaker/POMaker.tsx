@@ -2,14 +2,18 @@ import React, { useState, useEffect } from 'react';
 import POForm from './POForm';
 import POPreview from './POPreview';
 import { PurchaseOrder, CompanySettings, TermsTemplate, VendorMaster } from '../../types';
-import { Save, ArrowLeft } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Save, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 const POMaker: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const editId = queryParams.get('edit');
+  
+  const { token, user, logout } = useAuth();
+  const canAccess = user?.role === 'SUPERADMIN' || user?.permissions.includes('ACCESS_PO_MAKER');
 
   const [po, setPo] = useState<PurchaseOrder>(() => {
     const saved = localStorage.getItem('po_maker_draft');
@@ -42,8 +46,14 @@ const POMaker: React.FC = () => {
   const generatePONo = async (version: string) => {
     try {
       const res = await fetch(`/api/po/latest?version=${version}`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
+
+      if (res.status === 401 || res.status === 403) {
+        logout();
+        return;
+      }
+
       const { latest } = await res.json();
       
       const prefix = version === 'hemraj_rice' ? 'HRM' : version === 'hemraj_ind' ? 'HI' : 'RS';
@@ -72,16 +82,18 @@ const POMaker: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchSettings();
-    fetchTemplates();
-    fetchVendors();
-    fetchComparisons();
-    if (editId) {
-      fetchPO(editId);
-    } else if (!po.po_no) {
-      generatePONo(po.version || 'hemraj_rice');
+    if (canAccess) {
+      fetchSettings();
+      fetchTemplates();
+      fetchVendors();
+      fetchComparisons();
+      if (editId) {
+        fetchPO(editId);
+      } else if (!po.po_no) {
+        generatePONo(po.version || 'hemraj_rice');
+      }
     }
-  }, [editId]);
+  }, [editId, canAccess]);
 
   // Auto-save draft
   useEffect(() => {
@@ -92,11 +104,8 @@ const POMaker: React.FC = () => {
 
   // Handle Automatic PO Number Prefix/Year Formatting on Version Change
   useEffect(() => {
-    if (!editId) {
+    if (!editId && canAccess) {
       const prefix = po.version === 'hemraj_rice' ? 'HRM' : po.version === 'hemraj_ind' ? 'HI' : 'RS';
-      // Only auto-generate if the PO number is empty or starts with one of the standard prefixes but NOT the current one
-      // This allows manual overrides to persist if they don't look like our standard PO numbers, 
-      // or if they already match the current prefix (no need to re-fetch).
       const currentPrefix = po.po_no?.split('/')[0];
       const standardPrefixes = ['HRM', 'HI', 'RS'];
       
@@ -104,13 +113,17 @@ const POMaker: React.FC = () => {
         generatePONo(po.version || 'hemraj_rice');
       }
     }
-  }, [po.version]);
+  }, [po.version, canAccess]);
 
   const fetchPO = async (id: string) => {
     try {
       const res = await fetch(`/api/po/${id}`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
+      if (res.status === 401 || res.status === 403) {
+        logout();
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         setPo(data);
@@ -122,16 +135,24 @@ const POMaker: React.FC = () => {
 
   const fetchSettings = async () => {
     const res = await fetch('/api/settings/company', {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+      headers: { 'Authorization': `Bearer ${token}` }
     });
+    if (res.status === 401 || res.status === 403) {
+      logout();
+      return;
+    }
     const data = await res.json();
     setSettings(data);
   };
 
   const fetchTemplates = async () => {
     const res = await fetch('/api/settings/terms', {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+      headers: { 'Authorization': `Bearer ${token}` }
     });
+    if (res.status === 401 || res.status === 403) {
+      logout();
+      return;
+    }
     if (res.ok) {
       const data = await res.json();
       setTemplates(Array.isArray(data) ? data : []);
@@ -142,8 +163,12 @@ const POMaker: React.FC = () => {
 
   const fetchVendors = async () => {
     const res = await fetch('/api/settings/vendors', {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+      headers: { 'Authorization': `Bearer ${token}` }
     });
+    if (res.status === 401 || res.status === 403) {
+      logout();
+      return;
+    }
     if (res.ok) {
       const data = await res.json();
       setVendors(Array.isArray(data) ? data : []);
@@ -153,8 +178,12 @@ const POMaker: React.FC = () => {
   const fetchComparisons = async () => {
     try {
       const res = await fetch('/api/comparisons?limit=100', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
+      if (res.status === 401 || res.status === 403) {
+        logout();
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         setComparisons(data);
@@ -176,10 +205,16 @@ const POMaker: React.FC = () => {
       method,
       headers: { 
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify(po)
     });
+    
+    if (res.status === 401 || res.status === 403) {
+      logout();
+      return;
+    }
+
     if (res.ok) {
       alert(`PO ${editId ? 'updated' : 'saved'} successfully!`);
       if (!editId) {
@@ -195,6 +230,17 @@ const POMaker: React.FC = () => {
       window.location.reload();
     }
   };
+
+  if (!canAccess) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[80vh] p-8 text-center bg-white m-8 rounded-2xl border border-black shadow-sm">
+        <ShieldCheck className="w-16 h-16 text-gray-400 mb-4" />
+        <h2 className="text-2xl font-bold text-black uppercase tracking-tight">Access Restricted</h2>
+        <p className="text-gray-500 mt-2 max-w-md">You do not have the 'ACCESS_PO_MAKER' permission required to create purchase orders.</p>
+        <Link to="/" className="mt-8 px-6 py-2 bg-black text-white rounded-lg font-bold text-xs uppercase tracking-widest">Back to Dashboard</Link>
+      </div>
+    );
+  }
 
   return (
     <div className="h-[calc(100vh-64px)] flex flex-col bg-white">

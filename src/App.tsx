@@ -6,23 +6,33 @@ import Login from './Login';
 import POMaker from './components/POMaker/POMaker';
 import POSettings from './components/Settings/POSettings';
 import SavedPOs from './SavedPOs';
-import { Settings as SettingsIcon, FileText, Database } from 'lucide-react';
+import PurchaseHeadDashboard from './PurchaseHeadDashboard';
+import POApprovalView from './POApprovalView';
+import { Settings as SettingsIcon, FileText, Database, ShieldCheck } from 'lucide-react';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const token = localStorage.getItem('admin_token');
-  if (!token) return <Navigate to="/login" replace />;
+const ProtectedRoute = ({ children, permission }: { children: React.ReactNode, permission?: string }) => {
+  const { isAuthenticated, user } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  
+  if (permission) {
+    const userRole = user?.role || 'USER';
+    const userPermissions = user?.permissions || [];
+    
+    if (userRole !== 'SUPERADMIN' && !userPermissions.includes(permission)) {
+      return <Navigate to="/" replace />;
+    }
+  }
+  
   return <>{children}</>;
 };
 
-export default function App() {
-  const handleLogout = () => {
-    localStorage.removeItem('admin_token');
-    window.location.href = '/login';
-  };
+function AppContent() {
+  const { isAuthenticated, logout, user } = useAuth();
 
   return (
-    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <div className="min-h-screen bg-white font-sans text-black">
+    <div className="min-h-screen bg-white font-sans text-black">
+      {isAuthenticated && (
         <nav className="bg-white border-b border-black sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
@@ -43,37 +53,53 @@ export default function App() {
                   <Link to="/saved-pos" className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-black hover:bg-black/10 transition-colors">
                     <Database className="w-4 h-4" /> Saved POs
                   </Link>
+                  {(user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO')) && (
+                    <Link to="/purchase-head" className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-bold text-blue-600 hover:bg-blue-50 transition-colors border border-blue-200 ml-2">
+                      <ShieldCheck className="w-4 h-4" /> Approval Hub
+                    </Link>
+                  )}
                   <Link to="/settings" className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-black hover:bg-black/10 transition-colors">
                     <SettingsIcon className="w-4 h-4" /> Settings
                   </Link>
                 </div>
               </div>
               <div className="flex items-center">
-                 {localStorage.getItem('admin_token') && (
-                   <button 
-                     onClick={handleLogout}
-                     className="text-xs font-bold text-black hover:underline transition-colors uppercase tracking-widest"
-                   >
-                     Logout
-                   </button>
-                 )}
+                 <button 
+                   onClick={logout}
+                   className="text-xs font-bold text-black hover:underline transition-colors uppercase tracking-widest"
+                 >
+                   Logout
+                 </button>
               </div>
             </div>
           </div>
         </nav>
+      )}
 
-        <main>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={<ProtectedRoute><Builder /></ProtectedRoute>} />
-            <Route path="/saved" element={<ProtectedRoute><SavedTables /></ProtectedRoute>} />
-            <Route path="/saved/:id" element={<ProtectedRoute><ViewTable /></ProtectedRoute>} />
-            <Route path="/po-maker" element={<ProtectedRoute><POMaker /></ProtectedRoute>} />
-            <Route path="/saved-pos" element={<ProtectedRoute><SavedPOs /></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><POSettings /></ProtectedRoute>} />
-          </Routes>
-        </main>
-      </div>
-    </BrowserRouter>
+      <main>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<ProtectedRoute><Builder /></ProtectedRoute>} />
+          <Route path="/saved" element={<ProtectedRoute><SavedTables /></ProtectedRoute>} />
+          <Route path="/saved/:id" element={<ProtectedRoute><ViewTable /></ProtectedRoute>} />
+          <Route path="/po-maker" element={<ProtectedRoute><POMaker /></ProtectedRoute>} />
+          <Route path="/saved-pos" element={<ProtectedRoute><SavedPOs /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><POSettings /></ProtectedRoute>} />
+          <Route path="/purchase-head" element={<ProtectedRoute permission="APPROVE_PO"><PurchaseHeadDashboard /></ProtectedRoute>} />
+          <Route path="/approve-po/:id" element={<ProtectedRoute permission="APPROVE_PO"><POApprovalView /></ProtectedRoute>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <AppContent />
+      </BrowserRouter>
+    </AuthProvider>
   );
 }

@@ -419,14 +419,48 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
                   </div>
 
                   {/* Signatory and Metadata Block */}
-                  <div className="mt-12 flex justify-between items-start">
-                    <div className="text-left text-[10px] font-bold">
+                  <div className="mt-8 border-t border-black pt-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="text-left text-[10px] font-bold">
                         <p>Yours faithfully,</p>
                         <p className="font-black text-xs uppercase mt-1">{currentMeta.name}</p>
-                    </div>
-                    <div className="text-right text-[10px] font-bold space-y-0.5 pt-1">
+                      </div>
+                      <div className="text-right text-[10px] font-bold space-y-0.5">
                         <p>GSTIN : <span className="font-black">{currentMeta.gstin}</span></p>
                         <p>PAN : <span className="font-black">{currentMeta.pan}</span></p>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-end">
+                      <div className="text-left">
+                        <div className="flex items-center gap-0 h-32">
+                          {po.status === 'APPROVED' && (
+                            <>
+                              {/* Signature - Left side, larger */}
+                              <img src="/signature.jpg" alt="Signature" className="h-24 w-auto object-contain -mr-8 z-10" />
+                              
+                              {/* Stamp - Right of signature, slightly behind */}
+                              <div className="opacity-90">
+                                {po.version === 'hemraj_rice' && (
+                                  <img src="/hemraj_rice_stamp.png" alt="Stamp" className="h-32 w-auto object-contain transform -rotate-6" />
+                                )}
+                                {po.version === 'hemraj_ind' && (
+                                  <img src="/hemraj_ind_stamp.png" alt="Stamp" className="h-32 w-auto object-contain transform -rotate-6" />
+                                )}
+                                {po.version === 'radhashyam' && (
+                                  <img src="/radhashyam_stamp.png" alt="Stamp" className="h-32 w-auto object-contain transform -rotate-6" />
+                                )}
+                              </div>
+                            </>
+                          )}
+                          {(!po.status || po.status === 'PENDING') && (
+                            <div className="h-20 border-b border-dashed border-gray-300 w-48 mb-2 flex items-end text-[8px] text-gray-400 font-normal italic">
+                              Authorized Signatory Signature & Stamp
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-[9px] uppercase font-black">Authorized Signatory</p>
+                      </div>
                     </div>
                   </div>
                 </td>

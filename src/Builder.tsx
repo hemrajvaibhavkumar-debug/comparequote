@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, FileText, Download, Table as TableIcon, Loader2, Plus, Trash2, Eye, Settings as SettingsIcon, X, RotateCcw } from 'lucide-react';
+import { Upload, FileText, Download, Table as TableIcon, Loader2, Plus, Trash2, Eye, Settings as SettingsIcon, X, RotateCcw, ShieldCheck } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { extractQuotations } from './services/gemini';
 import { ComparisonData, HeaderInfo } from './types';
@@ -7,6 +7,7 @@ import { ComparisonTable } from './components/ComparisonTable';
 import * as Papa from 'papaparse';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import { useAuth } from './context/AuthContext';
 
 declare const google: any;
 
@@ -14,6 +15,10 @@ interface DBExecutive { id: number; name: string; designation?: string; }
 interface DBPlant { id: number; name: string; location?: string; }
 
 const Builder: React.FC = () => {
+  const { token, user, logout } = useAuth();
+  const canExtract = user?.role === 'SUPERADMIN' || user?.permissions.includes('ACCESS_COMPARE');
+  const canManageSettings = user?.role === 'SUPERADMIN' || user?.permissions.includes('MANAGE_SETTINGS');
+
   // State with LocalStorage persistence (Auto-save draft)
   const [header, setHeader] = useState<HeaderInfo>(() => {
     const saved = localStorage.getItem('quote_draft_header');
@@ -70,12 +75,11 @@ const Builder: React.FC = () => {
 
     try {
       const res = await fetch('/api/comparisons/latest-year', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       
-      if (res.status === 403) {
-        localStorage.removeItem('admin_token');
-        window.location.href = '/login';
+      if (res.status === 401 || res.status === 403) {
+        logout();
         return;
       }
       
@@ -114,12 +118,11 @@ const Builder: React.FC = () => {
   const fetchMasters = async () => {
     try {
       const res = await fetch('/api/masters', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      if (res.status === 403) {
-        localStorage.removeItem('admin_token');
-        window.location.href = '/login';
+      if (res.status === 401 || res.status === 403) {
+        logout();
         return;
       }
 
@@ -138,7 +141,7 @@ const Builder: React.FC = () => {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ name: newPreparedBy, designation: newPreparedByDesignation })
       });
@@ -155,7 +158,7 @@ const Builder: React.FC = () => {
     try {
       const res = await fetch(`/api/executives/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) fetchMasters();
     } catch (e) { alert("Error deleting executive"); }
@@ -168,7 +171,7 @@ const Builder: React.FC = () => {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ name: newPlantName, location: newPlantLocation })
       });
@@ -185,7 +188,7 @@ const Builder: React.FC = () => {
     try {
       const res = await fetch(`/api/plants/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) fetchMasters();
     } catch (e) { alert("Error deleting plant"); }
@@ -223,14 +226,13 @@ const Builder: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(payload)
       });
 
-      if (res.status === 403) {
-        localStorage.removeItem('admin_token');
-        window.location.href = '/login';
+      if (res.status === 401 || res.status === 403) {
+        logout();
         return;
       }
 
@@ -425,7 +427,7 @@ const Builder: React.FC = () => {
                <RotateCcw className="w-4 h-4" /> RESET ALL
              </button>
              <button onClick={() => setShowSettings(!showSettings)} className="flex items-center gap-2 px-4 py-2.5 bg-white text-black rounded-xl text-sm font-bold hover:bg-black/10 transition-all border border-black">
-               <SettingsIcon className="w-4 h-4" /> Settings
+               <SettingsIcon className="w-4 h-4" /> Options
              </button>
           </div>
         </header>
@@ -444,27 +446,32 @@ const Builder: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-4">
                 <h3 className="text-sm font-bold text-black uppercase">Prepared By Options</h3>
-                <div className="space-y-2">
-                  <input 
-                    type="text" 
-                    value={newPreparedBy} 
-                    onChange={e => setNewPreparedBy(e.target.value)} 
-                    placeholder="Name..." 
-                    className="w-full px-4 py-2 bg-white border border-black rounded-lg text-sm"
-                  />
-                  <input 
-                    type="text" 
-                    value={newPreparedByDesignation} 
-                    onChange={e => setNewPreparedByDesignation(e.target.value)} 
-                    placeholder="Designation..." 
-                    className="w-full px-4 py-2 bg-white border border-black rounded-lg text-sm"
-                  />
-                  <button onClick={addExecutive} className="w-full py-2 bg-black text-white rounded-lg text-sm font-bold hover:bg-black/90">Add Executive</button>
-                </div>
+                {canManageSettings ? (
+                  <div className="space-y-2">
+                    <input 
+                      type="text" 
+                      value={newPreparedBy} 
+                      onChange={e => setNewPreparedBy(e.target.value)} 
+                      placeholder="Name..." 
+                      className="w-full px-4 py-2 bg-white border border-black rounded-lg text-sm"
+                    />
+                    <input 
+                      type="text" 
+                      value={newPreparedByDesignation} 
+                      onChange={e => setNewPreparedByDesignation(e.target.value)} 
+                      placeholder="Designation..." 
+                      className="w-full px-4 py-2 bg-white border border-black rounded-lg text-sm"
+                    />
+                    <button onClick={addExecutive} className="w-full py-2 bg-black text-white rounded-lg text-sm font-bold hover:bg-black/90">Add Executive</button>
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-gray-500 italic">Only administrators can add/remove options.</p>
+                )}
                 <div className="flex flex-wrap gap-2 pt-2">
                   {dbExecutives.map(opt => (
                     <span key={opt.id} className="px-3 py-1 bg-black text-white rounded-lg text-xs font-medium flex items-center gap-2">
-                      {opt.name} {opt.designation && `(${opt.designation})`} <X className="w-3 h-3 cursor-pointer hover:text-white/80" onClick={() => removeExecutive(opt.id)} />
+                      {opt.name} {opt.designation && `(${opt.designation})`} 
+                      {canManageSettings && <X className="w-3 h-3 cursor-pointer hover:text-white/80" onClick={() => removeExecutive(opt.id)} />}
                     </span>
                   ))}
                 </div>
@@ -472,27 +479,32 @@ const Builder: React.FC = () => {
 
               <div className="space-y-4">
                 <h3 className="text-sm font-bold text-black uppercase">Plant Name Options</h3>
-                <div className="space-y-2">
-                  <input 
-                    type="text" 
-                    value={newPlantName} 
-                    onChange={e => setNewPlantName(e.target.value)} 
-                    placeholder="Plant Name..." 
-                    className="w-full px-4 py-2 bg-white border border-black rounded-lg text-sm"
-                  />
-                  <input 
-                    type="text" 
-                    value={newPlantLocation} 
-                    onChange={e => setNewPlantLocation(e.target.value)} 
-                    placeholder="Location..." 
-                    className="w-full px-4 py-2 bg-white border border-black rounded-lg text-sm"
-                  />
-                  <button onClick={addPlant} className="w-full py-2 bg-black text-white rounded-lg text-sm font-bold hover:bg-black/90">Add Plant</button>
-                </div>
+                {canManageSettings ? (
+                  <div className="space-y-2">
+                    <input 
+                      type="text" 
+                      value={newPlantName} 
+                      onChange={e => setNewPlantName(e.target.value)} 
+                      placeholder="Plant Name..." 
+                      className="w-full px-4 py-2 bg-white border border-black rounded-lg text-sm"
+                    />
+                    <input 
+                      type="text" 
+                      value={newPlantLocation} 
+                      onChange={e => setNewPlantLocation(e.target.value)} 
+                      placeholder="Location..." 
+                      className="w-full px-4 py-2 bg-white border border-black rounded-lg text-sm"
+                    />
+                    <button onClick={addPlant} className="w-full py-2 bg-black text-white rounded-lg text-sm font-bold hover:bg-black/90">Add Plant</button>
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-gray-500 italic">Only administrators can add/remove options.</p>
+                )}
                 <div className="flex flex-wrap gap-2 pt-2">
                   {dbPlants.map(opt => (
                     <span key={opt.id} className="px-3 py-1 bg-black text-white rounded-lg text-xs font-medium flex items-center gap-2">
-                      {opt.name} {opt.location && `(${opt.location})`} <X className="w-3 h-3 cursor-pointer hover:text-white/80" onClick={() => removePlant(opt.id)} />
+                      {opt.name} {opt.location && `(${opt.location})`} 
+                      {canManageSettings && <X className="w-3 h-3 cursor-pointer hover:text-white/80" onClick={() => removePlant(opt.id)} />}
                     </span>
                   ))}
                 </div>
@@ -574,34 +586,44 @@ const Builder: React.FC = () => {
 
           <div className="col-span-12 lg:col-span-8 bg-white p-6 rounded-2xl shadow-sm border border-black space-y-5">
             <h2 className="text-sm font-bold text-black uppercase tracking-wider">Extraction Source</h2>
-            <div 
-              onClick={() => (document.querySelector('input[type="file"]') as HTMLInputElement)?.click()}
-              className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${isDragActive ? 'border-black bg-white' : 'border-black bg-white'}`}
-            >
-              <input {...getInputProps()} />
-              <Upload className="w-10 h-10 text-black mx-auto mb-2" />
-              <p className="text-sm text-black font-medium">Drop PDF/Images anywhere or click to browse</p>
-            </div>
-            
-            {files.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {files.map((f, i) => (
-                  <span key={i} className="px-3 py-1 bg-black text-white rounded-full text-[10px] font-bold flex items-center gap-2">
-                    {f.name} <Trash2 className="w-3 h-3 cursor-pointer" onClick={() => setFiles(files.filter((_, idx) => idx !== i))} />
-                  </span>
-                ))}
+            {canExtract ? (
+              <>
+                <div 
+                  onClick={() => (document.querySelector('input[type="file"]') as HTMLInputElement)?.click()}
+                  className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${isDragActive ? 'border-black bg-white' : 'border-black bg-white'}`}
+                >
+                  <input {...getInputProps()} />
+                  <Upload className="w-10 h-10 text-black mx-auto mb-2" />
+                  <p className="text-sm text-black font-medium">Drop PDF/Images anywhere or click to browse</p>
+                </div>
+                
+                {files.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {files.map((f, i) => (
+                      <span key={i} className="px-3 py-1 bg-black text-white rounded-full text-[10px] font-bold flex items-center gap-2">
+                        {f.name} <Trash2 className="w-3 h-3 cursor-pointer" onClick={() => setFiles(files.filter((_, idx) => idx !== i))} />
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <textarea value={inputText} onChange={e => setInputText(e.target.value)} placeholder="Or paste quotation text..." className="w-full h-32 px-4 py-3 bg-white border border-black rounded-xl text-sm resize-none text-black" />
+
+                <div className="flex gap-3">
+                  <div className="flex flex-col gap-2 flex-1">
+                    <button onClick={handleExtract} disabled={isExtracting || (!inputText && !files.length)} className="w-full py-3.5 bg-black text-white rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-black/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2">
+                      {isExtracting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />} Extract Data
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="p-12 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-300">
+                <ShieldCheck className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-bold text-gray-900 uppercase tracking-tight">Access Restricted</h3>
+                <p className="text-sm text-gray-500 mt-2">You do not have permission to use the AI Extraction tool.</p>
               </div>
             )}
-
-            <textarea value={inputText} onChange={e => setInputText(e.target.value)} placeholder="Or paste quotation text..." className="w-full h-32 px-4 py-3 bg-white border border-black rounded-xl text-sm resize-none text-black" />
-
-            <div className="flex gap-3">
-              <div className="flex flex-col gap-2 flex-1">
-                <button onClick={handleExtract} disabled={isExtracting || (!inputText && !files.length)} className="w-full py-3.5 bg-black text-white rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-black/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2">
-                  {isExtracting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />} Extract Data
-                </button>
-              </div>
-            </div>
           </div>
         </div>
 

@@ -1,23 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { PurchaseOrder } from './types';
-import { FileText, Eye, Edit, Trash2, Search, ArrowLeft } from 'lucide-react';
+import { FileText, Eye, Edit, Trash2, Search, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { useAuth } from './context/AuthContext';
 
 const SavedPOs: React.FC = () => {
   const [pos, setPos] = useState<PurchaseOrder[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  
+  const { token, user, logout } = useAuth();
+  const canView = user?.role === 'SUPERADMIN' || user?.permissions.includes('VIEW_SAVED_POS');
 
   useEffect(() => {
-    fetchPOs();
-  }, []);
+    if (canView) {
+      fetchPOs();
+    }
+  }, [canView]);
 
   const fetchPOs = async () => {
     try {
       const res = await fetch('/api/po', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
+      if (res.status === 401 || res.status === 403) {
+        logout();
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         setPos(data);
@@ -35,7 +45,7 @@ const SavedPOs: React.FC = () => {
     try {
       const res = await fetch(`/api/po/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
         setPos(pos.filter(po => po.id !== id));
@@ -44,6 +54,17 @@ const SavedPOs: React.FC = () => {
       console.error('Failed to delete PO', err);
     }
   };
+
+  if (!canView) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center bg-white m-8 rounded-2xl border border-black shadow-sm">
+        <ShieldCheck className="w-16 h-16 text-gray-400 mb-4" />
+        <h2 className="text-2xl font-bold text-black uppercase tracking-tight">Access Restricted</h2>
+        <p className="text-gray-500 mt-2 max-w-md">You do not have the 'VIEW_SAVED_POS' permission required to view the Purchase Order database.</p>
+        <Link to="/" className="mt-8 px-6 py-2 bg-black text-white rounded-lg font-bold text-xs uppercase tracking-widest">Back to Dashboard</Link>
+      </div>
+    );
+  }
 
   const filteredPOs = pos.filter(po => 
     po.po_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
