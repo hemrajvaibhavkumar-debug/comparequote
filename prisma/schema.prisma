@@ -77,6 +77,7 @@ model PurchaseOrder {
   date           DateTime @default(now())
   quote_date     String?
   quote_ref_type String?
+  quote_doc_no   String?
   vendor_name    String
   version        String?  // hemraj_ind, hemraj_rice, radhashyam
   vendor_details Json?    // Address, GSTIN, Mail, Ph
@@ -91,7 +92,7 @@ model PurchaseOrder {
 
 model VendorMaster {
   id        Int      @id @default(autoincrement())
-  name      String   @unique
+  name      String
   address   String?  @map("_address")
   state     String?
   gstin     String?

@@ -8,10 +8,23 @@ interface POPreviewProps {
   po: PurchaseOrder;
   setPo: React.Dispatch<React.SetStateAction<PurchaseOrder>>;
   settings: CompanySettings | null;
+  actions?: React.ReactNode;
 }
 
-const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
+const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions }) => {
   const printRef = useRef<HTMLDivElement>(null);
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    try {
+      // If it's already in YYYY-MM-DD format, return it
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-CA'); // Returns YYYY-MM-DD
+    } catch (e) {
+      return dateStr;
+    }
+  };
 
   const updatePO = (field: keyof PurchaseOrder, value: any) => {
     setPo(prev => ({ ...prev, [field]: value }));
@@ -80,18 +93,22 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
   return (
     <div className="flex flex-col items-center gap-4 text-black w-full h-full overflow-hidden">
       <div className="flex gap-4 print-hidden shrink-0 py-4">
-        <button 
-          onClick={handlePrint}
-          className="flex items-center gap-2 bg-black text-white px-6 py-2 rounded-full hover:bg-black/90 transition shadow-lg font-bold text-sm"
-        >
-          <Printer className="w-4 h-4" /> Print PO
-        </button>
-        <button 
-          onClick={handleDownload}
-          className="flex items-center gap-2 bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 transition shadow-lg font-bold text-sm"
-        >
-          <Download className="w-4 h-4" /> Download PDF
-        </button>
+        {actions || (
+          <>
+            <button 
+              onClick={handlePrint}
+              className="flex items-center gap-2 bg-black text-white px-6 py-2 rounded-full hover:bg-black/90 transition shadow-lg font-bold text-sm"
+            >
+              <Printer className="w-4 h-4" /> Print PO
+            </button>
+            <button 
+              onClick={handleDownload}
+              className="flex items-center gap-2 bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 transition shadow-lg font-bold text-sm"
+            >
+              <Download className="w-4 h-4" /> Download PDF
+            </button>
+          </>
+        )}
       </div>
 
       <style>{`
@@ -282,7 +299,7 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings }) => {
                       <p className="font-bold text-black uppercase">PO NO :: <span className="font-black text-sm">{po.po_no || 'HI /2026-27/00'}</span></p>
                     </div>
                     <div className="border border-black p-2 rounded shadow-[1px_1px_0px_black]">
-                      <p className="font-bold text-black uppercase">Date : <span className="font-black text-sm">{po.date}</span></p>
+                      <p className="font-bold text-black uppercase">Date : <span className="font-black text-sm">{formatDate(po.date)}</span></p>
                     </div>
                   </div>
 

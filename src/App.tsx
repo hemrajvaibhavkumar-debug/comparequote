@@ -19,7 +19,16 @@ const ProtectedRoute = ({ children, permission }: { children: React.ReactNode, p
     const userRole = user?.role || 'USER';
     const userPermissions = user?.permissions || [];
     
-    if (userRole !== 'SUPERADMIN' && !userPermissions.includes(permission)) {
+    if (userRole === 'SUPERADMIN') return <>{children}</>;
+
+    // Special case for Approval Hub: allow either full approve or read-only view
+    if (permission === 'VIEW_APPROVAL_HUB') {
+       if (userPermissions.includes('VIEW_APPROVAL_HUB') || userPermissions.includes('APPROVE_PO')) {
+         return <>{children}</>;
+       }
+    }
+    
+    if (!userPermissions.includes(permission)) {
       return <Navigate to="/" replace />;
     }
   }
@@ -53,7 +62,7 @@ function AppContent() {
                   <Link to="/saved-pos" className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-black hover:bg-black/10 transition-colors">
                     <Database className="w-4 h-4" /> Saved POs
                   </Link>
-                  {(user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO')) && (
+                  {(user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO') || user?.permissions.includes('VIEW_APPROVAL_HUB')) && (
                     <Link to="/purchase-head" className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-bold text-blue-600 hover:bg-blue-50 transition-colors border border-blue-200 ml-2">
                       <ShieldCheck className="w-4 h-4" /> Approval Hub
                     </Link>
@@ -85,8 +94,8 @@ function AppContent() {
           <Route path="/po-maker" element={<ProtectedRoute><POMaker /></ProtectedRoute>} />
           <Route path="/saved-pos" element={<ProtectedRoute><SavedPOs /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><POSettings /></ProtectedRoute>} />
-          <Route path="/purchase-head" element={<ProtectedRoute permission="APPROVE_PO"><PurchaseHeadDashboard /></ProtectedRoute>} />
-          <Route path="/approve-po/:id" element={<ProtectedRoute permission="APPROVE_PO"><POApprovalView /></ProtectedRoute>} />
+          <Route path="/purchase-head" element={<ProtectedRoute permission="VIEW_APPROVAL_HUB"><PurchaseHeadDashboard /></ProtectedRoute>} />
+          <Route path="/approve-po/:id" element={<ProtectedRoute permission="VIEW_APPROVAL_HUB"><POApprovalView /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

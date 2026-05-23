@@ -8,7 +8,10 @@ export default function PurchaseHeadDashboard() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('PENDING');
+  const [actioningId, setActioningId] = useState<number | null>(null);
   const { token, logout, user } = useAuth();
+  
+  const canApprove = user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO');
 
   useEffect(() => {
     fetchPOs();
@@ -35,6 +38,37 @@ export default function PurchaseHeadDashboard() {
     }
   };
 
+  const handleQuickStatusUpdate = async (id: number, newStatus: 'APPROVED' | 'REJECTED', e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!window.confirm(`Are you sure you want to ${newStatus.toLowerCase()} PO #${pos.find(p => p.id === id)?.po_no}?`)) return;
+
+    try {
+      setActioningId(id);
+      const res = await fetch(`/api/po/${id}/status`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      
+      if (res.ok) {
+        // Refresh local state
+        setPos(prev => prev.map(p => p.id === id ? { ...p, status: newStatus } : p));
+      } else {
+        alert("Failed to update status");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error updating status");
+    } finally {
+      setActioningId(null);
+    }
+  };
+
   const filteredPOs = pos.filter(po => {
     const matchesSearch = po.po_no.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          po.vendor_name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -44,13 +78,14 @@ export default function PurchaseHeadDashboard() {
   });
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
+    const s = status || 'PENDING';
+    switch (s) {
       case 'APPROVED':
-        return <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Approved</span>;
+        return <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-bold flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Approved</span>;
       case 'REJECTED':
-        return <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium flex items-center gap-1"><XCircle className="w-3 h-3" /> Rejected</span>;
+        return <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-bold flex items-center gap-1"><XCircle className="w-3 h-3" /> Rejected</span>;
       default:
-        return <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium flex items-center gap-1"><Clock className="w-3 h-3" /> Pending</span>;
+        return <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-bold flex items-center gap-1"><Clock className="w-3 h-3" /> Pending</span>;
     }
   };
 
@@ -59,8 +94,8 @@ export default function PurchaseHeadDashboard() {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <ShieldCheck className="text-blue-600" /> Purchase Head Approval
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2 uppercase tracking-tight">
+              <ShieldCheck className="text-blue-600 w-7 h-7" /> Purchase Approval Hub
             </h1>
             <p className="text-gray-500 font-medium">Welcome back, <span className="text-blue-600">@{user?.username}</span>. Review and sign pending POs.</p>
           </div>
@@ -77,7 +112,7 @@ export default function PurchaseHeadDashboard() {
               />
             </div>
             <select 
-              className="px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              className="px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-bold text-xs uppercase tracking-widest"
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value)}
             >
@@ -103,43 +138,77 @@ export default function PurchaseHeadDashboard() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPOs.map((po) => (
-              <Link 
-                key={po.id} 
-                to={`/approve-po/${po.id}`}
-                className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group overflow-hidden"
-              >
-                <div className="p-5">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-600 transition-colors">
-                      <FileText className="w-5 h-5 text-blue-600 group-hover:text-white" />
+            {filteredPOs.map((po) => {
+              const poStatus = po.status || 'PENDING';
+              const isActioning = actioningId === po.id;
+
+              return (
+                <div 
+                  key={po.id} 
+                  className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group overflow-hidden relative flex flex-col"
+                >
+                  <Link to={`/approve-po/${po.id}`} className="p-5 flex-1 cursor-pointer">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-600 transition-colors">
+                        <FileText className="w-5 h-5 text-blue-600 group-hover:text-white" />
+                      </div>
+                      {getStatusBadge(poStatus)}
                     </div>
-                    {getStatusBadge(po.status)}
-                  </div>
+                    
+                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                      PO #{po.po_no}
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-4 line-clamp-1">{po.vendor_name}</p>
+                    
+                    <div className="space-y-2 pt-4 border-t border-gray-50">
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <Calendar className="w-4 h-4" />
+                        {new Date(po.date).toLocaleDateString()}
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-900 font-bold">
+                        <span className="text-gray-500 font-normal italic">Amount:</span>
+                        ₹{po.total_amount.toLocaleString()}
+                      </div>
+                    </div>
+                  </Link>
                   
-                  <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                    PO #{po.po_no}
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-4 line-clamp-1">{po.vendor_name}</p>
-                  
-                  <div className="space-y-2 pt-4 border-t border-gray-50">
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <Calendar className="w-4 h-4" />
-                      {new Date(po.date).toLocaleDateString()}
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-900 font-bold">
-                      <span className="text-gray-500 font-normal italic">Amount:</span>
-                      ₹{po.total_amount.toLocaleString()}
-                    </div>
+                  <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                    {poStatus === 'PENDING' && canApprove ? (
+                      <div className="flex items-center gap-2 w-full">
+                        <button 
+                          onClick={(e) => handleQuickStatusUpdate(po.id, 'REJECTED', e)}
+                          disabled={isActioning}
+                          className="flex-1 py-1.5 bg-white border border-red-200 text-red-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-red-50 disabled:opacity-50 transition-all flex items-center justify-center gap-1"
+                        >
+                          <XCircle className="w-3 h-3" /> Reject
+                        </button>
+                        <button 
+                          onClick={(e) => handleQuickStatusUpdate(po.id, 'APPROVED', e)}
+                          disabled={isActioning}
+                          className="flex-1 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 disabled:opacity-50 transition-all shadow-sm flex items-center justify-center gap-1"
+                        >
+                          <CheckCircle className="w-3 h-3" /> Approve
+                        </button>
+                      </div>
+                    ) : (
+                      <Link 
+                        to={`/approve-po/${po.id}`}
+                        className="w-full text-center text-xs font-bold text-blue-600 hover:underline flex items-center justify-center gap-2 uppercase tracking-widest"
+                      >
+                        {poStatus === 'APPROVED' ? 'View Document' : poStatus === 'REJECTED' ? 'View Rejection' : 'Review Details'}
+                        <ChevronRight className="w-4 h-4" />
+                      </Link>
+                    )}
                   </div>
+
+                  {isActioning && (
+                    <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-10">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    </div>
+                  )}
                 </div>
-                
-                <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-sm font-medium text-blue-600">
-                  {po.status === 'PENDING' ? 'Review & Sign' : 'View Details'}
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </Link>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

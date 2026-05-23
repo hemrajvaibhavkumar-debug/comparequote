@@ -649,8 +649,14 @@ async function startServer() {
       if (data.date) data.date = new Date(data.date);
       const po = await prisma.purchaseOrder.create({ data });
       res.json(po);
-    } catch (error) {
+    } catch (error: any) {
       console.error("[Backend] PO Save Error:", error);
+      if (error.code === 'P2002') {
+        return res.status(400).json({ 
+          error: "Duplicate PO Number", 
+          details: `The PO number "${req.body.po_no}" already exists in the database. Please use a unique number.` 
+        });
+      }
       res.status(500).json({ error: "Failed to save PO", details: String(error) });
     }
   });

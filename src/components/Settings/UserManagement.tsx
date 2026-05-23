@@ -15,7 +15,8 @@ const ALL_PERMISSIONS = [
   { key: "VIEW_SAVED_TABLES", label: "View Saved Tables", description: "View and edit previously saved comparison tables" },
   { key: "ACCESS_PO_MAKER", label: "PO Maker", description: "Create and edit Purchase Orders" },
   { key: "VIEW_SAVED_POS", label: "View Saved POs", description: "Access the list of all created POs" },
-  { key: "APPROVE_PO", label: "Approval Hub", description: "Review, sign, and approve/reject POs" },
+  { key: "VIEW_APPROVAL_HUB", label: "View Approval Hub", description: "View POs and approval status (Read-only)" },
+  { key: "APPROVE_PO", label: "Approval Hub Actions", description: "Review, sign, and approve/reject POs" },
   { key: "MANAGE_SETTINGS", label: "Company Settings", description: "Manage company info, terms, and vendors" },
   { key: "MANAGE_USERS", label: "User Management", description: "Create and manage other user accounts" },
 ];
