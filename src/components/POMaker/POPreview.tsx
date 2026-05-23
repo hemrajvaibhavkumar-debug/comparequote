@@ -450,33 +450,43 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions }) =
 
                     <div className="flex justify-between items-end">
                       <div className="text-left">
-                        <div className="flex items-center gap-0 h-32">
-                          {po.status === 'APPROVED' && (
-                            <>
-                              {/* Signature - Left side, larger */}
-                              <img src="/signature.jpg" alt="Signature" className="h-24 w-auto object-contain -mr-8 z-10" />
-                              
-                              {/* Stamp - Right of signature, slightly behind */}
-                              <div className="opacity-90">
-                                {po.version === 'hemraj_rice' && (
-                                  <img src="/hemraj_rice_stamp.png" alt="Stamp" className="h-32 w-auto object-contain transform -rotate-6" />
-                                )}
-                                {po.version === 'hemraj_ind' && (
-                                  <img src="/hemraj_ind_stamp.png" alt="Stamp" className="h-32 w-auto object-contain transform -rotate-6" />
-                                )}
-                                {po.version === 'radhashyam' && (
-                                  <img src="/radhashyam_stamp.png" alt="Stamp" className="h-32 w-auto object-contain transform -rotate-6" />
-                                )}
+                        <div className="flex flex-col items-start">
+                          <div className="flex items-center gap-0 h-32">
+                            {po.status === 'APPROVED' && (
+                              <>
+                                {/* Signature - Left side, larger */}
+                                <img src="/signature.jpg" alt="Signature" className="h-24 w-auto object-contain -mr-8 z-10" />
+                                
+                                {/* Stamp - Right of signature, slightly behind */}
+                                <div className="opacity-90">
+                                  {po.version === 'hemraj_rice' && (
+                                    <img src="/hemraj_rice_stamp.png" alt="Stamp" className="h-32 w-auto object-contain transform -rotate-6" />
+                                  )}
+                                  {po.version === 'hemraj_ind' && (
+                                    <img src="/hemraj_ind_stamp.png" alt="Stamp" className="h-32 w-auto object-contain transform -rotate-6" />
+                                  )}
+                                  {po.version === 'radhashyam' && (
+                                    <img src="/radhashyam_stamp.png" alt="Stamp" className="h-32 w-auto object-contain transform -rotate-6" />
+                                  )}
+                                </div>
+                              </>
+                            )}
+                            {(!po.status || po.status === 'PENDING') && (
+                              <div className="h-20 border-b border-dashed border-gray-300 w-48 mb-2 flex items-end text-[8px] text-gray-400 font-normal italic">
+                                Authorized Signatory Signature & Stamp
                               </div>
-                            </>
-                          )}
-                          {(!po.status || po.status === 'PENDING') && (
-                            <div className="h-20 border-b border-dashed border-gray-300 w-48 mb-2 flex items-end text-[8px] text-gray-400 font-normal italic">
-                              Authorized Signatory Signature & Stamp
+                            )}
+                          </div>
+                          
+                          {/* Digital Verification Details */}
+                          {po.status === 'APPROVED' && (
+                            <div className="text-[7px] font-black text-blue-800/60 uppercase leading-tight -mt-4 ml-4">
+                              <p>signed on : {po.approved_at ? new Date(po.approved_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : formatDate(po.date)}</p>
+                              <p>digitally signed by Rohit Aggarwal</p>
                             </div>
                           )}
                         </div>
-                        <p className="text-[9px] uppercase font-black">Authorized Signatory</p>
+                        <p className="text-[9px] uppercase font-black mt-2">Authorized Signatory</p>
                       </div>
                     </div>
                   </div>

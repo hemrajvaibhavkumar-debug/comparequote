@@ -675,11 +675,18 @@ async function startServer() {
   app.put("/api/po/:id", authenticateToken, async (req, res) => {
     try {
       // Remove id from body to avoid primary key update attempt
-      const { id, created_at, ...data } = req.body;
+      const { id, created_at, status, approved_by, approved_at, ...data } = req.body;
       if (data.date) data.date = new Date(data.date);
+      
+      // Force status back to PENDING on update to require re-approval for revisions
       const po = await prisma.purchaseOrder.update({
         where: { id: Number(req.params.id) },
-        data
+        data: {
+          ...data,
+          status: 'PENDING',
+          approved_by: null,
+          approved_at: null
+        }
       });
       res.json(po);
     } catch (error) {
