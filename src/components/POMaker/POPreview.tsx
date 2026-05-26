@@ -1,7 +1,5 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { PurchaseOrder, CompanySettings, POItem } from '../../types';
-import { Download, Printer } from 'lucide-react';
-import * as htmlToImage from 'html-to-image';
 
 interface POPreviewProps {
   po: PurchaseOrder;
@@ -11,8 +9,43 @@ interface POPreviewProps {
   isPDF?: boolean;
 }
 
+const TermsAndNotes = ({ po }: { po: PurchaseOrder }) => (
+  <div className="mt-4 no-break">
+    <div className="text-[10px] space-y-1 mb-6 text-black border border-black p-4 rounded font-bold text-left bg-[#fdfdfe]">
+      <p className="font-black text-[11px] underline mb-2 uppercase tracking-wide">Commercial Terms::</p>
+      <div className="grid grid-cols-[140px_1fr] gap-y-1.5">
+        <span className="uppercase text-[9px]">Tax ::</span> <span className="uppercase">{po.terms.tax}</span>
+        <span className="uppercase text-[9px]">Packing ::</span> <span className="uppercase">{po.terms.packing}</span>
+        <span className="uppercase text-[9px]">Forwarding ::</span> <span className="uppercase">{po.terms.notes}</span>
+        <span className="uppercase text-[9px]">Payment Terms ::</span>
+        <div className="flex flex-col">
+          {po.terms.payment_milestones && po.terms.payment_milestones.length > 0 ? (
+            po.terms.payment_milestones.map((m, idx) => (
+              <span key={idx} className="uppercase font-black">{m.percentage}% - {m.description}</span>
+            ))
+          ) : (
+            <span className="uppercase">{po.terms.payment}</span>
+          )}
+        </div>
+        <span className="uppercase text-[9px]">Freight ::</span> <span className="uppercase">{po.terms.freight} {po.terms.freight_amount ? `- ₹${Number(po.terms.freight_amount).toLocaleString()}` : ''}</span>
+        <span className="uppercase text-[9px]">Delivery Period ::</span> <span className="uppercase">{po.terms.delivery}</span>
+        {po.terms.contact_no && <><span className="uppercase text-[9px]">Contact No ::</span> <span>{po.terms.contact_no}</span></>}
+      </div>
+    </div>
+
+    <div className="text-[10px] space-y-2 mb-8 uppercase italic font-black text-black border-l-4 border-black pl-4 py-2 text-left">
+       <p>NOTE 1 :: <span className="underline">E-Way bill is mandatory for Rs 50,000 and above Purchase Value.</span></p>
+       <p>NOTE 2 :: If we have any type of dispute from specification then we will reject material.</p>
+       {(po.terms.manual_notes || []).map((note, idx) => (
+         <p key={idx}>NOTE {idx + 3} :: {note}</p>
+       ))}
+    </div>
+  </div>
+);
+
 const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions, isPDF }) => {
   const printRef = useRef<HTMLDivElement>(null);
+  
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '';
     try {
@@ -74,17 +107,19 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions, isP
     </span>
   );
 
-  // --- PDF PAGING LOGIC ---
+  // --- MULTI-PAGE PAGING LOGIC ---
   const ITEMS_PER_PAGE_FIRST = 10;
-  const ITEMS_PER_PAGE_SUBSEQUENT = 16;
+  const ITEMS_PER_PAGE_SUBSEQUENT = 18; 
 
   const splitItemsIntoPages = () => {
     const pages: POItem[][] = [];
     let currentItems = [...po.items];
     
+    // Page 1
     pages.push(currentItems.slice(0, ITEMS_PER_PAGE_FIRST));
     currentItems = currentItems.slice(ITEMS_PER_PAGE_FIRST);
     
+    // Subsequent Pages
     while (currentItems.length > 0) {
       pages.push(currentItems.slice(0, ITEMS_PER_PAGE_SUBSEQUENT));
       currentItems = currentItems.slice(ITEMS_PER_PAGE_SUBSEQUENT);
@@ -340,26 +375,51 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions, isP
     </div>
   );
 
-  if (isPDF) {
-    return (
-      <div className="pdf-paged-view flex flex-col gap-10 bg-gray-300 p-10 overflow-visible">
-        <style>{`
-          .pdf-page {
-            width: 210mm;
-            height: 297mm;
-            background: white;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 0 20px rgba(0,0,0,0.2);
-            page-break-after: always;
-            margin: 0 auto;
+  return (
+    <div className="flex flex-col items-center gap-4 text-black w-full min-h-full">
+      <div className="flex gap-4 print-hidden shrink-0 py-4">
+        {actions}
+      </div>
+
+      <style>{`
+        .pdf-paged-view {
+          display: flex;
+          flex-direction: column;
+          gap: 40px;
+          padding: 40px;
+          background: #e5e7eb;
+        }
+
+        .pdf-page {
+          width: 210mm;
+          height: 297mm;
+          background: white;
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+          margin: 0 auto;
+          flex-shrink: 0;
+          box-sizing: border-box;
+          overflow: hidden;
+        }
+
+        .pdf-header { height: 50mm; border-bottom: 2px solid black; flex-shrink: 0; }
+        .pdf-footer { height: 70mm; border-top: 2px solid black; flex-shrink: 0; position: absolute; bottom: 0; left: 0; width: 100%; }
+        .pdf-body { flex: 1; padding: 5mm 15mm 75mm 15mm; overflow: hidden; position: relative; }
+
+        @media print {
+          .pdf-paged-view { padding: 0 !important; gap: 0 !important; background: white !important; }
+          .pdf-page { 
+            box-shadow: none !important; 
+            margin: 0 !important; 
+            page-break-after: always !important; 
           }
-          .pdf-header { height: 50mm; border-bottom: 2px solid black; flex-shrink: 0; }
-          .pdf-footer { height: 70mm; border-top: 2px solid black; flex-shrink: 0; position: absolute; bottom: 0; left: 0; width: 100%; }
-          .pdf-body { flex: 1; padding: 5mm 15mm 70mm 15mm; overflow: hidden; }
-        `}</style>
-        
+          .print-hidden { display: none !important; }
+        }
+      `}</style>
+
+      <div ref={printRef} className="pdf-paged-view w-full">
         {itemPages.map((pageItems, pageIdx) => (
           <div key={pageIdx} className="pdf-page">
             <div className="pdf-header"><HeaderContent /></div>
@@ -393,7 +453,7 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions, isP
                     </div>
                   </div>
                   <p className="text-[10px] mb-4 italic text-black leading-relaxed font-bold text-left">
-                    Dear Sir/Madam, As per your Quotation Ref No.:-{po.quote_ref_type || 'MAIL'}, Ref Doc no:-<span className="text-black font-black uppercase mx-1 underline">{po.quote_doc_no || 'N/A'}</span>, Ref Date:-{po.quote_date || po.date}, We are sending the order so please supply the materials on urgent basis:-
+                    Dear Sir/Madam, As per your Quotation Ref No.:-<EditableText value={po.quote_ref_type || 'MAIL'} onChange={val => updatePO('quote_ref_type', val.toUpperCase())} />, Ref Doc no:-<span className="text-black font-black uppercase mx-1 underline">{po.quote_doc_no || 'N/A'}</span>, Ref Date:-<EditableText value={po.quote_date || po.date} onChange={val => updatePO('quote_date', val)} />, We are sending the order so please supply the materials on urgent basis:-
                   </p>
                 </>
               )}
@@ -403,238 +463,14 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions, isP
               {pageIdx === itemPages.length - 1 && (
                 <div className="mt-4">
                   <TotalsSection />
-
-                  <div className="text-[9px] space-y-1 mb-4 mt-4 text-black border border-black p-3 rounded font-bold text-left bg-[#fdfdfe]">
-                    <p className="font-black text-[10px] underline mb-1 uppercase tracking-wide">Commercial Terms::</p>
-                    <div className="grid grid-cols-[120px_1fr] gap-y-1">
-                      <span className="uppercase text-[8px]">Tax ::</span>
-                      <span className="uppercase">{po.terms.tax}</span>
-                      <span className="uppercase text-[8px]">Packing ::</span>
-                      <span className="uppercase">{po.terms.packing}</span>
-                      <span className="uppercase text-[8px]">Forwarding ::</span>
-                      <span className="uppercase">{po.terms.notes}</span>
-                      <span className="uppercase text-[8px]">Payment Terms ::</span>
-                      <div className="flex flex-col">
-                        {po.terms.payment_milestones && po.terms.payment_milestones.length > 0 ? (
-                          po.terms.payment_milestones.map((m, idx) => (
-                            <span key={idx} className="uppercase font-black">{m.percentage}% - {m.description}</span>
-                          ))
-                        ) : (
-                          <span className="uppercase">{po.terms.payment}</span>
-                        )}
-                      </div>
-                      <span className="uppercase text-[8px]">Freight ::</span>
-                      <span className="uppercase">{po.terms.freight} {po.terms.freight_amount ? `- ₹${Number(po.terms.freight_amount).toLocaleString()}` : ''}</span>
-                      <span className="uppercase text-[8px]">Delivery Period ::</span>
-                      <span className="uppercase">{po.terms.delivery}</span>
-                    </div>
-                  </div>
-
-                  <div className="text-[9px] space-y-1 mb-4 uppercase italic font-black text-black border-l-4 border-black pl-4 py-1 text-left">
-                     <p>NOTE 1 :: <span className="underline">E-Way bill is mandatory for Rs 50,000 and above Purchase Value.</span></p>
-                     <p>NOTE 2 :: If we have any type of dispute from specification then we will reject material.</p>
-                     {(po.terms.manual_notes || []).map((note, idx) => (
-                       <p key={idx}>NOTE {idx + 3} :: {note}</p>
-                     ))}
-                  </div>
+                  <TermsAndNotes po={po} />
                 </div>
               )}
             </div>
             <div className="pdf-footer"><FooterContent /></div>
-            <div className="absolute top-2 right-4 text-[8px] font-bold text-gray-400">Page {pageIdx + 1} of {itemPages.length}</div>
+            <div className="absolute top-2 right-4 text-[8px] font-bold text-gray-400 print-hidden">Page {pageIdx + 1} of {itemPages.length}</div>
           </div>
         ))}
-      </div>
-    );
-  }
-
-  // REGULAR SCREEN PREVIEW
-  return (
-    <div className="flex flex-col items-center gap-4 text-black w-full min-h-full">
-      <div className="flex gap-4 print-hidden shrink-0 py-4">
-        {actions}
-      </div>
-
-      <style>{`
-        @media print {
-          body * { visibility: hidden !important; }
-          .print-area, .print-area * { visibility: visible !important; }
-          .print-area {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 210mm !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            box-shadow: none !important;
-            border: none !important;
-            display: block !important;
-            background: white !important;
-          }
-          .page-header-fixed {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 210mm !important;
-            height: 50mm !important;
-            background: white !important;
-            z-index: 9999 !important;
-            border-bottom: 2px solid black !important;
-            display: flex !important;
-          }
-          .page-footer-fixed {
-            position: fixed !important;
-            bottom: 0 !important;
-            left: 0 !important;
-            width: 210mm !important;
-            height: 70mm !important;
-            background: white !important;
-            z-index: 9999 !important;
-            border-top: 2px solid black !important;
-            display: flex !important;
-          }
-          @page { size: A4 portrait; margin: 0 !important; }
-          body { background: white !important; margin: 0 !important; }
-          thead { display: table-header-group; }
-          tfoot { display: table-footer-group; }
-          tr { break-inside: avoid; page-break-inside: avoid; }
-          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        }
-
-        .print-area {
-          background: white;
-          color: black;
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-          width: 210mm;
-          min-height: 297mm;
-          margin: 0 auto;
-          position: relative;
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .page-header-fixed {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 50mm;
-          border-bottom: 2px solid black;
-          background: white;
-          overflow: hidden;
-        }
-
-        .page-footer-fixed {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 100%;
-          height: 70mm;
-          border-top: 2px solid black;
-          background: white;
-          overflow: hidden;
-        }
-
-        .page-header-spacer { height: 50mm; }
-        .page-footer-spacer { height: 70mm; }
-
-        .no-break {
-          break-inside: avoid;
-          page-break-inside: avoid;
-        }
-      `}</style>
-
-      <div className="print-area-wrapper w-full flex justify-center bg-gray-100 p-4 md:p-8 flex-1 overflow-auto text-black">
-        <div ref={printRef} className="print-area">
-          <div className="page-header-fixed"><HeaderContent /></div>
-          
-          <table className="w-full border-collapse">
-            <thead>
-              <tr><td><div className="page-header-spacer"></div></td></tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="p-[5mm_15mm_5mm_15mm] border-none text-black">
-                  <div className="text-center mb-8">
-                    <h2 className="inline-block border-b-2 border-black text-sm font-bold uppercase tracking-[0.2em] text-black pb-0.5">
-                      Purchase Order
-                    </h2>
-                  </div>
-
-                  <div className="flex justify-between items-start mb-6 text-xs text-black">
-                    <div className="border border-black p-2 rounded shadow-[1px_1px_0px_black]">
-                      <p className="font-bold text-black uppercase">PO NO :: <span className="font-black text-sm">{po.po_no || 'HI /2026-27/00'}</span></p>
-                    </div>
-                    <div className="border border-black p-2 rounded shadow-[1px_1px_0px_black]">
-                      <p className="font-bold text-black uppercase">Date : <span className="font-black text-sm">{formatDate(po.date)}</span></p>
-                    </div>
-                  </div>
-
-                  <div className="mb-6 text-[11px] text-black flex gap-4">
-                    <div className="font-bold pt-1 uppercase shrink-0">To,</div>
-                    <div className="flex-1">
-                      <p className="font-black text-sm text-black uppercase mb-1">{po.vendor_name || 'VENDOR NAME'}</p>
-                      <p className="whitespace-pre-wrap max-w-[450px] text-black italic font-medium">{po.vendor_details.address}</p>
-                      <div className="mt-2 space-y-0.5 text-black grid grid-cols-2 gap-x-8 border-t border-black/10 pt-2 font-bold text-left">
-                        <p><span className="uppercase text-[9px] mr-1">STATE :</span> {po.vendor_details.state}</p>
-                        <p><span className="uppercase text-[9px] mr-1">GSTIN :</span> {po.vendor_details.gstin}</p>
-                        <p><span className="uppercase text-[9px] mr-1">Mail ID :</span> {po.vendor_details.mail}</p>
-                        <p><span className="uppercase text-[9px] mr-1">Ph :</span> {po.vendor_details.ph}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <p className="text-[10px] mb-4 italic text-black leading-relaxed font-bold text-left">
-                    Dear Sir/Madam, As per your Quotation Ref No.:-<EditableText value={po.quote_ref_type || 'MAIL'} onChange={val => updatePO('quote_ref_type', val.toUpperCase())} />, Ref Doc no:-<span className="text-black font-black uppercase mx-1 underline">{po.quote_doc_no || 'N/A'}</span>, Ref Date:-<EditableText value={po.quote_date || po.date} onChange={val => updatePO('quote_date', val)} />, We are sending the order so please supply the materials on urgent basis:-
-                  </p>
-
-                  <ItemsTable items={po.items} />
-                  <TotalsSection />
-
-                  <div className="mt-4">
-                    <div className="text-[10px] space-y-1 mb-6 text-black no-break border border-black p-4 rounded font-bold text-left bg-[#fdfdfe]">
-                      <p className="font-black text-[11px] underline mb-2 uppercase tracking-wide">Commercial Terms::</p>
-                      <div className="grid grid-cols-[140px_1fr] gap-y-1.5">
-                        <span className="uppercase text-[9px]">Tax ::</span>
-                        <span className="uppercase">{po.terms.tax}</span>
-                        <span className="uppercase text-[9px]">Packing ::</span>
-                        <span className="uppercase">{po.terms.packing}</span>
-                        <span className="uppercase text-[9px]">Forwarding ::</span>
-                        <span className="uppercase">{po.terms.notes}</span>
-                        <span className="uppercase text-[9px]">Payment Terms ::</span>
-                        <div className="flex flex-col">
-                          {po.terms.payment_milestones && po.terms.payment_milestones.length > 0 ? (
-                            po.terms.payment_milestones.map((m, idx) => (
-                              <span key={idx} className="uppercase font-black">{m.percentage}% - {m.description}</span>
-                            ))
-                          ) : (
-                            <span className="uppercase">{po.terms.payment}</span>
-                          )}
-                        </div>
-                        <span className="uppercase text-[9px]">Freight ::</span>
-                        <span className="uppercase">{po.terms.freight} {po.terms.freight_amount ? `- ₹${Number(po.terms.freight_amount).toLocaleString()}` : ''}</span>
-                        <span className="uppercase text-[9px]">Delivery Period ::</span>
-                        <span className="uppercase">{po.terms.delivery}</span>
-                        {po.terms.contact_no && <><span className="uppercase text-[9px]">Contact No ::</span> <span>{po.terms.contact_no}</span></>}
-                      </div>
-                    </div>
-
-                    <div className="text-[10px] space-y-2 mb-8 uppercase italic font-black text-black no-break border-l-4 border-black pl-4 py-2 text-left">
-                       <p>NOTE 1 :: <span className="underline">E-Way bill is mandatory for Rs 50,000 and above Purchase Value.</span></p>
-                       <p>NOTE 2 :: If we have any type of dispute from specification then we will reject material.</p>
-                       {(po.terms.manual_notes || []).map((note, idx) => (
-                         <p key={idx}>NOTE {idx + 3} :: {note}</p>
-                       ))}
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-            <tfoot>
-              <tr><td><div className="page-footer-spacer"></div></td></tr>
-            </tfoot>
-          </table>
-          <div className="page-footer-fixed"><FooterContent /></div>
-        </div>
       </div>
     </div>
   );

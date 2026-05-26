@@ -60,8 +60,10 @@ async function startServer() {
   const PORT = 3000;
 
   // Auto-Seeder for SuperAdmin and Roles
-  const seedDefaults = async () => {
+  const seedDefaults = async (retries = 3) => {
     try {
+      console.log(`[Auth] Attempting to seed defaults (Attempts remaining: ${retries})...`);
+      
       // 1. Seed Roles
       const roleCount = await prisma.systemRole.count();
       if (roleCount === 0) {
@@ -94,8 +96,16 @@ async function startServer() {
         });
         console.log("[Auth] SuperAdmin account seeded: username 'admin'");
       }
-    } catch (e) {
-      console.error("[Auth] Seeder failed", e);
+    } catch (e: any) {
+      console.error("[Auth] Seeder attempt failed:", e.message);
+      if (e.meta) console.error("[Auth] Error meta:", JSON.stringify(e.meta, null, 2));
+      
+      if (retries > 0) {
+        console.log("[Auth] Retrying in 2 seconds...");
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return seedDefaults(retries - 1);
+      }
+      console.error("[Auth] All seeding attempts failed.");
     }
   };
   await seedDefaults();
