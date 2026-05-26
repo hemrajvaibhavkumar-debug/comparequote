@@ -91,11 +91,9 @@ model PurchaseOrder {
   total_amount   Float    @default(0)
   status         String   @default("PENDING") // PENDING, APPROVED, REJECTED
   rejection_remarks String?
-  l1_approved_by    String?
-  l1_approved_at    DateTime?
-  approved_by       String?
-  approved_at       DateTime?
-  pdf_base64        String?
+  approved_by    String?
+  approved_at     DateTime?
+  pdf_base64      String?
   created_at      DateTime @default(now())
   }
 

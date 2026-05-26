@@ -723,63 +723,27 @@ async function startServer() {
     }
   });
 
-  // Approval Workflow (Sequential)
-  app.put("/api/po/:id/status", authenticateToken, async (req, res) => {
+  // Approval Workflow
+  app.put("/api/po/:id/status", authenticateToken, requirePermission("APPROVE_PO"), async (req, res) => {
     try {
       const { status, remarks, pdf_base64 } = req.body;
       const user = (req as any).user;
-      const poId = Number(req.params.id);
       
-      // Fetch current PO to check state
-      const currentPo = await prisma.purchaseOrder.findUnique({ where: { id: poId } });
-      if (!currentPo) return res.status(404).json({ error: "PO not found" });
-
-      const permissions = user.permissions || [];
-      const isSuperAdmin = user.role === 'SUPERADMIN';
-
       const updateData: any = { status };
       if (pdf_base64) updateData.pdf_base64 = pdf_base64;
 
-      // --- LEVEL 1: SR. EXECUTIVE ---
-      if (status === 'L1_APPROVED') {
-        if (!isSuperAdmin && !permissions.includes("APPROVE_PO_L1")) {
-          return res.status(403).json({ error: "Permission denied: APPROVE_PO_L1 required for Level 1" });
-        }
-        updateData.l1_approved_by = user.username;
-        updateData.l1_approved_at = new Date();
-        updateData.rejection_remarks = null;
-      } 
-      
-      // --- LEVEL 2: PURCHASE HEAD (FINAL) ---
-      else if (status === 'APPROVED') {
-        if (!isSuperAdmin && !permissions.includes("APPROVE_PO_L2")) {
-          return res.status(403).json({ error: "Permission denied: APPROVE_PO_L2 required for Final Approval" });
-        }
-        
-        // Ensure L1 happened first (unless SuperAdmin)
-        if (!isSuperAdmin && currentPo.status !== 'L1_APPROVED') {
-          return res.status(400).json({ error: "Level 1 approval (Sr. Executive) is required before Final Approval." });
-        }
-
+      if (status === 'APPROVED') {
         updateData.approved_by = user.username;
         updateData.approved_at = new Date();
-        updateData.rejection_remarks = null;
-      } 
-      
-      // --- REJECTION ---
-      else if (status === 'REJECTED') {
-        if (!isSuperAdmin && !permissions.includes("APPROVE_PO_L1") && !permissions.includes("APPROVE_PO_L2")) {
-          return res.status(403).json({ error: "Permission denied: Approval permissions required to reject." });
-        }
+        updateData.rejection_remarks = null; // Clear remarks if re-approved
+      } else if (status === 'REJECTED') {
         updateData.rejection_remarks = remarks || 'No reason provided';
         updateData.approved_by = null;
         updateData.approved_at = null;
-        updateData.l1_approved_by = null;
-        updateData.l1_approved_at = null;
       }
       
       const po = await prisma.purchaseOrder.update({
-        where: { id: poId },
+        where: { id: Number(req.params.id) },
         data: updateData
       });
       res.json(po);

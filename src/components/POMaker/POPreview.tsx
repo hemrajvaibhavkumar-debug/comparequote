@@ -179,11 +179,12 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions, isP
           </div>
         </div>
 
-        <div className="flex justify-between items-end mt-2">
-          <div className="text-left">
-            <div className="flex flex-col items-start">
-              <div className="flex items-center gap-0 h-28 relative">
-                {po.status === 'APPROVED' && (
+        <div className="flex justify-between items-end">
+        <div className="text-left">
+          <div className="flex flex-col items-start">
+            <div className="flex items-center gap-0 h-24">
+              {po.status === 'APPROVED' && (
+
                   <>
                     <img src="/signature.jpg" alt="Signature" className="h-24 w-auto object-contain -mr-10 z-10 opacity-90" />
                     <div className="opacity-95">
