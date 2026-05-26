@@ -89,30 +89,39 @@ export default function PurchaseHeadDashboard() {
     }
   };
 
+  const totalCount = pos.length;
+  const pendingCount = pos.filter(p => (p.status || 'PENDING') === 'PENDING').length;
+  const approvedCount = pos.filter(p => p.status === 'APPROVED').length;
+  const combinedValue = pos.reduce((sum, p) => sum + (Number(p.total_amount) || 0), 0);
+
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+    <div className="min-h-screen bg-slate-50/50 p-4 sm:p-8 relative">
+      {/* Background ambient glows */}
+      <div className="ambient-glow ambient-indigo -top-20 -left-20 animate-pulse-slow" style={{ width: '400px', height: '400px' }}></div>
+      <div className="ambient-glow ambient-blue bottom-10 right-10 animate-pulse-slow" style={{ animationDelay: '3s', width: '400px', height: '400px' }}></div>
+
+      <div className="max-w-7xl mx-auto space-y-8 relative z-10">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-xs border border-slate-100">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2 uppercase tracking-tight">
-              <ShieldCheck className="text-blue-600 w-7 h-7" /> Purchase Approval Hub
+            <h1 className="text-2xl font-black text-slate-900 flex items-center gap-2.5 uppercase tracking-tight">
+              <ShieldCheck className="text-indigo-600 w-7 h-7" /> Purchase Approval Hub
             </h1>
-            <p className="text-gray-500 font-medium">Welcome back, <span className="text-blue-600">@{user?.username}</span>. Review and sign pending POs.</p>
+            <p className="text-slate-400 font-semibold text-sm mt-0.5">Welcome back, <span className="text-indigo-600">@{user?.username}</span>. Review, sign, and authorize pending POs.</p>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-4 items-center">
-            <div className="relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
+          <div className="flex flex-col sm:flex-row gap-4 items-center shrink-0">
+            <div className="relative group w-full sm:w-auto">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-650 transition-colors" />
               <input 
                 type="text" 
                 placeholder="Search POs..." 
-                className="pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none w-full sm:w-64 transition-all text-sm font-medium"
+                className="pl-10 pr-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/15 focus:border-indigo-500 w-full sm:w-64 transition-all text-sm font-medium text-slate-800"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
             </div>
 
-            <div className="flex items-center bg-gray-100 border border-gray-200 rounded-xl p-1 shrink-0">
+            <div className="flex items-center bg-slate-100 border border-slate-200 rounded-xl p-1 shrink-0">
               {[
                 { id: 'PENDING', label: 'Pending' },
                 { id: 'APPROVED', label: 'Approved' },
@@ -122,10 +131,10 @@ export default function PurchaseHeadDashboard() {
                 <button
                   key={f.id}
                   onClick={() => setStatusFilter(f.id)}
-                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
                     statusFilter === f.id 
-                      ? 'bg-white text-blue-600 shadow-sm border border-gray-100' 
-                      : 'text-gray-400 hover:text-gray-600'
+                      ? 'bg-white text-indigo-650 shadow-xs border border-slate-100' 
+                      : 'text-slate-400 hover:text-slate-600'
                   }`}
                 >
                   {f.label}
@@ -135,17 +144,57 @@ export default function PurchaseHeadDashboard() {
           </div>
         </div>
 
+        {/* Dashboard Analytics Banner Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs flex items-center gap-4">
+            <div className="p-3.5 bg-indigo-50 rounded-2xl text-indigo-600">
+              <FileText className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Total Actions</span>
+              <h3 className="text-xl font-extrabold text-slate-800 mt-0.5">{totalCount} POs</h3>
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs flex items-center gap-4 border-l-4 border-l-amber-500">
+            <div className="p-3.5 bg-amber-50 rounded-2xl text-amber-600">
+              <Clock className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Awaiting Sign</span>
+              <h3 className="text-xl font-extrabold text-slate-800 mt-0.5">{pendingCount} POs</h3>
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs flex items-center gap-4 border-l-4 border-l-emerald-500">
+            <div className="p-3.5 bg-emerald-50 rounded-2xl text-emerald-600">
+              <CheckCircle className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Approved Value</span>
+              <h3 className="text-xl font-extrabold text-slate-800 mt-0.5">{approvedCount} POs</h3>
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs flex items-center gap-4 border-l-4 border-l-indigo-600">
+            <div className="p-3.5 bg-indigo-50 rounded-2xl text-indigo-700">
+              <span className="text-sm font-extrabold">₹</span>
+            </div>
+            <div>
+              <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Combined Value</span>
+              <h3 className="text-md font-black text-indigo-700 mt-0.5">₹{combinedValue.toLocaleString('en-IN')}</h3>
+            </div>
+          </div>
+        </div>
+
         {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="flex justify-center py-24">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-650"></div>
           </div>
         ) : filteredPOs.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm p-12 text-center border border-gray-100">
-            <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FileText className="text-gray-400 w-8 h-8" />
+          <div className="bg-white rounded-2xl shadow-xs p-16 text-center border border-slate-100 max-w-2xl mx-auto space-y-4">
+            <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
+              <FileText className="text-slate-350 w-6 h-6" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900">No purchase orders found</h3>
-            <p className="text-gray-500 mt-1">There are no POs matching your current filters.</p>
+            <h3 className="text-lg font-bold text-slate-800">No purchase orders found</h3>
+            <p className="text-slate-400 text-sm font-medium">There are currently no POs matching your chosen status filter.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -156,65 +205,65 @@ export default function PurchaseHeadDashboard() {
               return (
                 <div 
                   key={po.id} 
-                  className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group overflow-hidden relative flex flex-col"
+                  className="bg-white rounded-2xl shadow-xs border border-slate-100 hover:shadow-md hover:border-slate-200 transition-all duration-300 group overflow-hidden relative flex flex-col"
                 >
-                  <Link to={`/approve-po/${po.id}`} className="p-5 flex-1 cursor-pointer">
+                  <Link to={`/approve-po/${po.id}`} className="p-6 flex-1 cursor-pointer">
                     <div className="flex justify-between items-start mb-4">
-                      <div className="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-600 transition-colors">
-                        <FileText className="w-5 h-5 text-blue-600 group-hover:text-white" />
+                      <div className="p-2.5 bg-indigo-50 text-indigo-650 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-xs duration-300">
+                        <FileText className="w-5 h-5" />
                       </div>
                       {getStatusBadge(poStatus)}
                     </div>
                     
-                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                    <h3 className="text-lg font-extrabold text-slate-850 group-hover:text-indigo-600 transition-colors">
                       PO #{po.po_no}
                     </h3>
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-1">{po.vendor_name}</p>
+                    <p className="text-sm text-slate-500 mb-4 line-clamp-1 font-semibold uppercase tracking-tight">{po.vendor_name}</p>
                     
-                    <div className="space-y-2 pt-4 border-t border-gray-50">
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <Calendar className="w-4 h-4" />
-                        {new Date(po.date).toLocaleDateString()}
+                    <div className="space-y-2 pt-4 border-t border-slate-100">
+                      <div className="flex items-center gap-2 text-xs text-slate-400 font-semibold uppercase">
+                        <Calendar className="w-4 h-4 text-slate-350" />
+                        {new Date(po.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-900 font-bold">
-                        <span className="text-gray-500 font-normal italic">Amount:</span>
-                        ₹{po.total_amount.toLocaleString()}
+                      <div className="flex items-center gap-2 text-sm text-slate-850 font-black">
+                        <span className="text-slate-400 font-semibold text-xs uppercase tracking-wider">Amount:</span>
+                        ₹{po.total_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </div>
                     </div>
                   </Link>
                   
-                  <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                  <div className="px-6 py-3.5 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between shrink-0">
                     {poStatus === 'PENDING' && canApprove ? (
-                      <div className="flex items-center gap-2 w-full">
+                      <div className="flex items-center gap-3.5 w-full">
                         <button 
                           onClick={(e) => handleQuickStatusUpdate(po.id, 'REJECTED', e)}
                           disabled={isActioning}
-                          className="flex-1 py-1.5 bg-white border border-red-200 text-red-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-red-50 disabled:opacity-50 transition-all flex items-center justify-center gap-1"
+                          className="flex-1 py-2 bg-white border border-rose-200 text-rose-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-50 disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
                         >
-                          <XCircle className="w-3 h-3" /> Reject
+                          <XCircle className="w-3.5 h-3.5" /> Reject
                         </button>
                         <button 
                           onClick={(e) => handleQuickStatusUpdate(po.id, 'APPROVED', e)}
                           disabled={isActioning}
-                          className="flex-1 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 disabled:opacity-50 transition-all shadow-sm flex items-center justify-center gap-1"
+                          className="flex-1 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-md shadow-indigo-100 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                         >
-                          <CheckCircle className="w-3 h-3" /> Approve
+                          <CheckCircle className="w-3.5 h-3.5" /> Approve
                         </button>
                       </div>
                     ) : (
                       <Link 
                         to={`/approve-po/${po.id}`}
-                        className="w-full text-center text-xs font-bold text-blue-600 hover:underline flex items-center justify-center gap-2 uppercase tracking-widest"
+                        className="w-full text-center text-xs font-black text-indigo-650 hover:text-indigo-700 hover:underline flex items-center justify-center gap-2 uppercase tracking-widest"
                       >
-                        {poStatus === 'APPROVED' ? 'View Document' : poStatus === 'REJECTED' ? 'View Rejection' : 'Review Details'}
-                        <ChevronRight className="w-4 h-4" />
+                        {poStatus === 'APPROVED' ? 'View Final Document' : poStatus === 'REJECTED' ? 'View Rejection Details' : 'Review Details'}
+                        <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                       </Link>
                     )}
                   </div>
 
                   {isActioning && (
                     <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-10">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-indigo-650"></div>
                     </div>
                   )}
                 </div>

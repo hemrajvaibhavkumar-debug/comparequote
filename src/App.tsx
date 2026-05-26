@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import Builder from './Builder';
 import SavedTables from './SavedTables';
 import ViewTable from './ViewTable';
@@ -16,7 +16,7 @@ const ProtectedRoute = ({ children, permission }: { children: React.ReactNode, p
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   
   if (permission) {
-    const userRole = user?.role || 'USER';
+    const userRole = user?.role || 'SUPERADMIN';
     const userPermissions = user?.permissions || [];
     
     if (userRole === 'SUPERADMIN') return <>{children}</>;
@@ -38,36 +38,58 @@ const ProtectedRoute = ({ children, permission }: { children: React.ReactNode, p
 
 function AppContent() {
   const { isAuthenticated, logout, user } = useAuth();
+  const location = useLocation();
+
+  const isActive = (path: string) => {
+    if (path === '/') {
+      return location.pathname === '/' || location.pathname.startsWith('/saved/');
+    }
+    return location.pathname.startsWith(path);
+  };
+
+  const navLinkStyle = (path: string, colorClass = 'indigo') => {
+    const active = isActive(path);
+    return `px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-1.5 border border-transparent ${
+      active
+        ? `bg-indigo-50 text-indigo-600 border-indigo-100/50 shadow-xs`
+        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+    }`;
+  };
 
   return (
-    <div className="min-h-screen bg-white font-sans text-black">
+    <div className="min-h-screen bg-slate-50/50 font-sans text-slate-900 antialiased transition-colors duration-300">
       {isAuthenticated && (
-        <nav className="bg-white border-b border-black sticky top-0 z-50">
+        <nav className="glass-navbar sticky top-0 z-50 transition-standard">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
               <div className="flex items-center gap-6">
-                <Link to="/" className="flex items-center gap-2 font-bold text-xl tracking-tight text-black hover:opacity-80">
-                  <span className="w-8 h-8 rounded-lg bg-black flex items-center justify-center text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>
+                <Link to="/" className="flex items-center gap-2.5 font-bold text-xl tracking-tight text-slate-900 hover:opacity-90 transition-opacity">
+                  <span className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-blue-500 flex items-center justify-center text-white shadow-md shadow-indigo-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2.5"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>
                   </span>
-                  QuoteCompare
+                  <span className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent font-black tracking-tight">QuoteCompare</span>
                 </Link>
-                <div className="hidden sm:flex space-x-1 ml-4 items-center">
-                  <Link to="/" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-black/10 transition-colors">Compare</Link>
-                  <Link to="/saved" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-black/10 transition-colors">Saved Tables</Link>
-                  <div className="h-4 w-px bg-black mx-2"></div>
-                  <Link to="/po-maker" className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-bold text-black hover:bg-black/10 transition-colors underline decoration-2 underline-offset-4">
+                
+                <div className="hidden sm:flex space-x-1.5 ml-4 items-center">
+                  <Link to="/" className={navLinkStyle('/', 'indigo')}>Compare</Link>
+                  <Link to="/saved" className={isActive('/saved') && !isActive('/saved-pos') ? 'px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-1.5 border bg-indigo-50 text-indigo-600 border-indigo-100/50 shadow-xs' : 'px-3.5 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-transparent'}>Saved Tables</Link>
+                  
+                  <div className="h-5 w-px bg-slate-200 mx-2"></div>
+                  
+                  <Link to="/po-maker" className={navLinkStyle('/po-maker', 'indigo')}>
                     <FileText className="w-4 h-4" /> PO Maker
                   </Link>
-                  <Link to="/saved-pos" className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-black hover:bg-black/10 transition-colors">
+                  <Link to="/saved-pos" className={navLinkStyle('/saved-pos', 'indigo')}>
                     <Database className="w-4 h-4" /> Saved POs
                   </Link>
+                  
                   {(user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO') || user?.permissions.includes('VIEW_APPROVAL_HUB')) && (
-                    <Link to="/purchase-head" className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-bold text-blue-600 hover:bg-blue-50 transition-colors border border-blue-200 ml-2">
+                    <Link to="/purchase-head" className={navLinkStyle('/purchase-head', 'blue')}>
                       <ShieldCheck className="w-4 h-4" /> Approval Hub
                     </Link>
                   )}
-                  <Link to="/settings" className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-black hover:bg-black/10 transition-colors">
+                  
+                  <Link to="/settings" className={navLinkStyle('/settings', 'indigo')}>
                     <SettingsIcon className="w-4 h-4" /> Settings
                   </Link>
                 </div>
@@ -75,7 +97,7 @@ function AppContent() {
               <div className="flex items-center">
                  <button 
                    onClick={logout}
-                   className="text-xs font-bold text-black hover:underline transition-colors uppercase tracking-widest"
+                   className="px-4 py-1.5 rounded-xl text-[10px] font-black text-slate-600 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-100 transition-all duration-200 uppercase tracking-wider cursor-pointer shadow-xs hover:shadow-sm"
                  >
                    Logout
                  </button>
@@ -85,7 +107,7 @@ function AppContent() {
         </nav>
       )}
 
-      <main>
+      <main className="relative z-10">
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<ProtectedRoute><Builder /></ProtectedRoute>} />

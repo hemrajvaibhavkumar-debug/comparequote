@@ -1,48 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
 @import "tailwindcss";
 
 @theme {
-  --color-indigo-50: #ffffff;
-  --color-indigo-100: #f9fafb;
-  --color-indigo-200: #e5e7eb;
-  --color-indigo-300: #d1d5db;
-  --color-indigo-400: #9ca3af;
-  --color-indigo-500: #6b7280;
-  --color-indigo-600: #000000;
-  --color-indigo-700: #000000;
-  --color-indigo-800: #000000;
-  --color-indigo-900: #000000;
-
-  --color-slate-50: #ffffff;
-  --color-slate-100: #f9fafb;
-  --color-slate-200: #e5e7eb;
-  --color-slate-300: #d1d5db;
-  --color-slate-400: #9ca3af;
-  --color-slate-500: #6b7280;
-  --color-slate-600: #374151;
-  --color-slate-700: #111827;
-  --color-slate-800: #000000;
-  --color-slate-900: #000000;
-
-  --color-blue-50: #ffffff;
-  --color-blue-100: #f9fafb;
-  --color-blue-500: #4b5563;
-  --color-blue-600: #000000;
-  --color-blue-700: #000000;
-
-  --color-red-50: #ffffff;
-  --color-red-100: #f9fafb;
-  --color-red-500: #4b5563;
-  --color-red-600: #000000;
-  --color-red-700: #000000;
+  --font-sans: 'Outfit', 'Inter', sans-serif;
+  
+  /* Custom anim offsets */
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Global resets and body styling */
+body {
+  font-family: 'Outfit', 'Inter', sans-serif;
+  background-color: #f8fafc;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Glassmorphism utilities */
+.glass-navbar {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(241, 245, 249, 0.8);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+}
+
+/* Premium ambient backdrop elements */
+.ambient-glow {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ambient-indigo {
+  background: radial-gradient(circle, var(--color-indigo-400) 0%, transparent 70%);
+}
+
+.ambient-blue {
+  background: radial-gradient(circle, var(--color-blue-400) 0%, transparent 70%);
+}
+
+/* Scrollbar optimizations */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Interactive transitions */
+.transition-standard {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
 table {
   border-collapse: collapse;
-}
-
-th, td {
-  border: 1px solid #000 !important;
 }
 
 /* Custom Resize Handle Styling */
@@ -55,7 +107,7 @@ th, td {
 
 .resize-both::-webkit-resizer {
   background-color: transparent;
-  background-image: linear-gradient(135deg, transparent 70%, #000000 70%);
+  background-image: linear-gradient(135deg, transparent 70%, #94a3b8 70%);
   background-size: 10px 10px;
   background-repeat: no-repeat;
   background-position: bottom right;
@@ -71,9 +123,14 @@ th, td {
     background: white !important;
     padding: 0 !important;
     margin: 0 !important;
+    font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif !important;
   }
 
-  nav, .print-hidden, button, .no-print {
+  th, td {
+    border: 1px solid #000 !important;
+  }
+
+  nav, .print-hidden, button, .no-print, .actions-bar {
     display: none !important;
   }
 
@@ -89,10 +146,12 @@ th, td {
     padding: 0 !important;
   }
 
-  .shadow-sm, .shadow-xl, .rounded-2xl, .rounded-lg {
+  .shadow-sm, .shadow-xl, .rounded-2xl, .rounded-lg, .glass-card {
     box-shadow: none !important;
     border-radius: 0 !important;
     border: none !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
   }
 
   .overflow-x-auto, .overflow-auto {
@@ -138,7 +197,6 @@ th, td {
     display: none !important;
   }
 
-  /* Force the comparison table to be visible and clear */
   .p-4, .md\:p-8, .p-5, .p-6 {
     padding: 0 !important;
     margin: 0 !important;

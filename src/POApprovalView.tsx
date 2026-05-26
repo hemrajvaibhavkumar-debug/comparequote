@@ -279,7 +279,7 @@ export default function POApprovalView() {
 
   // Header Actions to be passed to POPreview
   const headerActions = (
-    <>
+    <div className="flex items-center gap-3 w-full flex-wrap">
       {po.pdf_base64 && (
         <button 
           onClick={async () => {
@@ -310,89 +310,92 @@ export default function POApprovalView() {
             }
           }}
           disabled={submitting}
-          style={{ backgroundColor: '#f3f4f6', color: '#374151' }}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm mr-auto"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-xs mr-auto bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/60 shadow-sm transition-all duration-200 disabled:opacity-50"
         >
-          <RotateCcw className={`w-4 h-4 ${submitting ? 'animate-spin' : ''}`} /> Regenerate Snapshot
+          <RotateCcw className={`w-3.5 h-3.5 ${submitting ? 'animate-spin' : ''}`} /> Regenerate Snapshot
         </button>
       )}
       <button 
         onClick={handlePrint}
-        style={{ backgroundColor: '#f3f4f6', color: '#374151' }}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm"
+        className="flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/60 shadow-sm transition-all duration-200"
       >
-        <Printer className="w-4 h-4" /> Print
+        <Printer className="w-3.5 h-3.5" /> Print
       </button>
       <button 
         onClick={handleDownload}
-        style={{ backgroundColor: '#16a34a', color: '#ffffff' }}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg shadow-md font-bold text-sm"
+        className="flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5"
       >
-        <Download className="w-4 h-4" /> Download PDF
+        <Download className="w-3.5 h-3.5" /> Download PDF
       </button>
 
       {isApproved && (
         <button 
           onClick={handleSendToVendor}
           disabled={sending}
-          style={{ backgroundColor: '#2563eb', color: '#ffffff' }}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg shadow-md font-bold text-sm"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-xs bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50"
         >
-          {sending ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Mail className="w-4 h-4" />}
+          {sending ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Mail className="w-3.5 h-3.5" />}
           Send to Vendor
         </button>
       )}
 
       {isPending && canApprove && (
-        <>
+        <div className="flex items-center gap-2 ml-auto md:ml-0">
           <button 
             onClick={() => handleStatusUpdate('REJECTED')}
             disabled={submitting}
-            style={{ backgroundColor: '#fef2f2', color: '#dc2626', borderColor: '#fee2e2' }}
-            className="px-4 py-2 border rounded-lg font-bold text-sm flex items-center gap-2 ml-2"
+            className="px-4 py-2 border rounded-xl font-semibold text-xs flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border-rose-200/60 transition-all duration-200 disabled:opacity-50"
           >
-            <XCircle className="w-4 h-4" /> Reject
+            <XCircle className="w-3.5 h-3.5" /> Reject
           </button>
           <button 
             onClick={() => handleStatusUpdate('APPROVED')}
             disabled={submitting}
-            style={{ backgroundColor: '#2563eb', color: '#ffffff' }}
-            className="px-6 py-2 rounded-lg font-bold shadow-md flex items-center gap-2"
+            className="px-5 py-2 rounded-xl font-semibold text-xs flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/10 transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50"
           >
-            <ShieldCheck className="w-4 h-4" /> Approve & Sign
+            <ShieldCheck className="w-3.5 h-3.5" /> Approve & Sign
           </button>
-        </>
+        </div>
       )}
-    </>
+    </div>
   );
 
   return (
-    <div className="min-h-screen bg-gray-100 pb-20">
-      <div className="bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-50 shadow-sm print-hidden">
+    <div className="min-h-screen bg-slate-50 pb-20 relative overflow-hidden">
+      {/* Ambient background glows */}
+      <div className="ambient-glow ambient-indigo -top-40 -right-40" />
+      <div className="ambient-glow ambient-blue -bottom-40 -left-40" />
+
+      {/* Glass navigation header */}
+      <div className="glass-navbar px-6 py-4 sticky top-0 z-50 shadow-sm print-hidden">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <button onClick={() => navigate('/purchase-head')} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium group transition-colors">
+            <button 
+              onClick={() => navigate('/purchase-head')} 
+              className="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-semibold group transition-all duration-200 bg-white hover:bg-slate-100/80 px-4 py-2 rounded-xl border border-slate-200/60 shadow-sm text-sm"
+            >
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to List
             </button>
-            <div className="h-6 w-px bg-gray-200"></div>
-            <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+            <div className="h-6 w-px bg-slate-200/80"></div>
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest font-sans">
                Approver Hub / PO #{po.po_no}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto p-4 sm:p-8" ref={printRef}>
+      <div className="max-w-5xl mx-auto p-4 sm:p-8 relative z-10" ref={printRef}>
+        {/* Document Preview Frame */}
         <div 
-          className="bg-white rounded-none relative mb-8 min-h-[800px]"
-          style={{ 
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-            border: '1px solid #e5e7eb'
-          }}
+          className={`bg-white relative mb-8 min-h-[800px] transition-all duration-300 ${
+            isExporting 
+              ? 'rounded-none border-none shadow-none' 
+              : 'rounded-2xl border border-slate-200/80 shadow-xl overflow-hidden'
+          }`}
         >
           {po.pdf_base64 && !isExporting ? (
             <div className="w-full flex flex-col">
-              <div className="flex justify-end p-2 bg-gray-50 border-b border-gray-200 print-hidden">
+              <div className="flex justify-end p-3 bg-slate-50/80 border-b border-slate-100 print-hidden">
                 {headerActions}
               </div>
               {pdfUrl ? (
@@ -402,10 +405,10 @@ export default function POApprovalView() {
                   title="Purchase Order PDF"
                 />
               ) : (
-                <div className="w-full min-h-[1100px] flex items-center justify-center bg-gray-50 text-gray-400">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    <p className="text-sm font-medium">Loading document viewer...</p>
+                <div className="w-full min-h-[1100px] flex items-center justify-center bg-slate-50/50 text-slate-400">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-600 border-t-transparent"></div>
+                    <p className="text-sm font-semibold text-slate-600">Loading document viewer...</p>
                   </div>
                 </div>
               )}
@@ -422,7 +425,7 @@ export default function POApprovalView() {
             )
           )}
           
-          {/* Hidden POPreview for re-generating signed PDF if needed or if PDF is being displayed */}
+          {/* Hidden POPreview for capturing signed PDF */}
           {po.pdf_base64 && settings && !isExporting && (
             <div className="hidden pointer-events-none absolute opacity-0" style={{ left: '-9999px', top: '-9999px' }}>
               <POPreview po={po} setPo={() => {}} settings={settings} />
@@ -431,18 +434,20 @@ export default function POApprovalView() {
         </div>
         
         {/* Large Action Card at the Bottom */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 print-hidden border-b-4 border-b-blue-600">
+        <div className={`glass-card p-8 rounded-2xl shadow-lg flex flex-col md:flex-row items-center justify-between gap-6 print-hidden border-l-4 transition-all duration-300 ${
+          isApproved ? 'border-l-emerald-500' : isPending ? 'border-l-indigo-600' : 'border-l-rose-500'
+        }`}>
           <div className="flex-1">
             {isPending ? (
-              <div className="flex items-start gap-3">
-                <div className="p-3 bg-blue-50 rounded-xl">
-                  <Stamp className="w-6 h-6 text-blue-600" />
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-indigo-50 rounded-2xl border border-indigo-100/50">
+                  <Stamp className="w-6 h-6 text-indigo-600 animate-pulse" />
                 </div>
                 <div>
-                  <h4 className="text-lg font-bold text-gray-900">
+                  <h4 className="text-lg font-bold text-slate-900 font-sans">
                     {canApprove ? 'Finalize Approval' : 'Awaiting Review'}
                   </h4>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-slate-500 mt-1">
                     {canApprove 
                       ? 'Carefully review the document above. Approving will apply your signature and the company stamp.'
                       : 'This document is currently pending approval by the Purchase Head.'}
@@ -450,20 +455,26 @@ export default function POApprovalView() {
                 </div>
               </div>
             ) : (
-              <div className="flex items-start gap-3">
-                <div className={`p-3 rounded-xl ${isApproved ? 'bg-green-50' : 'bg-red-50'}`}>
-                  {isApproved ? <CheckCircle className="w-6 h-6 text-green-600" /> : <XCircle className="w-6 h-6 text-red-600" />}
+              <div className="flex items-start gap-4">
+                <div className={`p-3 rounded-2xl border ${
+                  isApproved 
+                    ? 'bg-emerald-50 border-emerald-100/50 text-emerald-600' 
+                    : 'bg-rose-50 border-rose-100/50 text-rose-600'
+                }`}>
+                  {isApproved ? <CheckCircle className="w-6 h-6" /> : <XCircle className="w-6 h-6" />}
                 </div>
                 <div>
-                  <h4 className="text-lg font-bold text-gray-900">{isApproved ? 'Order Approved' : 'Order Rejected'}</h4>
-                  <p className="text-sm text-gray-500">
+                  <h4 className="text-lg font-bold text-slate-900 font-sans">
+                    {isApproved ? 'Order Approved' : 'Order Rejected'}
+                  </h4>
+                  <p className="text-sm text-slate-500 mt-1">
                     {isApproved 
                       ? `Digitally signed by ${po.approved_by || 'Admin'} on ${po.approved_at ? new Date(po.approved_at).toLocaleString() : 'N/A'}`
                       : 'This purchase order has been rejected and will not be processed.'}
                   </p>
                   {!isApproved && !isPending && po.rejection_remarks && (
-                    <div className="mt-3 p-3 bg-red-100/50 border-l-4 border-red-500 rounded text-sm text-red-900 font-bold">
-                      <span className="uppercase text-[10px] opacity-60 block mb-1">Reason for Rejection:</span>
+                    <div className="mt-4 p-4 bg-rose-50 border border-rose-100 rounded-xl text-sm text-rose-950 font-medium">
+                      <span className="uppercase text-[10px] font-bold text-rose-600 block mb-1 tracking-wider">Reason for Rejection:</span>
                       {po.rejection_remarks}
                     </div>
                   )}
@@ -472,49 +483,45 @@ export default function POApprovalView() {
             )}
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 shrink-0 w-full md:w-auto justify-end">
             {isPending && canApprove ? (
               <>
                 <button 
                   onClick={() => handleStatusUpdate('REJECTED')}
                   disabled={submitting}
-                  style={{ backgroundColor: '#ffffff', color: '#dc2626', borderColor: '#fecaca' }}
-                  className="px-8 py-3.5 border rounded-xl font-bold flex items-center gap-2 transition-all shadow-sm"
+                  className="px-6 py-3 border border-rose-200 rounded-xl font-bold text-sm text-rose-600 bg-white hover:bg-rose-50 flex items-center gap-2 transition-all duration-200 shadow-sm cursor-pointer disabled:opacity-50"
                 >
-                  <XCircle className="w-5 h-5" /> Reject PO
+                  <XCircle className="w-4 h-4" /> Reject PO
                 </button>
                 <button 
                   onClick={() => handleStatusUpdate('APPROVED')}
                   disabled={submitting}
-                  style={{ backgroundColor: '#2563eb', color: '#ffffff' }}
-                  className="px-10 py-3.5 rounded-xl font-bold shadow-lg flex items-center gap-2 transition-all transform hover:-translate-y-0.5"
+                  className="px-8 py-3 rounded-xl font-bold text-sm bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20 flex items-center gap-2 transition-all duration-200 transform hover:-translate-y-0.5 cursor-pointer disabled:opacity-50"
                 >
-                  <ShieldCheck className="w-6 h-6" /> Approve & Sign
+                  <ShieldCheck className="w-5 h-5" /> Approve & Sign
                 </button>
               </>
             ) : isApproved ? (
               <button 
                 onClick={handleSendToVendor}
                 disabled={sending}
-                style={{ backgroundColor: '#2563eb', color: '#ffffff' }}
-                className="px-10 py-3.5 rounded-xl font-bold shadow-lg flex items-center gap-3 transition-all transform hover:-translate-y-0.5"
+                className="px-8 py-3 rounded-xl font-bold text-sm bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20 flex items-center gap-3 transition-all duration-200 transform hover:-translate-y-0.5 cursor-pointer disabled:opacity-50"
               >
                 {sending ? (
                   <>
-                    <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     Sending...
                   </>
                 ) : (
                   <>
-                    <Send className="w-5 h-5" /> Send to Vendor
+                    <Send className="w-4 h-4" /> Send to Vendor
                   </>
                 )}
               </button>
             ) : (
               <button 
                 onClick={() => navigate('/purchase-head')}
-                style={{ backgroundColor: '#111827', color: '#ffffff' }}
-                className="px-10 py-3.5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg"
+                className="px-8 py-3 rounded-xl font-bold text-sm bg-slate-900 hover:bg-slate-800 text-white shadow-lg flex items-center gap-2 transition-all duration-200 cursor-pointer"
               >
                 Return to Hub
               </button>

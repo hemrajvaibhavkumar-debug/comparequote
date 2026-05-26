@@ -212,17 +212,17 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
   return (
     <div className="space-y-8 pb-20">
       {/* Header Info */}
-      <section className="bg-white p-6 rounded-xl shadow-sm border border-black space-y-4">
-        <div className="flex items-center justify-between border-b border-black pb-2">
-          <h2 className="text-lg font-bold">PO Information</h2>
+      <section className="glass-card p-6 rounded-2xl shadow-sm border border-slate-200/80 space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <h2 className="text-sm font-bold text-slate-900 font-sans tracking-wide">PO Information</h2>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
             <div className="flex justify-between items-end">
-              <label className="block text-xs font-bold text-black uppercase">PO Number</label>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">PO Number</label>
               <button 
                 onClick={onGeneratePONo}
-                className="text-[10px] font-bold text-black hover:underline flex items-center gap-1 mb-0.5"
+                className="text-[10px] font-bold text-slate-500 hover:text-indigo-600 flex items-center gap-1 mb-0.5 transition-colors duration-200"
                 title="Generate next sequential number"
               >
                 <RotateCcw className="w-2.5 h-2.5" /> RESET
@@ -230,7 +230,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             </div>
             <input 
               type="text"
-              className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
+              className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
               value={po.po_no || ''}
               onChange={e => setPo({...po, po_no: e.target.value})}
               placeholder="e.g. HRM/2026-27/01"
@@ -238,9 +238,9 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
           </div>
           <div className="grid grid-cols-2 gap-4 col-span-2">
             <div>
-              <label className="block text-xs font-bold text-black uppercase">Quotation Ref Type</label>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Quotation Ref Type</label>
               <select 
-                className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black bg-white"
+                className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
                 value={po.quote_ref_type || 'MAIL'}
                 onChange={e => setPo({...po, quote_ref_type: e.target.value})}
               >
@@ -250,10 +250,10 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-black uppercase">Ref Doc No (Comparison)</label>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Ref Doc No (Comparison)</label>
               <div className="flex gap-2">
                 <select 
-                  className="mt-1 w-1/2 border border-black rounded-lg px-2 py-2 bg-white text-xs text-black"
+                  className="mt-1 w-1/2 border border-slate-200 rounded-xl px-2 py-2 bg-white text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
                   onChange={e => {
                     if (e.target.value !== 'CUSTOM') {
                       setPo({...po, quote_doc_no: e.target.value});
@@ -261,24 +261,24 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                   }}
                   value={comparisons.some(c => c.doc_no === po.quote_doc_no) ? po.quote_doc_no : (po.quote_doc_no ? 'CUSTOM' : '')}
                 >
-                  <option value="">-- Select Doc No --</option>
+                  <option value="">-- Select Doc --</option>
                   {comparisons.map(c => <option key={c.id} value={c.doc_no}>{c.doc_no}</option>)}
                   <option value="CUSTOM">Custom...</option>
                 </select>
                 <input 
                   type="text"
-                  className="mt-1 flex-1 border border-black rounded-lg px-3 py-2 text-black text-xs"
+                  className="mt-1 flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
                   value={po.quote_doc_no || ''}
                   onChange={e => setPo({...po, quote_doc_no: e.target.value})}
                   placeholder="Ref Doc No"
                 />
               </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-black uppercase">Quotation Date</label>
+            <div className="col-span-2">
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Quotation Date</label>
               <input 
                 type="date"
-                className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
+                className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                 value={po.quote_date || ''}
                 onChange={e => setPo({...po, quote_date: e.target.value})}
               />
@@ -288,14 +288,14 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
       </section>
 
       {/* Vendor Details */}
-      <section className="bg-white p-6 rounded-xl shadow-sm border border-black space-y-4">
-        <h2 className="text-lg font-bold border-b border-black pb-2">Vendor Details</h2>
+      <section className="glass-card p-6 rounded-2xl shadow-sm border border-slate-200/80 space-y-6">
+        <h2 className="text-sm font-bold text-slate-900 font-sans tracking-wide border-b border-slate-100 pb-3">Vendor Details</h2>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-black uppercase">Select Vendor</label>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Select Vendor</label>
               <select 
-                className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black bg-white"
+                className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
                 onChange={e => handleVendorSelect(e.target.value)}
                 value={po.vendor_name || ''}
               >
@@ -307,10 +307,10 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-black uppercase">Vendor Name</label>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Vendor Name</label>
               <input 
                 type="text"
-                className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
+                className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
                 value={po.vendor_name || ''}
                 onChange={e => setPo({...po, vendor_name: e.target.value})}
               />
@@ -319,46 +319,46 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
           
           <div className="grid grid-cols-2 gap-4">
              <div className="col-span-2">
-                <label className="block text-xs font-bold text-black uppercase">Address</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Address</label>
                 <textarea 
-                  className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
+                  className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
                   rows={2}
                   value={po.vendor_details.address || ''}
                   onChange={e => updateVendorField('address', e.target.value)}
                 />
              </div>
              <div>
-                <label className="block text-xs font-bold text-black uppercase">GSTIN</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">GSTIN</label>
                 <input 
                   type="text"
-                  className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
+                  className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
                   value={po.vendor_details.gstin || ''}
                   onChange={e => updateVendorField('gstin', e.target.value)}
                 />
              </div>
              <div>
-                <label className="block text-xs font-bold text-black uppercase">State</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">State</label>
                 <input 
                   type="text"
-                  className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
+                  className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
                   value={po.vendor_details.state || ''}
                   onChange={e => updateVendorField('state', e.target.value)}
                 />
              </div>
              <div>
-                <label className="block text-xs font-bold text-black uppercase">Mail ID</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Mail ID</label>
                 <input 
                   type="email"
-                  className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
+                  className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
                   value={po.vendor_details.mail || ''}
                   onChange={e => updateVendorField('mail', e.target.value)}
                 />
              </div>
              <div>
-                <label className="block text-xs font-bold text-black uppercase">Ph</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Phone</label>
                 <input 
                   type="text"
-                  className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
+                  className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
                   value={po.vendor_details.ph || ''}
                   onChange={e => updateVendorField('ph', e.target.value)}
                 />
@@ -368,33 +368,33 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
       </section>
 
       {/* Items */}
-      <section className="bg-white p-6 rounded-xl shadow-sm border border-black space-y-4">
-        <div className="flex items-center justify-between border-b border-black pb-2">
-          <h2 className="text-lg font-bold">Items</h2>
+      <section className="glass-card p-6 rounded-2xl shadow-sm border border-slate-200/80 space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <h2 className="text-sm font-bold text-slate-900 font-sans tracking-wide">Items</h2>
           <div className="flex gap-2">
              <button 
                onClick={() => setShowBulkPaste(!showBulkPaste)}
-               className="flex items-center gap-1 text-sm border border-black text-black px-3 py-1 rounded-lg hover:bg-black/5"
+               className="flex items-center gap-1.5 text-xs font-semibold border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 px-3 py-1.5 rounded-xl transition duration-200 shadow-sm cursor-pointer"
              >
-               <ClipboardPaste className="w-4 h-4" /> Bulk Paste
+               <ClipboardPaste className="w-3.5 h-3.5" /> Bulk Paste
              </button>
              <button 
                onClick={addItem}
-               className="flex items-center gap-1 text-sm bg-black text-white px-3 py-1 rounded-lg hover:bg-black/90"
+               className="flex items-center gap-1.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-xl shadow-sm transition duration-200 hover:-translate-y-0.5 transform cursor-pointer"
              >
-               <Plus className="w-4 h-4" /> Add Item
+               <Plus className="w-3.5 h-3.5" /> Add Item
              </button>
           </div>
         </div>
 
         {showBulkPaste && (
-          <div className="p-4 bg-gray-50 border border-black rounded-lg space-y-3">
+          <div className="p-5 bg-slate-50 border border-slate-200 rounded-xl space-y-4 shadow-inner">
              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold uppercase">Paste Spreadsheet Data</h3>
-                <p className="text-[10px] text-gray-500 italic">Example: "Item Description, Brand, 10 PCS, 500.00"</p>
+                <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Paste Spreadsheet Data</h3>
+                <p className="text-[10px] text-slate-400 italic">Example: "Item Description, Brand, 10 PCS, 500.00"</p>
              </div>
              <textarea 
-               className="w-full border border-black rounded-lg px-3 py-2 text-sm bg-white"
+               className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all min-h-[100px]"
                rows={4}
                placeholder="Paste items from Excel or Sheets here..."
                value={bulkText}
@@ -403,18 +403,18 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
              <div className="flex justify-end gap-2">
                 <button 
                   onClick={() => setShowBulkPaste(false)}
-                  className="text-xs font-bold px-3 py-1"
+                  className="text-xs font-semibold text-slate-500 hover:text-slate-700 px-3 py-2 rounded-xl transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button 
                   onClick={handleBulkExtract}
                   disabled={isExtracting || !bulkText.trim()}
-                  className="flex items-center gap-2 bg-black text-white text-xs font-bold px-4 py-1.5 rounded-lg disabled:opacity-50"
+                  className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2 rounded-xl shadow-sm transition disabled:opacity-50 cursor-pointer"
                 >
                   {isExtracting ? (
                     <>
-                      <Loader2 className="w-3 h-3 animate-spin" /> Processing with Groq...
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Processing...
                     </>
                   ) : (
                     'Extract Items'
@@ -426,45 +426,45 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
 
         <div className="space-y-4">
           {po.items.map((item, index) => (
-            <div key={index} className="p-4 bg-white rounded-lg border border-black relative group">
+            <div key={index} className="p-5 bg-slate-50/50 hover:bg-white rounded-2xl border border-slate-200/60 relative group hover:shadow-md transition-all duration-200">
               <button 
                 onClick={() => removeItem(index)}
-                className="absolute -top-2 -right-2 bg-black text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition shadow-lg border border-white"
+                className="absolute -top-2.5 -right-2.5 bg-rose-600 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition shadow-lg border border-white hover:bg-rose-700 cursor-pointer"
               >
-                <Trash2 className="w-3 h-3" />
+                <Trash2 className="w-3.5 h-3.5" />
               </button>
               <div className="grid grid-cols-12 gap-3">
-                <div className="col-span-6">
-                  <label className="block text-[10px] font-bold text-black uppercase">Item Name / Description</label>
+                <div className="col-span-12 md:col-span-6">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Item Name / Description</label>
                   <input 
                     type="text"
-                    className="w-full border border-black rounded px-2 py-1 text-sm text-black"
+                    className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
                     value={item.itemName || ''}
                     onChange={e => updateItem(index, 'itemName', e.target.value)}
                   />
                 </div>
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-bold text-black uppercase">Make</label>
+                <div className="col-span-6 md:col-span-2">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Make</label>
                   <input 
                     type="text"
-                    className="w-full border border-black rounded px-2 py-1 text-sm text-black"
+                    className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
                     value={item.make || ''}
                     onChange={e => updateItem(index, 'make', e.target.value)}
                   />
                 </div>
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-bold text-black uppercase">Qty</label>
+                <div className="col-span-3 md:col-span-2">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Qty</label>
                   <input 
                     type="number"
-                    className="w-full border border-black rounded px-2 py-1 text-sm text-black"
+                    className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
                     value={item.qty || 0}
                     onChange={e => updateItem(index, 'qty', e.target.value)}
                   />
                 </div>
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-bold text-black uppercase">UOM</label>
+                <div className="col-span-3 md:col-span-2">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">UOM</label>
                   <select 
-                    className="w-full border border-black rounded px-1 py-1 text-sm bg-white text-black"
+                    className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
                     value={item.uom || 'NOS'}
                     onChange={e => updateItem(index, 'uom', e.target.value)}
                   >
@@ -475,29 +475,29 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                     <option value="NOS">NOS</option>
                   </select>
                 </div>
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-bold text-black uppercase">Rate</label>
+                <div className="col-span-3 md:col-span-3">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Rate</label>
                   <input 
                     type="number"
-                    className="w-full border border-black rounded px-2 py-1 text-sm text-black"
+                    className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
                     value={item.rate || 0}
                     onChange={e => updateItem(index, 'rate', e.target.value)}
                   />
                 </div>
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-bold text-black uppercase">Dis%</label>
+                <div className="col-span-3 md:col-span-3">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Dis%</label>
                   <input 
                     type="number"
                     step="0.001"
-                    className="w-full border border-black rounded px-2 py-1 text-sm text-black"
+                    className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
                     value={item.discount || 0}
                     onChange={e => updateItem(index, 'discount', e.target.value)}
                   />
                 </div>
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-bold text-black uppercase">Tax</label>
+                <div className="col-span-3 md:col-span-3">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tax</label>
                   <select 
-                    className="w-full border border-black rounded px-1 py-1 text-sm bg-white text-black"
+                    className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
                     value={item.tax || 'GST @18%'}
                     onChange={e => updateItem(index, 'tax', e.target.value)}
                   >
@@ -506,11 +506,11 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                     <option value="Nil">Nil</option>
                   </select>
                 </div>
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-bold text-black uppercase">Amount</label>
+                <div className="col-span-3 md:col-span-3">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Amount</label>
                   <input 
                     type="number"
-                    className="w-full border border-black rounded px-2 py-1 text-sm text-black font-bold"
+                    className="w-full border border-slate-200/80 rounded-lg px-2.5 py-1.5 text-xs text-slate-600 bg-slate-100/50 font-bold outline-none cursor-not-allowed shadow-inner"
                     value={item.amount || 0}
                     readOnly
                   />
@@ -518,12 +518,12 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               </div>
             </div>
           ))}
-          {po.items.length === 0 && !showBulkPaste && <div className="text-center py-4 text-black text-sm">No items added.</div>}
+          {po.items.length === 0 && !showBulkPaste && <div className="text-center py-6 text-slate-400 italic text-sm">No items added yet.</div>}
           {po.items.length > 0 && (
-            <div className="flex justify-end pt-2">
+            <div className="flex justify-end pt-3">
                <div className="text-right">
-                  <p className="text-xs font-bold text-black uppercase">Total Item Amount</p>
-                  <p className="text-lg font-black text-black">₹{po.total_amount.toLocaleString()}</p>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Item Amount</p>
+                  <p className="text-lg font-black text-slate-900 mt-1">₹{po.total_amount.toLocaleString()}</p>
                </div>
             </div>
           )}
@@ -531,12 +531,12 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
       </section>
 
       {/* Commercial Terms */}
-      <section className="bg-white p-6 rounded-xl shadow-sm border border-black space-y-4">
-        <div className="flex items-center justify-between border-b border-black pb-2">
-          <h2 className="text-lg font-bold">Commercial Terms</h2>
+      <section className="glass-card p-6 rounded-2xl shadow-sm border border-slate-200/80 space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <h2 className="text-sm font-bold text-slate-900 font-sans tracking-wide">Commercial Terms</h2>
           <div className="relative">
              <select 
-               className="text-sm bg-white border border-black rounded-lg px-3 py-1 outline-none text-black"
+               className="text-xs bg-white border border-slate-200 rounded-xl px-3 py-1.5 outline-none text-slate-700 font-semibold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer"
                onChange={e => applyTemplate(e.target.value)}
                defaultValue=""
              >
@@ -547,9 +547,9 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-black uppercase">Tax (Summary)</label>
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tax (Summary)</label>
             <select 
-              className="mt-1 w-full border border-black rounded-lg px-3 py-2 bg-white text-black"
+              className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
               value={po.terms.tax || ''}
               onChange={e => setPo({...po, terms: { ...po.terms, tax: e.target.value }})}
             >
@@ -561,10 +561,10 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             </select>
           </div>
           <div>
-            <label className="block text-xs font-bold text-black uppercase">Packing</label>
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Packing</label>
             <div className="flex gap-2">
               <select 
-                className="mt-1 w-1/3 border border-black rounded-lg px-2 py-2 bg-white text-xs text-black"
+                className="mt-1 w-1/3 border border-slate-200 rounded-xl px-2 py-2 bg-white text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
                 onChange={e => {
                   if (e.target.value !== 'CUSTOM') {
                     setPo({...po, terms: { ...po.terms, packing: e.target.value }});
@@ -572,14 +572,14 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                 }}
                 defaultValue=""
               >
-                <option value="" disabled>Select Option</option>
+                <option value="" disabled>Select</option>
                 <option value="Nil">Nil</option>
                 <option value="Extra">Extra</option>
                 <option value="CUSTOM">Custom...</option>
               </select>
               <input 
                 type="text"
-                className="mt-1 flex-1 border border-black rounded-lg px-3 py-2 text-black text-sm"
+                className="mt-1 flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                 value={po.terms.packing || ''}
                 onChange={e => setPo({...po, terms: { ...po.terms, packing: e.target.value }})}
                 placeholder="e.g. Nil, Extra"
@@ -587,10 +587,10 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             </div>
           </div>
           <div>
-            <label className="block text-xs font-bold text-black uppercase">Forwarding</label>
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Forwarding</label>
             <div className="flex gap-2">
               <select 
-                className="mt-1 w-1/3 border border-black rounded-lg px-2 py-2 bg-white text-xs text-black"
+                className="mt-1 w-1/3 border border-slate-200 rounded-xl px-2 py-2 bg-white text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
                 onChange={e => {
                   if (e.target.value !== 'CUSTOM') {
                     setPo({...po, terms: { ...po.terms, notes: e.target.value || '' }});
@@ -598,15 +598,15 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                 }}
                 defaultValue=""
               >
-                <option value="" disabled>Select Option</option>
+                <option value="" disabled>Select</option>
                 <option value="Nil">Nil</option>
                 <option value="Extra">Extra</option>
-                <option value="Free Upto Kolkata/Burdwan">Free Upto Kolkata/Burdwan</option>
+                <option value="Free Upto Kolkata/Burdwan">Free Upto Kolkata</option>
                 <option value="CUSTOM">Custom...</option>
               </select>
               <input 
                 type="text"
-                className="mt-1 flex-1 border border-black rounded-lg px-3 py-2 text-black text-sm"
+                className="mt-1 flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                 value={po.terms.notes || ''}
                 onChange={e => setPo({...po, terms: { ...po.terms, notes: e.target.value }})}
                 placeholder="e.g. Free Upto Kolkata"
@@ -614,14 +614,14 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             </div>
           </div>
           <div className="col-span-2">
-            <div className="flex justify-between items-center mb-1">
-              <label className="block text-xs font-bold text-black uppercase">Payment Terms</label>
+            <div className="flex justify-between items-center mb-2">
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Payment Terms</label>
               <button 
                 onClick={() => setPo(prev => ({ 
                   ...prev, 
                   terms: { ...prev.terms, payment_milestones: [...(prev.terms.payment_milestones || []), { percentage: 0, description: '' }] } 
                 }))}
-                className="text-[10px] font-bold bg-black text-white px-2 py-1 rounded hover:bg-black/80 flex items-center gap-1"
+                className="text-[10px] font-semibold bg-indigo-600 text-white px-2.5 py-1.5 rounded-xl hover:bg-indigo-700 transition flex items-center gap-1 hover:-translate-y-0.5 shadow-sm transform cursor-pointer"
               >
                 <Plus className="w-3 h-3" /> ADD MILESTONE
               </button>
@@ -642,10 +642,10 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
 
                 return (
                   <div key={idx} className="flex gap-2 items-center">
-                    <div className="relative w-20">
+                    <div className="relative w-24 shrink-0">
                       <input 
                         type="number"
-                        className="w-full border border-black rounded-lg px-2 py-1.5 text-sm text-black pr-6"
+                        className="w-full border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
                         value={m.percentage || ''}
                         onChange={e => {
                           const newMilestones = [...(po.terms.payment_milestones || [])];
@@ -654,10 +654,10 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                         }}
                         placeholder="0"
                       />
-                      <span className="absolute right-2 top-2 text-xs font-bold">%</span>
+                      <span className="absolute right-3 top-2 text-xs font-bold text-slate-400">%</span>
                     </div>
                     <select 
-                      className="w-1/3 border border-black rounded-lg px-2 py-1.5 bg-white text-xs text-black"
+                      className="w-1/3 border border-slate-200 rounded-xl px-2 py-1.5 bg-white text-xs text-slate-700 font-semibold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
                       value={isCustom ? "CUSTOM" : (m.description || "")}
                       onChange={e => {
                         const newMilestones = [...(po.terms.payment_milestones || [])];
@@ -675,7 +675,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                     </select>
                     <input 
                       type="text"
-                      className="flex-1 border border-black rounded-lg px-3 py-1.5 text-sm text-black"
+                      className="flex-1 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                       value={m.description || ''}
                       onChange={e => {
                         const newMilestones = [...(po.terms.payment_milestones || [])];
@@ -689,7 +689,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                         const newMilestones = (po.terms.payment_milestones || []).filter((_, i) => i !== idx);
                         setPo({ ...po, terms: { ...po.terms, payment_milestones: newMilestones } });
                       }}
-                      className="p-1.5 text-red-500 hover:bg-red-50 rounded border border-transparent hover:border-red-200"
+                      className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-xl border border-transparent hover:border-rose-100 transition-colors cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -699,10 +699,10 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               
               {po.terms.payment_milestones && po.terms.payment_milestones.length > 0 && (
                 <div className="flex justify-end pr-10">
-                  <div className={`text-[10px] font-black px-2 py-0.5 rounded ${
+                  <div className={`text-[10px] font-bold px-2.5 py-1 rounded-xl shadow-inner ${
                     (po.terms.payment_milestones.reduce((sum, m) => sum + m.percentage, 0)) === 100 
-                    ? 'bg-green-100 text-green-700' 
-                    : 'bg-red-100 text-red-700'
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-100/50' 
+                    : 'bg-rose-50 text-rose-700 border border-rose-100/50'
                   }`}>
                     TOTAL: {po.terms.payment_milestones.reduce((sum, m) => sum + m.percentage, 0)}%
                   </div>
@@ -712,7 +712,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               {(!po.terms.payment_milestones || po.terms.payment_milestones.length === 0) && (
                 <div className="flex gap-2">
                   <select 
-                    className="w-1/2 border border-black rounded-lg px-2 py-2 bg-white text-xs text-black"
+                    className="w-1/2 border border-slate-200 rounded-xl px-2 py-2 bg-white text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
                     onChange={e => {
                       if (e.target.value !== 'CUSTOM') {
                         setPo({...po, terms: { ...po.terms, payment: e.target.value }});
@@ -727,7 +727,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                   </select>
                   <input 
                     type="text"
-                    className="flex-1 border border-black rounded-lg px-3 py-2 text-xs text-black"
+                    className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                     value={po.terms.payment || ''}
                     onChange={e => setPo({...po, terms: { ...po.terms, payment: e.target.value }})}
                     placeholder="Simple payment term or use milestones"
@@ -736,11 +736,11 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               )}
             </div>
           </div>
-          <div>
-            <label className="block text-xs font-bold text-black uppercase">Freight</label>
+          <div className="col-span-2">
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Freight</label>
             <div className="flex gap-2">
               <select 
-                className="mt-1 w-1/4 border border-black rounded-lg px-2 py-2 bg-white text-xs text-black"
+                className="mt-1 w-1/4 border border-slate-200 rounded-xl px-2 py-2 bg-white text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
                 value={po.terms.freight || ''}
                 onChange={e => setPo({...po, terms: { ...po.terms, freight: e.target.value }})}
               >
@@ -750,7 +750,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                 <option value="Nil">Nil</option>
               </select>
               <select 
-                className="mt-1 w-1/4 border border-black rounded-lg px-2 py-2 bg-white text-xs text-black"
+                className="mt-1 w-1/4 border border-slate-200 rounded-xl px-2 py-2 bg-white text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
                 value={po.terms.freight_tax || 'GST @18%'}
                 onChange={e => updateFreightTax(e.target.value)}
               >
@@ -760,7 +760,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               </select>
               <input 
                 type="number"
-                className="mt-1 flex-1 border border-black rounded-lg px-3 py-2 text-black text-sm"
+                className="mt-1 flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                 value={po.terms.freight_amount || 0}
                 onChange={e => updateFreightAmount(Number(e.target.value))}
                 placeholder="Amount"
@@ -768,16 +768,16 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             </div>
           </div>
           <div className="col-span-2">
-            <div className="bg-black text-white p-4 rounded-lg flex justify-between items-center">
-               <span className="font-bold uppercase text-sm">Grand Total Amount</span>
-               <span className="text-2xl font-black">₹{grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-5 rounded-2xl flex justify-between items-center border border-indigo-950/60 shadow-lg">
+               <span className="font-semibold uppercase text-xs tracking-wider text-indigo-200/90">Grand Total Amount</span>
+               <span className="text-2xl font-black font-sans tracking-tight text-white">₹{grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
             </div>
           </div>
           <div className="col-span-2">
-            <label className="block text-xs font-bold text-black uppercase">Delivery Period</label>
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Delivery Period</label>
             <div className="flex gap-2">
               <select 
-                className="mt-1 w-1/3 border border-black rounded-lg px-3 py-2 bg-white text-black"
+                className="mt-1 w-1/3 border border-slate-200 rounded-xl px-3 py-2 bg-white text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
                 onChange={e => {
                   if (e.target.value !== 'CUSTOM') {
                     setPo({...po, terms: { ...po.terms, delivery: e.target.value }});
@@ -791,7 +791,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               </select>
               <input 
                 type="text"
-                className="mt-1 flex-1 border border-black rounded-lg px-3 py-2 text-black"
+                className="mt-1 flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                 value={po.terms.delivery || ''}
                 onChange={e => setPo({...po, terms: { ...po.terms, delivery: e.target.value }})}
                 placeholder="Immediate or enter custom period"
@@ -799,21 +799,21 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             </div>
           </div>
           <div className="col-span-2">
-            <label className="block text-xs font-bold text-black uppercase">Contact No</label>
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Contact No</label>
             <input 
               type="text"
-              className="mt-1 w-full border border-black rounded-lg px-3 py-2 text-black"
+              className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
               value={po.terms.contact_no || ''}
               onChange={e => setPo({...po, terms: { ...po.terms, contact_no: e.target.value }})}
               placeholder="e.g. +91 98765 43210"
             />
           </div>
           <div className="col-span-2">
-            <div className="flex justify-between items-center mb-2">
-              <label className="block text-xs font-bold text-black uppercase underline decoration-2 underline-offset-4">Additional Notes</label>
+            <div className="flex justify-between items-center mb-3 border-t border-slate-100 pt-4">
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Additional Notes</label>
               <button 
                 onClick={() => setPo(prev => ({ ...prev, terms: { ...prev.terms, manual_notes: [...(prev.terms.manual_notes || []), ''] } }))}
-                className="text-[10px] font-bold bg-black text-white px-2 py-1 rounded-md hover:bg-black/80 flex items-center gap-1"
+                className="text-[10px] font-semibold bg-indigo-600 text-white px-2.5 py-1.5 rounded-xl hover:bg-indigo-700 transition flex items-center gap-1 hover:-translate-y-0.5 shadow-sm transform cursor-pointer"
               >
                 <Plus className="w-3 h-3" /> ADD NOTE
               </button>
@@ -821,9 +821,9 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             <div className="space-y-3">
               {(po.terms.manual_notes || []).map((note, idx) => (
                 <div key={idx} className="flex gap-2 group">
-                  <div className="w-16 shrink-0 pt-2.5 text-[10px] font-black text-black opacity-40 uppercase">Note {idx + 3} ::</div>
+                  <div className="w-16 shrink-0 pt-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Note {idx + 3} ::</div>
                   <textarea 
-                    className="flex-1 border border-black rounded-lg px-3 py-2 text-black text-sm min-h-[60px]"
+                    className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 text-xs min-h-[60px] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white placeholder-slate-400"
                     value={note}
                     onChange={e => {
                       const newNotes = [...(po.terms.manual_notes || [])];
@@ -837,14 +837,14 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                       const newNotes = (po.terms.manual_notes || []).filter((_, i) => i !== idx);
                       setPo({ ...po, terms: { ...po.terms, manual_notes: newNotes } });
                     }}
-                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg shrink-0 h-fit self-start"
+                    className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl shrink-0 h-fit transition-colors cursor-pointer"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               ))}
               {(!po.terms.manual_notes || po.terms.manual_notes.length === 0) && (
-                <div className="text-[10px] text-gray-400 italic text-center py-2 border-2 border-dashed border-gray-200 rounded-lg">
+                <div className="text-[10px] text-slate-400 italic text-center py-4 border-2 border-dashed border-slate-100 rounded-xl bg-slate-50/20">
                   No additional notes added yet.
                 </div>
               )}

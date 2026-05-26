@@ -157,46 +157,46 @@ export default function UserManagement() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-bold text-black flex items-center gap-2 uppercase tracking-tight">
-            <User className="w-5 h-5" /> User Accounts
+          <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 uppercase tracking-wider font-sans">
+            <User className="w-4 h-4 text-indigo-600" /> User Accounts
           </h3>
-          <p className="text-sm text-gray-500">Manage team access and permissions</p>
+          <p className="text-xs text-slate-500 font-medium">Manage team access levels, system roles, and granular permissions</p>
         </div>
         <button 
           onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-black/90 transition-all shadow-md"
+          className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-200 hover:-translate-y-0.5 transform shadow-md shadow-indigo-600/10 cursor-pointer"
         >
           <Plus className="w-4 h-4" /> Add User
         </button>
       </div>
 
-      <div className="bg-white border border-black rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-gray-50 border-b border-black">
-              <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-gray-600">User</th>
-              <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-gray-600">Role</th>
-              <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-gray-600">Permissions</th>
-              <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-gray-600 text-right">Actions</th>
+            <tr className="bg-slate-50 border-b border-slate-200/80">
+              <th className="px-6 py-3.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">User</th>
+              <th className="px-6 py-3.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Role</th>
+              <th className="px-6 py-3.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Permissions</th>
+              <th className="px-6 py-3.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-slate-100">
             {users.map(u => (
-              <tr key={u.id} className="hover:bg-gray-50 transition-colors">
+              <tr key={u.id} className="hover:bg-slate-50/50 transition-colors duration-150">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-black/5 flex items-center justify-center font-bold text-black uppercase">
+                    <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center font-bold text-indigo-600 text-sm uppercase shadow-sm">
                       {u.username.charAt(0)}
                     </div>
-                    <span className="font-bold text-sm">{u.username}</span>
+                    <span className="font-semibold text-xs text-slate-800">{u.username}</span>
                     {u.username === currentUser?.username && (
-                      <span className="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-bold uppercase">You</span>
+                      <span className="text-[8px] bg-indigo-50 border border-indigo-100 text-indigo-700 px-2 py-0.5 rounded-lg font-bold uppercase tracking-wider">You</span>
                     )}
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full ${
-                    u.role === 'SUPERADMIN' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'
+                  <span className={`text-[9px] font-bold uppercase px-2.5 py-1 rounded-xl shadow-inner ${
+                    u.role === 'SUPERADMIN' ? 'bg-purple-50 text-purple-700 border border-purple-100/50' : 'bg-slate-100 text-slate-700 border border-slate-200/30'
                   }`}>
                     {u.role}
                   </span>
@@ -204,10 +204,10 @@ export default function UserManagement() {
                 <td className="px-6 py-4">
                   <div className="flex flex-wrap gap-1">
                     {u.role === 'SUPERADMIN' ? (
-                      <span className="text-[10px] text-gray-400 font-bold uppercase italic">All Permissions Granted</span>
+                      <span className="text-[9px] text-slate-400 font-bold uppercase italic tracking-wide">All Permissions Granted</span>
                     ) : (
                       (u.permissions || []).map(p => (
-                        <span key={p} className="text-[9px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100 font-bold uppercase">
+                        <span key={p} className="text-[8px] bg-slate-50 text-slate-600 px-2 py-0.5 rounded-lg border border-slate-200/40 font-semibold uppercase tracking-wide">
                           {p.replace(/_/g, ' ')}
                         </span>
                       ))
@@ -215,21 +215,21 @@ export default function UserManagement() {
                   </div>
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <div className="flex justify-end gap-2">
+                  <div className="flex justify-end gap-1.5">
                     <button 
                       onClick={() => handleOpenModal(u)}
-                      className="p-1.5 text-gray-400 hover:text-black hover:bg-black/5 rounded transition-all"
+                      className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-all cursor-pointer"
                       title="Edit User"
                     >
-                      <Key className="w-4 h-4" />
+                      <Key className="w-3.5 h-3.5" />
                     </button>
                     {u.role !== 'SUPERADMIN' && (
                       <button 
                         onClick={() => handleDelete(u.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-all"
+                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
                         title="Delete User"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
@@ -242,57 +242,59 @@ export default function UserManagement() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border border-black shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between z-10">
-              <h4 className="text-lg font-bold flex items-center gap-2 uppercase tracking-tight">
-                {editingUser ? <Shield className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
+            <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
+              <h4 className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider text-slate-800 font-sans">
+                {editingUser ? <Shield className="w-4 h-4 text-indigo-600 animate-pulse" /> : <Plus className="w-4 h-4 text-indigo-600" />}
                 {editingUser ? 'Edit User Permissions' : 'Create New User Account'}
               </h4>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                <X className="w-5 h-5 text-gray-400" />
+              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-100 rounded-lg transition cursor-pointer">
+                <X className="w-4 h-4 text-slate-400 hover:text-slate-600" />
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-black uppercase tracking-widest text-gray-600">Username</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Username</label>
                   <input 
                     type="text" 
                     value={username}
                     onChange={e => setUsername(e.target.value)}
                     disabled={!!editingUser}
-                    className="w-full px-4 py-2 border border-black rounded-lg focus:ring-1 focus:ring-black outline-none disabled:bg-gray-50"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200 disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
                     placeholder="e.g., purchase_head_01"
                     required
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-black uppercase tracking-widest text-gray-600">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                     {editingUser ? 'New Password (Optional)' : 'Password'}
                   </label>
                   <input 
                     type="password" 
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    className="w-full px-4 py-2 border border-black rounded-lg focus:ring-1 focus:ring-black outline-none"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
                     placeholder="••••••••"
                     required={!editingUser}
                   />
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-black uppercase tracking-widest text-gray-600">System Role</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">System Role</label>
                 <div className="flex flex-wrap gap-2">
                   {roles.map(r => (
                     <button
                       key={r.id}
                       type="button"
                       onClick={() => setRole(r.name)}
-                      className={`py-2 px-3 border rounded-lg text-[10px] font-bold transition-all ${
-                        role === r.name ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200 hover:border-black'
+                      className={`py-2 px-4 border rounded-xl text-[10px] font-bold transition-all cursor-pointer ${
+                        role === r.name 
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' 
+                          : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-500 hover:text-indigo-600'
                       }`}
                     >
                       {r.name}
@@ -303,18 +305,20 @@ export default function UserManagement() {
 
               {role !== 'SUPERADMIN' && (
                 <div className="space-y-3">
-                  <label className="text-xs font-black uppercase tracking-widest text-gray-600 block">Granular Permissions</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Granular Permissions</label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {ALL_PERMISSIONS.map(p => (
                       <label 
                         key={p.key}
-                        className={`flex items-start gap-3 p-3 border rounded-xl cursor-pointer transition-all ${
-                          permissions.includes(p.key) ? 'border-black bg-black/5 shadow-sm' : 'border-gray-100 hover:border-black'
+                        className={`flex items-start gap-3 p-3.5 border rounded-xl cursor-pointer transition-all ${
+                          permissions.includes(p.key) 
+                            ? 'border-indigo-500 bg-indigo-50/50 shadow-sm' 
+                            : 'border-slate-100 hover:border-indigo-400 bg-slate-50/20'
                         }`}
                       >
                         <div className="pt-0.5">
                           <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
-                            permissions.includes(p.key) ? 'bg-black border-black text-white' : 'bg-white border-gray-300'
+                            permissions.includes(p.key) ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-300'
                           }`}>
                             {permissions.includes(p.key) && <Check className="w-3 h-3" />}
                           </div>
@@ -326,8 +330,8 @@ export default function UserManagement() {
                           />
                         </div>
                         <div>
-                          <div className="text-[11px] font-bold text-black uppercase tracking-tight">{p.label}</div>
-                          <div className="text-[10px] text-gray-500 leading-tight mt-0.5">{p.description}</div>
+                          <div className="text-[11px] font-bold text-slate-800 uppercase tracking-tight">{p.label}</div>
+                          <div className="text-[10px] text-slate-400 leading-tight mt-0.5">{p.description}</div>
                         </div>
                       </label>
                     ))}
@@ -336,22 +340,22 @@ export default function UserManagement() {
               )}
 
               {error && (
-                <div className="bg-red-50 border border-red-100 p-3 rounded-lg flex items-center gap-2 text-red-800 text-xs font-bold">
-                  <AlertCircle className="w-4 h-4" /> {error}
+                <div className="bg-rose-50 border border-rose-100 p-3 rounded-xl flex items-center gap-2 text-rose-800 text-xs font-semibold shadow-inner">
+                  <AlertCircle className="w-4 h-4 shrink-0" /> {error}
                 </div>
               )}
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                 <button 
                   type="button" 
                   onClick={() => setShowModal(false)}
-                  className="px-6 py-2 text-xs font-black uppercase tracking-widest text-gray-500 hover:bg-gray-50 rounded-lg"
+                  className="px-5 py-2 text-xs font-bold uppercase tracking-wider text-slate-500 hover:bg-slate-100 rounded-xl transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit"
-                  className="px-8 py-2 bg-black text-white text-xs font-black uppercase tracking-widest rounded-lg hover:bg-black/90 transition-all shadow-lg"
+                  className="px-7 py-2 bg-indigo-600 text-white text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-indigo-700 transition-all shadow-md shadow-indigo-600/10 hover:-translate-y-0.5 transform cursor-pointer"
                 >
                   {editingUser ? 'Save Changes' : 'Create Account'}
                 </button>

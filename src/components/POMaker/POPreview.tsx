@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { PurchaseOrder, CompanySettings, POItem } from '../../types';
 
 interface POPreviewProps {
@@ -45,6 +45,48 @@ const TermsAndNotes = ({ po }: { po: PurchaseOrder }) => (
 
 const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions, isPDF }) => {
   const printRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    if (isPDF) {
+      setScale(1);
+      return;
+    }
+
+    const handleResize = () => {
+      if (!printRef.current) return;
+      const parentEl = printRef.current.parentElement;
+      if (!parentEl) return;
+      
+      const parentWidth = parentEl.clientWidth;
+      const targetWidth = 794; // 210mm in px at 96 DPI
+      
+      // Allow padding of 48px
+      if (parentWidth > 0 && parentWidth < targetWidth + 48) {
+        const newScale = (parentWidth - 48) / targetWidth;
+        setScale(Math.max(0.4, newScale));
+      } else {
+        setScale(1);
+      }
+    };
+
+    handleResize();
+
+    const parentEl = printRef.current?.parentElement;
+    if (!parentEl) return;
+
+    const observer = new ResizeObserver(() => {
+      handleResize();
+    });
+
+    observer.observe(parentEl);
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [isPDF]);
   
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '';
@@ -123,6 +165,27 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions, isP
     while (currentItems.length > 0) {
       pages.push(currentItems.slice(0, ITEMS_PER_PAGE_SUBSEQUENT));
       currentItems = currentItems.slice(ITEMS_PER_PAGE_SUBSEQUENT);
+    }
+    
+    // Check if the last page can fit the totals and terms
+    if (pages.length > 0) {
+      const lastPageIdx = pages.length - 1;
+      const lastPageItems = pages[lastPageIdx];
+      
+      if (lastPageIdx === 0) {
+        // First page is also the last page
+        // Page 1 has a large PO header, vendor box, and intro text (~77mm).
+        // It can only fit up to 2 items along with the totals and terms.
+        if (lastPageItems.length > 2) {
+          pages.push([]); // Push totals and terms to a fresh new page
+        }
+      } else {
+        // Subsequent pages do not have PO headers, but still need to fit table headers + totals + terms.
+        // They can fit up to 8 items comfortably without overflowing.
+        if (lastPageItems.length > 8) {
+          pages.push([]); // Push totals and terms to a fresh new page
+        }
+      }
     }
     
     return pages.length > 0 ? pages : [[]];
@@ -404,71 +467,103 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions, isP
           overflow: hidden;
         }
 
+        .print-no-wrap {
+          display: flex;
+          justify-content: center;
+          align-items: flex-start;
+          flex-shrink: 0;
+          overflow: hidden;
+          transition: all 0.25s ease;
+        }
+
         .pdf-header { height: 50mm; border-bottom: 2px solid black; flex-shrink: 0; }
         .pdf-footer { height: 70mm; border-top: 2px solid black; flex-shrink: 0; position: absolute; bottom: 0; left: 0; width: 100%; }
         .pdf-body { flex: 1; padding: 5mm 15mm 75mm 15mm; overflow: hidden; position: relative; }
 
         @media print {
           .pdf-paged-view { padding: 0 !important; gap: 0 !important; background: white !important; }
+          .print-no-wrap {
+            width: 210mm !important;
+            height: 297mm !important;
+            overflow: visible !important;
+            transform: none !important;
+          }
           .pdf-page { 
             box-shadow: none !important; 
             margin: 0 !important; 
+            transform: none !important;
             page-break-after: always !important; 
           }
           .print-hidden { display: none !important; }
         }
       `}</style>
 
-      <div ref={printRef} className="pdf-paged-view w-full">
+      <div ref={printRef} className="pdf-paged-view w-full flex flex-col items-center">
         {itemPages.map((pageItems, pageIdx) => (
-          <div key={pageIdx} className="pdf-page">
-            <div className="pdf-header"><HeaderContent /></div>
-            <div className="pdf-body">
-              {pageIdx === 0 && (
-                <>
-                  <div className="text-center mb-6">
-                    <h2 className="inline-block border-b-2 border-black text-sm font-bold uppercase tracking-[0.2em] text-black pb-0.5">
-                      Purchase Order
-                    </h2>
-                  </div>
-                  <div className="flex justify-between items-start mb-6 text-xs text-black">
-                    <div className="border border-black p-2 rounded shadow-[1px_1px_0px_black]">
-                      <p className="font-bold text-black uppercase">PO NO :: <span className="font-black text-sm">{po.po_no || 'HI /2026-27/00'}</span></p>
+          <div 
+            key={pageIdx}
+            style={{ 
+              width: isPDF ? '210mm' : `${210 * scale}mm`, 
+              height: isPDF ? '297mm' : `${297 * scale}mm`,
+            }}
+            className="print-no-wrap"
+          >
+            <div 
+              className="pdf-page"
+              style={{
+                transform: isPDF ? 'none' : `scale(${scale})`,
+                transformOrigin: 'top center',
+                margin: 0
+              }}
+            >
+              <div className="pdf-header"><HeaderContent /></div>
+              <div className="pdf-body">
+                {pageIdx === 0 && (
+                  <>
+                    <div className="text-center mb-6">
+                      <h2 className="inline-block border-b-2 border-black text-sm font-bold uppercase tracking-[0.2em] text-black pb-0.5">
+                        Purchase Order
+                      </h2>
                     </div>
-                    <div className="border border-black p-2 rounded shadow-[1px_1px_0px_black]">
-                      <p className="font-bold text-black uppercase">Date : <span className="font-black text-sm">{formatDate(po.date)}</span></p>
-                    </div>
-                  </div>
-                  <div className="mb-6 text-[11px] text-black flex gap-4">
-                    <div className="font-bold pt-1 uppercase shrink-0">To,</div>
-                    <div className="flex-1">
-                      <p className="font-black text-sm text-black uppercase mb-1">{po.vendor_name || 'VENDOR NAME'}</p>
-                      <p className="whitespace-pre-wrap max-w-[450px] text-black italic font-medium">{po.vendor_details.address}</p>
-                      <div className="mt-2 space-y-0.5 text-black grid grid-cols-2 gap-x-8 border-t border-black/10 pt-2 font-bold text-left text-[10px]">
-                        <p><span className="uppercase text-[8px] mr-1">STATE :</span> {po.vendor_details.state}</p>
-                        <p><span className="uppercase text-[8px] mr-1">GSTIN :</span> {po.vendor_details.gstin}</p>
-                        <p><span className="uppercase text-[8px] mr-1">Mail ID :</span> {po.vendor_details.mail}</p>
-                        <p><span className="uppercase text-[8px] mr-1">Ph :</span> {po.vendor_details.ph}</p>
+                    <div className="flex justify-between items-start mb-6 text-xs text-black">
+                      <div className="border border-black p-2 rounded shadow-[1px_1px_0px_black]">
+                        <p className="font-bold text-black uppercase">PO NO :: <span className="font-black text-sm">{po.po_no || 'HI /2026-27/00'}</span></p>
+                      </div>
+                      <div className="border border-black p-2 rounded shadow-[1px_1px_0px_black]">
+                        <p className="font-bold text-black uppercase">Date : <span className="font-black text-sm">{formatDate(po.date)}</span></p>
                       </div>
                     </div>
+                    <div className="mb-6 text-[11px] text-black flex gap-4">
+                      <div className="font-bold pt-1 uppercase shrink-0">To,</div>
+                      <div className="flex-1">
+                        <p className="font-black text-sm text-black uppercase mb-1">{po.vendor_name || 'VENDOR NAME'}</p>
+                        <p className="whitespace-pre-wrap max-w-[450px] text-black italic font-medium">{po.vendor_details.address}</p>
+                        <div className="mt-2 space-y-0.5 text-black grid grid-cols-2 gap-x-8 border-t border-black/10 pt-2 font-bold text-left text-[10px]">
+                          <p><span className="uppercase text-[8px] mr-1">STATE :</span> {po.vendor_details.state}</p>
+                          <p><span className="uppercase text-[8px] mr-1">GSTIN :</span> {po.vendor_details.gstin}</p>
+                          <p><span className="uppercase text-[8px] mr-1">Mail ID :</span> {po.vendor_details.mail}</p>
+                          <p><span className="uppercase text-[8px] mr-1">Ph :</span> {po.vendor_details.ph}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-[10px] mb-4 italic text-black leading-relaxed font-bold text-left">
+                      Dear Sir/Madam, As per your Quotation Ref No.:-<EditableText value={po.quote_ref_type || 'MAIL'} onChange={val => updatePO('quote_ref_type', val.toUpperCase())} />, Ref Doc no:-<span className="text-black font-black uppercase mx-1 underline">{po.quote_doc_no || 'N/A'}</span>, Ref Date:-<EditableText value={po.quote_date || po.date} onChange={val => updatePO('quote_date', val)} />, We are sending the order so please supply the materials on urgent basis:-
+                    </p>
+                  </>
+                )}
+
+                {pageItems.length > 0 && <ItemsTable items={pageItems} />}
+
+                {pageIdx === itemPages.length - 1 && (
+                  <div className="mt-4">
+                    <TotalsSection />
+                    <TermsAndNotes po={po} />
                   </div>
-                  <p className="text-[10px] mb-4 italic text-black leading-relaxed font-bold text-left">
-                    Dear Sir/Madam, As per your Quotation Ref No.:-<EditableText value={po.quote_ref_type || 'MAIL'} onChange={val => updatePO('quote_ref_type', val.toUpperCase())} />, Ref Doc no:-<span className="text-black font-black uppercase mx-1 underline">{po.quote_doc_no || 'N/A'}</span>, Ref Date:-<EditableText value={po.quote_date || po.date} onChange={val => updatePO('quote_date', val)} />, We are sending the order so please supply the materials on urgent basis:-
-                  </p>
-                </>
-              )}
-
-              <ItemsTable items={pageItems} />
-
-              {pageIdx === itemPages.length - 1 && (
-                <div className="mt-4">
-                  <TotalsSection />
-                  <TermsAndNotes po={po} />
-                </div>
-              )}
+                )}
+              </div>
+              <div className="pdf-footer"><FooterContent /></div>
+              <div className="absolute top-2 right-4 text-[8px] font-bold text-slate-400 print-hidden">Page {pageIdx + 1} of {itemPages.length}</div>
             </div>
-            <div className="pdf-footer"><FooterContent /></div>
-            <div className="absolute top-2 right-4 text-[8px] font-bold text-gray-400 print-hidden">Page {pageIdx + 1} of {itemPages.length}</div>
           </div>
         ))}
       </div>

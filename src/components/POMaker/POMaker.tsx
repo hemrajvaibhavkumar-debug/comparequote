@@ -311,23 +311,30 @@ const POMaker: React.FC = () => {
   }
 
   return (
-    <div className="h-[calc(100vh-64px)] flex flex-col bg-white">
-      <div className="bg-white border-b border-black px-6 py-3 flex items-center justify-between shrink-0">
+    <div className="h-[calc(100vh-64px)] flex flex-col bg-slate-50 relative overflow-hidden">
+      {/* Ambient background glows */}
+      <div className="ambient-glow ambient-indigo -top-40 -right-40" />
+      <div className="ambient-glow ambient-blue -bottom-40 -left-40" />
+
+      <div className="glass-navbar px-6 py-3 flex items-center justify-between shrink-0 relative z-10 shadow-sm">
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="p-2 hover:bg-black/10 rounded-full transition border border-black">
-            <ArrowLeft className="w-5 h-5 text-black" />
+          <button 
+            onClick={() => navigate(-1)} 
+            className="p-2 text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 rounded-xl transition border border-slate-200/60 shadow-sm"
+          >
+            <ArrowLeft className="w-4 h-4" />
           </button>
-          <h1 className="text-xl font-bold text-black">Purchase Order Maker</h1>
+          <h1 className="text-lg font-bold text-slate-900 font-sans tracking-tight">Purchase Order Maker</h1>
         </div>
         <div className="flex items-center gap-3">
           <button 
             onClick={handleClearDraft}
-            className="text-xs font-bold text-black hover:underline px-2"
+            className="text-xs font-bold text-slate-500 hover:text-rose-600 px-3 py-2 rounded-xl hover:bg-slate-100 transition-all"
           >
             RESET DRAFT
           </button>
           <select 
-            className="bg-white border border-black rounded-lg px-3 py-2 text-sm font-bold"
+            className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
             value={po.version}
             onChange={e => setPo({...po, version: e.target.value as any})}
             disabled={po.status === 'APPROVED'}
@@ -341,22 +348,22 @@ const POMaker: React.FC = () => {
             <button 
               onClick={handleSave}
               disabled={isGenerating}
-              className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-black/90 transition font-medium disabled:opacity-50"
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl transition font-semibold text-xs shadow-sm disabled:opacity-50 hover:-translate-y-0.5 transform transition-all duration-200 cursor-pointer"
             >
-              {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              {isGenerating ? 'Generating PDF & Saving...' : 'Save to Database'}
+              {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+              {isGenerating ? 'Saving...' : 'Save to Database'}
             </button>
           ) : (
-            <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg border border-emerald-200 font-bold text-xs uppercase tracking-widest">
-              <ShieldCheck className="w-4 h-4" /> Locked (Approved)
+            <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-xl border border-emerald-200/60 font-bold text-[10px] uppercase tracking-widest">
+              <ShieldCheck className="w-3.5 h-3.5" /> Locked (Approved)
             </div>
           )}
         </div>
       </div>
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative z-10">
         {/* Left Pane - Form */}
-        <div className="w-1/2 overflow-y-auto p-6 bg-white border-r border-black">
+        <div className="w-1/2 overflow-y-auto p-6 bg-slate-50 border-r border-slate-200/80 custom-scrollbar">
           <POForm 
             po={po} 
             setPo={setPo} 
@@ -368,8 +375,12 @@ const POMaker: React.FC = () => {
         </div>
 
         {/* Right Pane - Preview */}
-        <div className="w-1/2 overflow-y-auto p-8 bg-white border-black flex justify-center" ref={previewRef}>
-          <POPreview po={po} setPo={setPo} settings={settings} isPDF={isExporting} />
+        <div className="w-1/2 overflow-auto p-8 bg-slate-100/40 custom-scrollbar" ref={previewRef}>
+          <div className={`mx-auto w-full max-w-3xl transition-all duration-300 ${
+            isExporting ? '' : 'bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden p-6'
+          }`}>
+            <POPreview po={po} setPo={setPo} settings={settings} isPDF={isExporting} />
+          </div>
         </div>
       </div>
     </div>

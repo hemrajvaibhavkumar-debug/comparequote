@@ -400,54 +400,62 @@ const Builder: React.FC = () => {
   };
 
   return (
-    <div {...getRootProps()} className={`min-h-screen bg-white p-4 md:p-8 font-sans transition-colors relative ${isDragActive ? 'bg-white' : ''}`}>
+    <div {...getRootProps()} className={`min-h-screen bg-slate-50/50 p-4 md:p-8 font-sans transition-colors relative ${isDragActive ? 'bg-slate-100/60' : ''}`}>
       {isDragActive && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 backdrop-blur-sm pointer-events-none border-4 border-black border-dashed m-4 rounded-3xl">
-          <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4">
-            <Upload className="w-16 h-16 text-black animate-bounce" />
-            <p className="text-xl font-bold text-black">Drop files anywhere to upload</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-indigo-900/10 backdrop-blur-xs pointer-events-none border-4 border-indigo-500 border-dashed m-4 rounded-3xl animate-pulse-slow">
+          <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 border border-indigo-50">
+            <Upload className="w-16 h-16 text-indigo-600 animate-bounce" />
+            <p className="text-xl font-bold text-slate-800">Drop files anywhere to upload</p>
+            <p className="text-xs text-slate-400 font-medium">QuoteCompare AI will extract quotations automatically</p>
           </div>
         </div>
       )}
-      <div className="max-w-7xl mx-auto space-y-8">
-        <header className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-black print-hidden">
+      <div className="max-w-7xl mx-auto space-y-8 relative z-10">
+        {/* Background ambient blobs */}
+        <div className="ambient-glow ambient-indigo -top-40 -left-40 animate-pulse-slow" style={{ width: '350px', height: '350px' }}></div>
+        <div className="ambient-glow ambient-blue top-60 right-0 animate-pulse-slow" style={{ animationDelay: '3s', width: '350px', height: '350px' }}></div>
+
+        <header className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-sm border border-slate-100 print-hidden transition-all">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center shadow-lg">
-              <TableIcon className="w-7 h-7 text-white" />
+            <div className="w-12 h-12 bg-gradient-to-tr from-indigo-600 to-blue-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-150 animate-float">
+              <TableIcon className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-black">QuoteCompare</h1>
+            <div>
+              <h1 className="text-2xl font-black bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent tracking-tight">Compare Workspace</h1>
+              <p className="text-slate-400 text-xs font-semibold mt-0.5">Analyze, refine, and merge multiple quotations</p>
+            </div>
           </div>
           
           <div className="flex flex-wrap items-center gap-3">
-             <button onClick={saveToNeon} disabled={isSaving || !data.items.length} className="flex items-center gap-2 px-6 py-2.5 bg-black text-white rounded-xl text-sm font-bold hover:bg-black/90 disabled:opacity-50 transition-all shadow-lg">
+             <button onClick={saveToNeon} disabled={isSaving || !data.items.length} className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 disabled:opacity-50 transition-all shadow-md shadow-emerald-100 active:scale-95 cursor-pointer">
                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />} Save to DB
              </button>
-             <button onClick={handlePrint} disabled={!data.items.length} className="flex items-center gap-2 px-6 py-2.5 bg-black text-white rounded-xl text-sm font-bold hover:bg-black/90 disabled:opacity-50 transition-all shadow-lg">
+             <button onClick={handlePrint} disabled={!data.items.length} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-md shadow-indigo-100 active:scale-95 cursor-pointer">
                <FileText className="w-4 h-4" /> Export/Print PDF
              </button>
-             <button onClick={clearDraft} className="flex items-center gap-2 px-6 py-2.5 bg-white text-black rounded-xl text-sm font-bold hover:bg-black/10 transition-all border border-black shadow-sm">
+             <button onClick={clearDraft} className="flex items-center gap-2 px-5 py-2.5 bg-white text-slate-700 rounded-xl text-sm font-semibold hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-all border border-slate-200 shadow-xs active:scale-95 cursor-pointer">
                <RotateCcw className="w-4 h-4" /> RESET ALL
              </button>
-             <button onClick={() => setShowSettings(!showSettings)} className="flex items-center gap-2 px-4 py-2.5 bg-white text-black rounded-xl text-sm font-bold hover:bg-black/10 transition-all border border-black">
+             <button onClick={() => setShowSettings(!showSettings)} className="flex items-center gap-2 px-4 py-2.5 bg-white text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-50 transition-all border border-slate-200 shadow-xs cursor-pointer">
                <SettingsIcon className="w-4 h-4" /> Options
              </button>
           </div>
         </header>
 
         {showSettings && (
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-black space-y-6 animate-in slide-in-from-top-4 duration-300 print-hidden">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-black flex items-center gap-2">
-                <SettingsIcon className="w-5 h-5 text-black" /> Predefined Options
+          <div className="bg-white/95 backdrop-blur-md p-6 rounded-2xl shadow-md border border-slate-100 space-y-6 animate-in slide-in-from-top-4 duration-300 print-hidden">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h2 className="text-md font-bold text-slate-800 flex items-center gap-2">
+                <SettingsIcon className="w-5 h-5 text-indigo-600" /> Predefined Master Options
               </h2>
-              <button onClick={() => setShowSettings(false)} className="p-2 hover:bg-black/10 rounded-lg">
-                <X className="w-5 h-5 text-black" />
+              <button onClick={() => setShowSettings(false)} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer">
+                <X className="w-4 h-4 text-slate-500" />
               </button>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-4">
-                <h3 className="text-sm font-bold text-black uppercase">Prepared By Options</h3>
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Prepared By Options</h3>
                 {canManageSettings ? (
                   <div className="space-y-2">
                     <input 
@@ -455,32 +463,32 @@ const Builder: React.FC = () => {
                       value={newPreparedBy} 
                       onChange={e => setNewPreparedBy(e.target.value)} 
                       placeholder="Name..." 
-                      className="w-full px-4 py-2 bg-white border border-black rounded-lg text-sm"
+                      className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-indigo-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/10 text-slate-800 transition-all font-medium"
                     />
                     <input 
                       type="text" 
                       value={newPreparedByDesignation} 
                       onChange={e => setNewPreparedByDesignation(e.target.value)} 
                       placeholder="Designation..." 
-                      className="w-full px-4 py-2 bg-white border border-black rounded-lg text-sm"
+                      className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-indigo-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/10 text-slate-800 transition-all font-medium"
                     />
-                    <button onClick={addExecutive} className="w-full py-2 bg-black text-white rounded-lg text-sm font-bold hover:bg-black/90">Add Executive</button>
+                    <button onClick={addExecutive} className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all shadow-md shadow-indigo-100 cursor-pointer active:scale-[0.98]">Add Executive</button>
                   </div>
                 ) : (
-                  <p className="text-[10px] text-gray-500 italic">Only administrators can add/remove options.</p>
+                  <p className="text-[10px] text-slate-400 italic font-semibold">Only administrators can add/remove master options.</p>
                 )}
                 <div className="flex flex-wrap gap-2 pt-2">
                   {dbExecutives.map(opt => (
-                    <span key={opt.id} className="px-3 py-1 bg-black text-white rounded-lg text-xs font-medium flex items-center gap-2">
-                      {opt.name} {opt.designation && `(${opt.designation})`} 
-                      {canManageSettings && <X className="w-3 h-3 cursor-pointer hover:text-white/80" onClick={() => removeExecutive(opt.id)} />}
+                    <span key={opt.id} className="px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-xs transition-colors group">
+                      {opt.name} {opt.designation && <span className="opacity-60 text-[10px]">({opt.designation})</span>} 
+                      {canManageSettings && <X className="w-3.5 h-3.5 cursor-pointer opacity-40 hover:opacity-100 hover:text-rose-600 transition-all" onClick={() => removeExecutive(opt.id)} />}
                     </span>
                   ))}
                 </div>
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-sm font-bold text-black uppercase">Plant Name Options</h3>
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Plant Name Options</h3>
                 {canManageSettings ? (
                   <div className="space-y-2">
                     <input 
@@ -488,25 +496,25 @@ const Builder: React.FC = () => {
                       value={newPlantName} 
                       onChange={e => setNewPlantName(e.target.value)} 
                       placeholder="Plant Name..." 
-                      className="w-full px-4 py-2 bg-white border border-black rounded-lg text-sm"
+                      className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-indigo-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/10 text-slate-800 transition-all font-medium"
                     />
                     <input 
                       type="text" 
                       value={newPlantLocation} 
                       onChange={e => setNewPlantLocation(e.target.value)} 
                       placeholder="Location..." 
-                      className="w-full px-4 py-2 bg-white border border-black rounded-lg text-sm"
+                      className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-indigo-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/10 text-slate-800 transition-all font-medium"
                     />
-                    <button onClick={addPlant} className="w-full py-2 bg-black text-white rounded-lg text-sm font-bold hover:bg-black/90">Add Plant</button>
+                    <button onClick={addPlant} className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all shadow-md shadow-indigo-100 cursor-pointer active:scale-[0.98]">Add Plant</button>
                   </div>
                 ) : (
-                  <p className="text-[10px] text-gray-500 italic">Only administrators can add/remove options.</p>
+                  <p className="text-[10px] text-slate-400 italic font-semibold">Only administrators can add/remove master options.</p>
                 )}
                 <div className="flex flex-wrap gap-2 pt-2">
                   {dbPlants.map(opt => (
-                    <span key={opt.id} className="px-3 py-1 bg-black text-white rounded-lg text-xs font-medium flex items-center gap-2">
-                      {opt.name} {opt.location && `(${opt.location})`} 
-                      {canManageSettings && <X className="w-3 h-3 cursor-pointer hover:text-white/80" onClick={() => removePlant(opt.id)} />}
+                    <span key={opt.id} className="px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-xs transition-colors group">
+                      {opt.name} {opt.location && <span className="opacity-60 text-[10px]">({opt.location})</span>} 
+                      {canManageSettings && <X className="w-3.5 h-3.5 cursor-pointer opacity-40 hover:opacity-100 hover:text-rose-600 transition-all" onClick={() => removePlant(opt.id)} />}
                     </span>
                   ))}
                 </div>
@@ -516,24 +524,24 @@ const Builder: React.FC = () => {
         )}
 
         <div className="grid grid-cols-12 gap-8 print-hidden">
-          <div className="col-span-12 lg:col-span-4 bg-white p-6 rounded-2xl shadow-sm border border-black space-y-5">
-            <h2 className="text-sm font-bold text-black uppercase tracking-wider">Document Metadata</h2>
+          <div className="col-span-12 lg:col-span-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-5 relative">
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Document Metadata</h2>
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
                 <div className="flex justify-between items-end">
-                  <label className="text-[10px] font-bold text-black uppercase">Doc No.</label>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Doc No.</label>
                   <button 
                     onClick={() => generateDocNo(true)}
-                    className="text-[10px] font-bold text-black hover:underline flex items-center gap-1 mb-0.5"
+                    className="text-[10px] font-bold text-slate-400 hover:text-indigo-600 flex items-center gap-1 mb-0.5 transition-colors cursor-pointer"
                     title="Reset to latest chronological number"
                   >
                     <RotateCcw className="w-2.5 h-2.5" /> RESET
                   </button>
                 </div>
-                <input type="text" value={header.docNo} onChange={e => setHeader({...header, docNo: e.target.value})} className="w-full mt-1 px-4 py-2 bg-white border border-black rounded-lg text-sm" placeholder="C0124-1" />
+                <input type="text" value={header.docNo} onChange={e => setHeader({...header, docNo: e.target.value})} className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-indigo-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/10 text-slate-800 font-bold transition-all" placeholder="C0124-1" />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-black uppercase">Prepared By</label>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Prepared By</label>
                 <select 
                   value={selectedExecutiveId || ''} 
                   onChange={e => {
@@ -542,14 +550,14 @@ const Builder: React.FC = () => {
                     const exec = dbExecutives.find(x => x.id === id);
                     if (exec) setHeader({...header, preparedBy: exec.name});
                   }} 
-                  className="w-full mt-1 px-4 py-2 bg-white border border-black rounded-lg text-sm"
+                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-indigo-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/10 text-slate-800 transition-all font-medium cursor-pointer"
                 >
                   <option value="">Select Executive</option>
                   {dbExecutives.map(opt => <option key={opt.id} value={opt.id}>{opt.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-bold text-black uppercase">Plant</label>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Plant</label>
                 <select 
                   value={selectedPlantId || ''} 
                   onChange={e => {
@@ -558,93 +566,94 @@ const Builder: React.FC = () => {
                     const plant = dbPlants.find(x => x.id === id);
                     if (plant) setHeader({...header, plantName: plant.name});
                   }} 
-                  className="w-full mt-1 px-4 py-2 bg-white border border-black rounded-lg text-sm"
+                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-indigo-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/10 text-slate-800 transition-all font-medium cursor-pointer"
                 >
                   <option value="">Select Plant</option>
                   {dbPlants.map(opt => <option key={opt.id} value={opt.id}>{opt.name}</option>)}
                 </select>
               </div>
-              <div>
-                <label className="text-[10px] font-bold text-black uppercase">Indent Date</label>
+              <div className="col-span-2">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Indent Date</label>
                 <input 
                   type="date" 
                   value={header.indentDate} 
                   onChange={e => setHeader({...header, indentDate: e.target.value})} 
-                  className="w-full mt-1 px-4 py-2 bg-white border border-black rounded-lg text-sm text-black" 
+                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-indigo-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/10 text-slate-800 transition-all font-medium" 
                 />
               </div>
 
               <div className="col-span-2">
-                <label className="text-[10px] font-bold text-black uppercase">Special Extraction Instructions (Optional)</label>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Special Extraction Instructions (Optional)</label>
                 <textarea 
                   value={extractionPrompt} 
                   onChange={e => setExtractionPrompt(e.target.value)} 
-                  className="w-full mt-1 px-4 py-2 bg-white border border-black rounded-lg text-sm min-h-[80px] text-black" 
+                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-indigo-500 rounded-xl text-sm min-h-[90px] focus:outline-none focus:ring-2 focus:ring-indigo-500/10 text-slate-800 transition-all font-medium" 
                   placeholder="e.g. 'The data is in one line', 'Ignore vendor X', 'Focus on specific columns'"
                 />
               </div>
             </div>
           </div>
 
-          <div className="col-span-12 lg:col-span-8 bg-white p-6 rounded-2xl shadow-sm border border-black space-y-5">
-            <h2 className="text-sm font-bold text-black uppercase tracking-wider">Extraction Source</h2>
+          <div className="col-span-12 lg:col-span-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-5">
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Extraction Source</h2>
             {canExtract ? (
               <>
                 <div 
                   onClick={() => (document.querySelector('input[type="file"]') as HTMLInputElement)?.click()}
-                  className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${isDragActive ? 'border-black bg-white' : 'border-black bg-white'}`}
+                  className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer ${isDragActive ? 'border-indigo-500 bg-indigo-50/20' : 'border-slate-200 hover:border-indigo-500 hover:bg-slate-50/50 bg-slate-50/30'}`}
                 >
                   <input {...getInputProps()} />
-                  <Upload className="w-10 h-10 text-black mx-auto mb-2" />
-                  <p className="text-sm text-black font-medium">Drop PDF/Images anywhere or click to browse</p>
+                  <Upload className={`w-10 h-10 mx-auto mb-3 transition-transform duration-300 ${isDragActive ? 'text-indigo-600 scale-110' : 'text-slate-400 hover:scale-105'}`} />
+                  <p className="text-sm text-slate-600 font-semibold">Drop PDF/Images anywhere or <span className="text-indigo-600 underline">browse files</span></p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Supports PDF, JPEG, JPG, PNG files</p>
                 </div>
                 
                 {files.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 pt-1">
                     {files.map((f, i) => (
-                      <span key={i} className="px-3 py-1 bg-black text-white rounded-full text-[10px] font-bold flex items-center gap-2">
-                        {f.name} <Trash2 className="w-3 h-3 cursor-pointer" onClick={() => setFiles(files.filter((_, idx) => idx !== i))} />
+                      <span key={i} className="px-3 py-1.5 bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-[10px] font-bold flex items-center gap-2 shadow-xs transition-colors hover:bg-slate-200">
+                        {f.name} <Trash2 className="w-3 h-3 text-slate-400 hover:text-rose-600 cursor-pointer transition-colors" onClick={() => setFiles(files.filter((_, idx) => idx !== i))} />
                       </span>
                     ))}
                   </div>
                 )}
 
-                <textarea value={inputText} onChange={e => setInputText(e.target.value)} placeholder="Or paste quotation text..." className="w-full h-32 px-4 py-3 bg-white border border-black rounded-xl text-sm resize-none text-black" />
+                <textarea value={inputText} onChange={e => setInputText(e.target.value)} placeholder="Or paste quotation text content here..." className="w-full h-32 px-4 py-3 bg-slate-50/50 border border-slate-200 focus:border-indigo-500 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/10 text-slate-800 font-medium transition-all" />
 
                 <div className="flex gap-3">
                   <div className="flex flex-col gap-2 flex-1">
-                    <button onClick={handleExtract} disabled={isExtracting || (!inputText && !files.length)} className="w-full py-3.5 bg-black text-white rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-black/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2">
-                      {isExtracting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />} Extract Data
+                    <button onClick={handleExtract} disabled={isExtracting || (!inputText && !files.length)} className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-blue-500 hover:from-indigo-700 hover:to-blue-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-md shadow-indigo-100 hover:shadow-indigo-200 cursor-pointer active:scale-[0.98]">
+                      {isExtracting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />} Extract Quotation Data
                     </button>
                   </div>
                 </div>
               </>
             ) : (
-              <div className="p-12 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-300">
-                <ShieldCheck className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-bold text-gray-900 uppercase tracking-tight">Access Restricted</h3>
-                <p className="text-sm text-gray-500 mt-2">You do not have permission to use the AI Extraction tool.</p>
+              <div className="p-12 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                <ShieldCheck className="w-12 h-12 text-slate-350 mx-auto mb-4" />
+                <h3 className="text-md font-bold text-slate-800 uppercase tracking-tight">Access Restricted</h3>
+                <p className="text-xs text-slate-500 mt-2">You do not have permission to use the AI Extraction tool.</p>
               </div>
             )}
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-black shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-black flex justify-between items-center print-hidden">
-            <h2 className="text-sm font-bold text-black uppercase tracking-wider">Comparison Table</h2>
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="p-5 border-b border-slate-100 bg-slate-50/30 flex justify-between items-center print-hidden">
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Comparison Summary Grid</h2>
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3 pr-4 border-r border-black/10">
-                <label className="text-[10px] font-bold uppercase text-black cursor-pointer select-none" htmlFor="multiplyByWeight">Multiply by Weight (WT)</label>
+              <div className="flex items-center gap-3 pr-4 border-r border-slate-200">
+                <label className="text-[10px] font-bold uppercase text-slate-600 cursor-pointer select-none" htmlFor="multiplyByWeight">Multiply by Weight (WT)</label>
                 <input 
                   id="multiplyByWeight"
                   type="checkbox" 
                   checked={data.multiplyByWeight || false} 
                   onChange={e => setData(prev => ({ ...prev, multiplyByWeight: e.target.checked }))} 
-                  className="w-4 h-4 accent-black cursor-pointer"
+                  className="w-4.5 h-4.5 accent-indigo-600 rounded-lg border-slate-300 cursor-pointer"
                 />
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold uppercase text-black">Font Size: {fontSize}px</span>
+              <div className="flex items-center gap-2.5">
+                <span className="text-[10px] font-bold uppercase text-slate-600">Font Size: {fontSize}px</span>
                 <input 
                   type="range" 
                   min="8" 
@@ -652,18 +661,18 @@ const Builder: React.FC = () => {
                   step="0.5"
                   value={fontSize} 
                   onChange={e => setFontSize(parseFloat(e.target.value))} 
-                  className="w-32 h-1 bg-black rounded-lg appearance-none cursor-pointer accent-black"
+                  className="w-32 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                 />
               </div>
-              {isExtracting && <span className="flex items-center gap-2 text-black animate-pulse text-xs font-bold"><Loader2 className="w-3 h-3 animate-spin" /> AI Analyzing...</span>}
+              {isExtracting && <span className="flex items-center gap-2 text-indigo-600 animate-pulse text-xs font-bold"><Loader2 className="w-3 h-3 animate-spin" /> AI Analyzing...</span>}
             </div>
           </div>
           <div className="p-5">
             {isExtracting ? (
               <div className="space-y-4 animate-pulse">
-                <div className="h-10 bg-black/5 rounded-lg w-full"></div>
-                <div className="h-20 bg-black/5 rounded-lg w-full"></div>
-                <div className="h-20 bg-black/5 rounded-lg w-full"></div>
+                <div className="h-10 bg-slate-100 rounded-lg w-full"></div>
+                <div className="h-20 bg-slate-100 rounded-lg w-full"></div>
+                <div className="h-20 bg-slate-100 rounded-lg w-full"></div>
               </div>
             ) : (
               <ComparisonTable data={data} setData={setData} header={header} setHeader={setHeader} tableRef={tableRef} fontSize={fontSize} />
