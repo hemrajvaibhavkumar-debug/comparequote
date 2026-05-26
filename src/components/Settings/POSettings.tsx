@@ -5,13 +5,16 @@ import { useAuth } from '../../context/AuthContext';
 import UserManagement from './UserManagement';
 
 const POSettings: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'profile' | 'terms' | 'vendors' | 'users'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'terms' | 'vendors' | 'users' | 'roles'>('profile');
   const [settings, setSettings] = useState<CompanySettings | null>(null);
   const [templates, setTemplates] = useState<TermsTemplate[]>([]);
   const [vendors, setVendors] = useState<VendorMaster[]>([]);
+  const [roles, setRoles] = useState<{id: number, name: string}[]>([]);
   const [loading, setLoading] = useState(true);
   const [newTemplate, setNewTemplate] = useState<Partial<TermsTemplate>>({});
   const [newVendor, setNewVendor] = useState<Partial<VendorMaster>>({});
+  const [newRole, setNewRole] = useState('');
+  const [editingRole, setEditingRole] = useState<{id: number, name: string} | null>(null);
   
   const { token, user } = useAuth();
   const isSuperAdmin = user?.role === 'SUPERADMIN';
@@ -20,6 +23,7 @@ const POSettings: React.FC = () => {
     fetchSettings();
     fetchTemplates();
     fetchVendors();
+    fetchRoles();
   }, []);
 
   const fetchSettings = async () => {
@@ -59,6 +63,20 @@ const POSettings: React.FC = () => {
       }
     } catch (error) {
       console.error("Failed to fetch vendors:", error);
+    }
+  };
+
+  const fetchRoles = async () => {
+    try {
+      const res = await fetch('/api/roles', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRoles(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch roles:", error);
     }
   };
 
@@ -123,6 +141,47 @@ const POSettings: React.FC = () => {
     fetchVendors();
   };
 
+  const handleAddRole = async () => {
+    if (!newRole) return;
+    
+    if (editingRole) {
+      await fetch(`/api/roles/${editingRole.id}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ name: newRole })
+      });
+      setEditingRole(null);
+    } else {
+      await fetch('/api/roles', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ name: newRole })
+      });
+    }
+    setNewRole('');
+    fetchRoles();
+  };
+
+  const handleDeleteRole = async (id: number) => {
+    const role = roles.find(r => r.id === id);
+    if (['SUPERADMIN', 'PURCHASE_HEAD', 'USER'].includes(role?.name || '')) {
+      alert("Cannot delete core system roles");
+      return;
+    }
+    if (!confirm('Are you sure you want to delete this role?')) return;
+    await fetch(`/api/roles/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    fetchRoles();
+  };
+
   if (loading) return <div className="p-8 text-center text-black">Loading settings...</div>;
 
   const TabButton = ({ id, label, icon: Icon }: { id: typeof activeTab, label: string, icon: any }) => (
@@ -159,7 +218,10 @@ const POSettings: React.FC = () => {
             <TabButton id="terms" label="Terms Templates" icon={FileText} />
             <TabButton id="vendors" label="Vendor Master" icon={Users} />
             {isSuperAdmin && (
-              <TabButton id="users" label="User Management" icon={ShieldCheck} />
+              <>
+                <TabButton id="roles" label="System Roles" icon={ShieldCheck} />
+                <TabButton id="users" label="User Management" icon={Users} />
+              </>
             )}
           </div>
         </div>
@@ -420,6 +482,72 @@ const POSettings: React.FC = () => {
 
         {activeTab === 'users' && isSuperAdmin && (
           <UserManagement />
+        )}
+
+        {activeTab === 'roles' && isSuperAdmin && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-white p-8 rounded-2xl border border-black shadow-sm h-fit">
+              <h2 className="text-xl font-bold text-black mb-6 uppercase tracking-tight">
+                {editingRole ? 'Rename Role' : 'Add System Role'}
+              </h2>
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-black uppercase tracking-widest text-gray-600">Role Name</label>
+                  <input 
+                    type="text" 
+                    className="w-full px-4 py-2 border border-black rounded-lg focus:ring-1 focus:ring-black outline-none"
+                    value={newRole}
+                    onChange={e => setNewRole(e.target.value)}
+                    placeholder="e.g. SR. EXECUTIVE"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={handleAddRole}
+                    className="flex-1 flex items-center justify-center gap-2 bg-black text-white px-4 py-3 rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-black/90 transition shadow-lg"
+                  >
+                    {editingRole ? <Save className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                    {editingRole ? 'Update Role' : 'Create Role'}
+                  </button>
+                  {editingRole && (
+                    <button 
+                      onClick={() => { setEditingRole(null); setNewRole(''); }}
+                      className="px-4 py-3 border border-black rounded-lg text-xs font-bold uppercase tracking-widest"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-sm font-black uppercase tracking-widest text-gray-500">Active Roles</h3>
+              {roles.map(r => (
+                <div key={r.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-black group">
+                  <div className="font-bold text-black uppercase tracking-tight">{r.name}</div>
+                  <div className="flex gap-2">
+                    {!['SUPERADMIN', 'PURCHASE_HEAD', 'USER'].includes(r.name) && (
+                      <>
+                        <button 
+                          onClick={() => { setEditingRole(r); setNewRole(r.name); }}
+                          className="text-gray-400 hover:text-black p-2 rounded-lg transition"
+                        >
+                          <Building2 className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteRole(r.id)}
+                          className="text-gray-400 hover:text-red-600 p-2 rounded-lg transition"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </div>

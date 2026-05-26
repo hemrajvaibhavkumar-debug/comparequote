@@ -139,7 +139,20 @@ export default function ViewTable() {
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
          <div className="p-5 border-b border-slate-100 flex justify-between items-center">
-           <h2 className="text-sm font-bold text-slate-800">Result Table {isEditing && <span className="ml-2 text-xs text-amber-600 font-bold uppercase tracking-widest bg-amber-50 px-2 py-1 rounded">Edit Mode Active</span>}</h2>
+           <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Result Table {isEditing && <span className="ml-2 text-xs text-amber-600 font-bold uppercase tracking-widest bg-amber-50 px-2 py-1 rounded">Edit Mode Active</span>}</h2>
+           <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 pr-4 border-r border-black/10">
+                <label className="text-[10px] font-bold uppercase text-black cursor-pointer select-none" htmlFor="multiplyByWeight">Multiply by Weight (WT)</label>
+                <input 
+                  id="multiplyByWeight"
+                  type="checkbox" 
+                  checked={data?.multiplyByWeight || false} 
+                  disabled={!isEditing}
+                  onChange={e => setData((prev: any) => ({ ...prev, multiplyByWeight: e.target.checked }))} 
+                  className="w-4 h-4 accent-black cursor-pointer disabled:opacity-50"
+                />
+              </div>
+            </div>
          </div>
          <div className="p-5 overflow-auto">
            <ComparisonTable 

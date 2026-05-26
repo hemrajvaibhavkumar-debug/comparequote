@@ -23,6 +23,7 @@ const ALL_PERMISSIONS = [
 
 export default function UserManagement() {
   const [users, setUsers] = useState<UserData[]>([]);
+  const [roles, setRoles] = useState<{id: number, name: string}[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
@@ -37,11 +38,11 @@ export default function UserManagement() {
 
   useEffect(() => {
     fetchUsers();
+    fetchRoles();
   }, []);
 
   const fetchUsers = async () => {
     try {
-      setLoading(true);
       const res = await fetch('/api/users', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -51,6 +52,21 @@ export default function UserManagement() {
       }
     } catch (e) {
       console.error("Failed to fetch users", e);
+    }
+  };
+
+  const fetchRoles = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/roles', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRoles(data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch roles", e);
     } finally {
       setLoading(false);
     }
@@ -269,17 +285,17 @@ export default function UserManagement() {
 
               <div className="space-y-1.5">
                 <label className="text-xs font-black uppercase tracking-widest text-gray-600">System Role</label>
-                <div className="flex gap-2">
-                  {['USER', 'PURCHASE_HEAD', 'SUPERADMIN'].map(r => (
+                <div className="flex flex-wrap gap-2">
+                  {roles.map(r => (
                     <button
-                      key={r}
+                      key={r.id}
                       type="button"
-                      onClick={() => setRole(r)}
-                      className={`flex-1 py-2 px-3 border rounded-lg text-xs font-bold transition-all ${
-                        role === r ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200 hover:border-black'
+                      onClick={() => setRole(r.name)}
+                      className={`py-2 px-3 border rounded-lg text-[10px] font-bold transition-all ${
+                        role === r.name ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200 hover:border-black'
                       }`}
                     >
-                      {r}
+                      {r.name}
                     </button>
                   ))}
                 </div>

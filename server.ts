@@ -59,9 +59,20 @@ async function startServer() {
   app.set('trust proxy', 1);
   const PORT = 3000;
 
-  // Auto-Seeder for SuperAdmin
-  const seedAdmin = async () => {
+  // Auto-Seeder for SuperAdmin and Roles
+  const seedDefaults = async () => {
     try {
+      // 1. Seed Roles
+      const roleCount = await prisma.systemRole.count();
+      if (roleCount === 0) {
+        const defaultRoles = ['USER', 'PURCHASE_HEAD', 'SUPERADMIN', 'SR. EXECUTIVE'];
+        await prisma.systemRole.createMany({
+          data: defaultRoles.map(name => ({ name }))
+        });
+        console.log("[Auth] Default roles seeded");
+      }
+
+      // 2. Seed SuperAdmin
       const userCount = await prisma.user.count();
       if (userCount === 0) {
         const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 10);
@@ -87,7 +98,7 @@ async function startServer() {
       console.error("[Auth] Seeder failed", e);
     }
   };
-  await seedAdmin();
+  await seedDefaults();
 
   app.use(express.json({ limit: "100mb" }));
   app.use(express.urlencoded({ limit: "100mb", extended: true }));
@@ -712,27 +723,63 @@ async function startServer() {
     }
   });
 
-  // Approval Workflow
-  app.put("/api/po/:id/status", authenticateToken, requirePermission("APPROVE_PO"), async (req, res) => {
+  // Approval Workflow (Sequential)
+  app.put("/api/po/:id/status", authenticateToken, async (req, res) => {
     try {
       const { status, remarks, pdf_base64 } = req.body;
       const user = (req as any).user;
+      const poId = Number(req.params.id);
       
+      // Fetch current PO to check state
+      const currentPo = await prisma.purchaseOrder.findUnique({ where: { id: poId } });
+      if (!currentPo) return res.status(404).json({ error: "PO not found" });
+
+      const permissions = user.permissions || [];
+      const isSuperAdmin = user.role === 'SUPERADMIN';
+
       const updateData: any = { status };
       if (pdf_base64) updateData.pdf_base64 = pdf_base64;
 
-      if (status === 'APPROVED') {
+      // --- LEVEL 1: SR. EXECUTIVE ---
+      if (status === 'L1_APPROVED') {
+        if (!isSuperAdmin && !permissions.includes("APPROVE_PO_L1")) {
+          return res.status(403).json({ error: "Permission denied: APPROVE_PO_L1 required for Level 1" });
+        }
+        updateData.l1_approved_by = user.username;
+        updateData.l1_approved_at = new Date();
+        updateData.rejection_remarks = null;
+      } 
+      
+      // --- LEVEL 2: PURCHASE HEAD (FINAL) ---
+      else if (status === 'APPROVED') {
+        if (!isSuperAdmin && !permissions.includes("APPROVE_PO_L2")) {
+          return res.status(403).json({ error: "Permission denied: APPROVE_PO_L2 required for Final Approval" });
+        }
+        
+        // Ensure L1 happened first (unless SuperAdmin)
+        if (!isSuperAdmin && currentPo.status !== 'L1_APPROVED') {
+          return res.status(400).json({ error: "Level 1 approval (Sr. Executive) is required before Final Approval." });
+        }
+
         updateData.approved_by = user.username;
         updateData.approved_at = new Date();
-        updateData.rejection_remarks = null; // Clear remarks if re-approved
-      } else if (status === 'REJECTED') {
+        updateData.rejection_remarks = null;
+      } 
+      
+      // --- REJECTION ---
+      else if (status === 'REJECTED') {
+        if (!isSuperAdmin && !permissions.includes("APPROVE_PO_L1") && !permissions.includes("APPROVE_PO_L2")) {
+          return res.status(403).json({ error: "Permission denied: Approval permissions required to reject." });
+        }
         updateData.rejection_remarks = remarks || 'No reason provided';
         updateData.approved_by = null;
         updateData.approved_at = null;
+        updateData.l1_approved_by = null;
+        updateData.l1_approved_at = null;
       }
       
       const po = await prisma.purchaseOrder.update({
-        where: { id: Number(req.params.id) },
+        where: { id: poId },
         data: updateData
       });
       res.json(po);
@@ -789,6 +836,54 @@ async function startServer() {
       res.json({ success: true });
     } catch (err) {
       res.status(500).json({ error: String(err) });
+    }
+  });
+
+  // --- System Roles API ---
+  app.get("/api/roles", authenticateToken, async (req, res) => {
+    try {
+      const roles = await prisma.systemRole.findMany({ orderBy: { name: 'asc' } });
+      res.json(roles);
+    } catch (e) {
+      res.status(500).json({ error: "Failed to fetch roles" });
+    }
+  });
+
+  app.post("/api/roles", authenticateToken, requirePermission("MANAGE_USERS"), async (req, res) => {
+    try {
+      const { name } = req.body;
+      const role = await prisma.systemRole.create({ data: { name: name.toUpperCase() } });
+      res.json(role);
+    } catch (e) {
+      res.status(500).json({ error: "Failed to create role. Name might be taken." });
+    }
+  });
+
+  app.put("/api/roles/:id", authenticateToken, requirePermission("MANAGE_USERS"), async (req, res) => {
+    try {
+      const { name } = req.body;
+      const role = await prisma.systemRole.update({
+        where: { id: parseInt(req.params.id) },
+        data: { name: name.toUpperCase() }
+      });
+      res.json(role);
+    } catch (e) {
+      res.status(500).json({ error: "Failed to update role" });
+    }
+  });
+
+  app.delete("/api/roles/:id", authenticateToken, requirePermission("MANAGE_USERS"), async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const role = await prisma.systemRole.findUnique({ where: { id } });
+      const protectedRoles = ['SUPERADMIN', 'PURCHASE_HEAD', 'USER'];
+      if (protectedRoles.includes(role?.name || '')) {
+        return res.status(403).json({ error: "Cannot delete core system roles" });
+      }
+      await prisma.systemRole.delete({ where: { id } });
+      res.json({ success: true });
+    } catch (e) {
+      res.status(500).json({ error: "Failed to delete role" });
     }
   });
 

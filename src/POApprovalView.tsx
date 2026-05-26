@@ -21,7 +21,8 @@ export default function POApprovalView() {
 
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
-  const canApprove = user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO');
+  const canApproveL1 = user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO_L1');
+  const canApproveL2 = user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO_L2');
 
   useEffect(() => {
     if (po?.pdf_base64) {
@@ -67,19 +68,20 @@ export default function POApprovalView() {
     fetchData();
   }, [id, token]);
 
-  const handleStatusUpdate = async (newStatus: 'APPROVED' | 'REJECTED') => {
-    if (!canApprove) return;
+  const handleStatusUpdate = async (newStatus: 'L1_APPROVED' | 'APPROVED' | 'REJECTED') => {
+    if (!user) return;
     
     let remarks = '';
     if (newStatus === 'REJECTED') {
       remarks = window.prompt("Please enter the reason for rejection:", "") || "";
-      if (remarks === null) return; // User cancelled
+      if (remarks === null) return;
       if (remarks.trim() === "") {
         alert("A reason is required for rejection.");
         return;
       }
     } else {
-      if (!window.confirm(`Are you sure you want to approve this Purchase Order?`)) return;
+      const levelText = newStatus === 'L1_APPROVED' ? 'Level 1 (Sr. Executive)' : 'Final (Purchase Head)';
+      if (!window.confirm(`Are you sure you want to give ${levelText} approval?`)) return;
     }
     
     try {
@@ -87,10 +89,14 @@ export default function POApprovalView() {
       
       let pdf_base64 = po?.pdf_base64;
       
-      // If approving, we need to generate a new SIGNED PDF snapshot
+      // If Final Approving, we need to generate the SIGNED PDF snapshot
       if (newStatus === 'APPROVED') {
-        // Temporarily set status to APPROVED in local state to render signatures for capture
-        const signedPo = { ...po!, status: 'APPROVED', approved_at: new Date().toISOString(), approved_by: user?.username || 'Admin' };
+        const signedPo = { 
+          ...po!, 
+          status: 'APPROVED', 
+          approved_at: new Date().toISOString(), 
+          approved_by: user?.username || 'Admin' 
+        };
         setPo(signedPo);
         
         // Wait for render cycle to apply signatures in the hidden POPreview
@@ -114,9 +120,10 @@ export default function POApprovalView() {
       if (res.ok) {
         const updatedPo = await res.json();
         setPo(updatedPo);
-        alert(`PO has been ${newStatus.toLowerCase()} successfully.`);
+        alert(`PO status updated to ${newStatus.replace('_', ' ')} successfully.`);
       } else {
-        alert("Failed to update status");
+        const err = await res.json();
+        alert(err.error || "Failed to update status");
       }
     } catch (e) {
       console.error(e);
@@ -137,7 +144,7 @@ export default function POApprovalView() {
       // Wait for React to render the paged view
       await new Promise(resolve => setTimeout(resolve, 800));
 
-      const pagedContainer = printRef.current.querySelector('.pdf-paged-view');
+      const pagedContainer = document.querySelector('.pdf-paged-view');
       if (!pagedContainer) {
         console.error("[generatePDFBase64] Paged container not found");
         setIsExporting(false);
@@ -172,7 +179,7 @@ export default function POApprovalView() {
       setIsExporting(false);
       return pdfOutput.split(',')[1];
     } catch (e) {
-      console.error("[generatePDFBase64] Multi-page generation error:", e);
+      console.error("[generatePDFBase64] Paged Error:", e);
       setIsExporting(false);
       return null;
     }
@@ -275,6 +282,7 @@ export default function POApprovalView() {
   const rawStatus = po.status || 'PENDING';
   const poStatus = rawStatus.toUpperCase();
   const isApproved = poStatus === 'APPROVED';
+  const isL1Approved = poStatus === 'L1_APPROVED';
   const isPending = poStatus === 'PENDING';
 
   // Header Actions to be passed to POPreview
@@ -343,25 +351,37 @@ export default function POApprovalView() {
         </button>
       )}
 
-      {isPending && canApprove && (
-        <>
-          <button 
-            onClick={() => handleStatusUpdate('REJECTED')}
-            disabled={submitting}
-            style={{ backgroundColor: '#fef2f2', color: '#dc2626', borderColor: '#fee2e2' }}
-            className="px-4 py-2 border rounded-lg font-bold text-sm flex items-center gap-2 ml-2"
-          >
-            <XCircle className="w-4 h-4" /> Reject
-          </button>
-          <button 
-            onClick={() => handleStatusUpdate('APPROVED')}
-            disabled={submitting}
-            style={{ backgroundColor: '#2563eb', color: '#ffffff' }}
-            className="px-6 py-2 rounded-lg font-bold shadow-md flex items-center gap-2"
-          >
-            <ShieldCheck className="w-4 h-4" /> Approve & Sign
-          </button>
-        </>
+      {isPending && canApproveL1 && (
+        <button 
+          onClick={() => handleStatusUpdate('L1_APPROVED')}
+          disabled={submitting}
+          style={{ backgroundColor: '#111827', color: '#ffffff' }}
+          className="px-6 py-2 rounded-lg font-bold shadow-md flex items-center gap-2"
+        >
+          <CheckCircle className="w-4 h-4" /> Level 1 Approve
+        </button>
+      )}
+
+      {isL1Approved && canApproveL2 && (
+        <button 
+          onClick={() => handleStatusUpdate('APPROVED')}
+          disabled={submitting}
+          style={{ backgroundColor: '#2563eb', color: '#ffffff' }}
+          className="px-6 py-2 rounded-lg font-bold shadow-md flex items-center gap-2"
+        >
+          <ShieldCheck className="w-4 h-4" /> Final Approve & Sign
+        </button>
+      )}
+
+      {(isPending || isL1Approved) && (canApproveL1 || canApproveL2) && (
+        <button 
+          onClick={() => handleStatusUpdate('REJECTED')}
+          disabled={submitting}
+          style={{ backgroundColor: '#fef2f2', color: '#dc2626', borderColor: '#fee2e2' }}
+          className="px-4 py-2 border rounded-lg font-bold text-sm flex items-center gap-2"
+        >
+          <XCircle className="w-4 h-4" /> Reject
+        </button>
       )}
     </>
   );
@@ -433,19 +453,19 @@ export default function POApprovalView() {
         {/* Large Action Card at the Bottom */}
         <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 print-hidden border-b-4 border-b-blue-600">
           <div className="flex-1">
-            {isPending ? (
+            {isPending || isL1Approved ? (
               <div className="flex items-start gap-3">
                 <div className="p-3 bg-blue-50 rounded-xl">
                   <Stamp className="w-6 h-6 text-blue-600" />
                 </div>
                 <div>
                   <h4 className="text-lg font-bold text-gray-900">
-                    {canApprove ? 'Finalize Approval' : 'Awaiting Review'}
+                    {isPending ? 'Level 1 Review Required' : 'Final Approval Required'}
                   </h4>
                   <p className="text-sm text-gray-500">
-                    {canApprove 
-                      ? 'Carefully review the document above. Approving will apply your signature and the company stamp.'
-                      : 'This document is currently pending approval by the Purchase Head.'}
+                    {isPending 
+                      ? 'Waiting for Sr. Executive to verify and approve (Level 1).'
+                      : `Verified by ${po.l1_approved_by} on ${new Date(po.l1_approved_at!).toLocaleDateString()}. Waiting for Purchase Head's final signature.`}
                   </p>
                 </div>
               </div>
@@ -473,48 +493,52 @@ export default function POApprovalView() {
           </div>
 
           <div className="flex items-center gap-4">
-            {isPending && canApprove ? (
+            {isPending && canApproveL1 ? (
               <>
                 <button 
                   onClick={() => handleStatusUpdate('REJECTED')}
                   disabled={submitting}
-                  style={{ backgroundColor: '#ffffff', color: '#dc2626', borderColor: '#fecaca' }}
-                  className="px-8 py-3.5 border rounded-xl font-bold flex items-center gap-2 transition-all shadow-sm"
+                  className="px-8 py-3.5 border border-red-200 bg-white text-red-600 rounded-xl font-bold flex items-center gap-2 transition-all shadow-sm"
+                >
+                  <XCircle className="w-5 h-5" /> Reject PO
+                </button>
+                <button 
+                  onClick={() => handleStatusUpdate('L1_APPROVED')}
+                  disabled={submitting}
+                  className="px-10 py-3.5 rounded-xl font-bold shadow-lg flex items-center gap-2 transition-all transform hover:-translate-y-0.5 bg-black text-white"
+                >
+                  <CheckCircle className="w-6 h-6" /> Level 1 Approve
+                </button>
+              </>
+            ) : isL1Approved && canApproveL2 ? (
+              <>
+                <button 
+                  onClick={() => handleStatusUpdate('REJECTED')}
+                  disabled={submitting}
+                  className="px-8 py-3.5 border border-red-200 bg-white text-red-600 rounded-xl font-bold flex items-center gap-2 transition-all shadow-sm"
                 >
                   <XCircle className="w-5 h-5" /> Reject PO
                 </button>
                 <button 
                   onClick={() => handleStatusUpdate('APPROVED')}
                   disabled={submitting}
-                  style={{ backgroundColor: '#2563eb', color: '#ffffff' }}
-                  className="px-10 py-3.5 rounded-xl font-bold shadow-lg flex items-center gap-2 transition-all transform hover:-translate-y-0.5"
+                  className="px-10 py-3.5 rounded-xl font-bold shadow-lg flex items-center gap-2 transition-all transform hover:-translate-y-0.5 bg-blue-600 text-white"
                 >
-                  <ShieldCheck className="w-6 h-6" /> Approve & Sign
+                  <ShieldCheck className="w-6 h-6" /> Final Approve & Sign
                 </button>
               </>
             ) : isApproved ? (
               <button 
                 onClick={handleSendToVendor}
                 disabled={sending}
-                style={{ backgroundColor: '#2563eb', color: '#ffffff' }}
-                className="px-10 py-3.5 rounded-xl font-bold shadow-lg flex items-center gap-3 transition-all transform hover:-translate-y-0.5"
+                className="px-10 py-3.5 rounded-xl font-bold shadow-lg flex items-center gap-3 transition-all transform hover:-translate-y-0.5 bg-blue-600 text-white"
               >
-                {sending ? (
-                  <>
-                    <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Sending...
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-5 h-5" /> Send to Vendor
-                  </>
-                )}
+                {sending ? <><div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div> Sending...</> : <><Send className="w-5 h-5" /> Send to Vendor</>}
               </button>
             ) : (
               <button 
                 onClick={() => navigate('/purchase-head')}
-                style={{ backgroundColor: '#111827', color: '#ffffff' }}
-                className="px-10 py-3.5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg"
+                className="px-10 py-3.5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg bg-gray-900 text-white"
               >
                 Return to Hub
               </button>
