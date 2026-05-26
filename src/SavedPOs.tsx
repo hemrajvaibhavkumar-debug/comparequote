@@ -204,13 +204,15 @@ const SavedPOs: React.FC = () => {
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex justify-end items-center gap-2">
-                          <button 
-                            onClick={() => navigate(`/po-maker?edit=${po.id}`)}
-                            className="p-2 text-gray-400 hover:text-black hover:bg-white border border-transparent hover:border-gray-200 rounded-xl transition-all shadow-none hover:shadow-sm"
-                            title="Edit Revision"
-                          >
-                            <Edit className="w-4.5 h-4.5" />
-                          </button>
+                          {po.status !== 'APPROVED' && (
+                            <button 
+                              onClick={() => navigate(`/po-maker?edit=${po.id}`)}
+                              className="p-2 text-gray-400 hover:text-black hover:bg-white border border-transparent hover:border-gray-200 rounded-xl transition-all shadow-none hover:shadow-sm"
+                              title="Edit Revision"
+                            >
+                              <Edit className="w-4.5 h-4.5" />
+                            </button>
+                          )}
                           <Link 
                             to={`/approve-po/${po.id}`}
                             className="p-2 text-gray-400 hover:text-blue-600 hover:bg-white border border-transparent hover:border-gray-200 rounded-xl transition-all shadow-none hover:shadow-sm"
@@ -218,13 +220,15 @@ const SavedPOs: React.FC = () => {
                           >
                             <Eye className="w-4.5 h-4.5" />
                           </Link>
-                          <button 
-                            onClick={() => handleDelete(po.id!)}
-                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-white border border-transparent hover:border-gray-200 rounded-xl transition-all shadow-none hover:shadow-sm"
-                            title="Delete PO"
-                          >
-                            <Trash2 className="w-4.5 h-4.5" />
-                          </button>
+                          {po.status !== 'APPROVED' && (
+                            <button 
+                              onClick={() => handleDelete(po.id!)}
+                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-white border border-transparent hover:border-gray-200 rounded-xl transition-all shadow-none hover:shadow-sm"
+                              title="Delete PO"
+                            >
+                              <Trash2 className="w-4.5 h-4.5" />
+                            </button>
+                          )}
                           <div className="w-6 flex justify-center text-gray-300 ml-2">
                             <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform group-hover:text-black" />
                           </div>

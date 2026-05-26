@@ -56,6 +56,7 @@ async function startServer() {
     baseURL: "https://api.groq.com/openai/v1"
   });
   const app = express();
+  app.set('trust proxy', 1);
   const PORT = 3000;
 
   // Auto-Seeder for SuperAdmin
@@ -645,7 +646,7 @@ async function startServer() {
 
   app.post("/api/po", authenticateToken, async (req, res) => {
     try {
-      const data = { ...req.body };
+      const { id, created_at, ...data } = req.body;
       if (data.date) data.date = new Date(data.date);
       const po = await prisma.purchaseOrder.create({ data });
       res.json(po);
@@ -697,7 +698,14 @@ async function startServer() {
 
   app.delete("/api/po/:id", authenticateToken, async (req, res) => {
     try {
-      await prisma.purchaseOrder.delete({ where: { id: Number(req.params.id) } });
+      const id = Number(req.params.id);
+      const po = await prisma.purchaseOrder.findUnique({ where: { id } });
+      
+      if (po?.status === 'APPROVED') {
+        return res.status(403).json({ error: "Cannot delete an approved Purchase Order." });
+      }
+
+      await prisma.purchaseOrder.delete({ where: { id } });
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to delete PO" });
@@ -707,13 +715,20 @@ async function startServer() {
   // Approval Workflow
   app.put("/api/po/:id/status", authenticateToken, requirePermission("APPROVE_PO"), async (req, res) => {
     try {
-      const { status } = req.body;
+      const { status, remarks, pdf_base64 } = req.body;
       const user = (req as any).user;
       
       const updateData: any = { status };
+      if (pdf_base64) updateData.pdf_base64 = pdf_base64;
+
       if (status === 'APPROVED') {
         updateData.approved_by = user.username;
         updateData.approved_at = new Date();
+        updateData.rejection_remarks = null; // Clear remarks if re-approved
+      } else if (status === 'REJECTED') {
+        updateData.rejection_remarks = remarks || 'No reason provided';
+        updateData.approved_by = null;
+        updateData.approved_at = null;
       }
       
       const po = await prisma.purchaseOrder.update({
@@ -724,6 +739,47 @@ async function startServer() {
     } catch (error) {
       console.error("[Backend] PO Status Update Error:", error);
       res.status(500).json({ error: "Failed to update PO status" });
+    }
+  });
+
+  app.post("/api/po/:id/send", authenticateToken, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { pdfBase64, poNo, vendorEmail, vendorName, companyName } = req.body;
+      const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
+
+      if (!n8nWebhookUrl) {
+        return res.status(500).json({ error: "n8n Webhook URL not configured" });
+      }
+
+      if (!pdfBase64 || !vendorEmail) {
+        return res.status(400).json({ error: "Missing required data (PDF or Vendor Email)" });
+      }
+
+      console.log(`[n8n] Sending PO ${poNo} from ${companyName || 'Hemraj'} to vendor ${vendorEmail}...`);
+
+      const response = await fetch(n8nWebhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          poNo,
+          vendorEmail,
+          vendorName,
+          companyName: companyName || "Hemraj Industries",
+          pdfBase64
+        })
+      });
+
+      if (response.ok) {
+        res.json({ success: true });
+      } else {
+        const errText = await response.text();
+        console.error("[n8n] Error response:", errText);
+        res.status(502).json({ error: "Failed to trigger n8n workflow", details: errText });
+      }
+    } catch (error) {
+      console.error("[Backend] PO Send Error:", error);
+      res.status(500).json({ error: "Internal server error while sending PO" });
     }
   });
 
@@ -840,8 +896,7 @@ async function startServer() {
           doc_no,
           data: data as any,
           executive_id: executive_id ? parseInt(executive_id) : null,
-          plant_id: plant_id ? parseInt(plant_id) : null,
-          created_at: new Date()
+          plant_id: plant_id ? parseInt(plant_id) : null
         },
       });
       return res.status(200).json({ success: true, comparison });
@@ -876,6 +931,15 @@ async function startServer() {
       res.sendFile(path.join(distPath, "index.html"));
     });
   }
+
+  // Global Error Handler
+  app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+    console.error("[Server Error]", err);
+    res.status(err.status || 500).json({ 
+      error: err.message || "Internal server error",
+      details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
+  });
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);

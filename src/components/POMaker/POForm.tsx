@@ -21,11 +21,12 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
       ...options,
       headers: {
         ...options.headers,
-        'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
     });
     if (res.status === 401 || res.status === 403) {
-      localStorage.removeItem('admin_token');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       window.location.href = '/login';
       throw new Error("Session expired");
     }

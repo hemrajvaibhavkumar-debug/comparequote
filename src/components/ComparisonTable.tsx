@@ -55,6 +55,9 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
   const vendorCols = 5; // MAKE, MRP, DIS, NET RATE, TOTAL AMOUNT
   const hasWeight = items.some(item => item.weight !== undefined && item.weight !== null && item.weight !== '');
 
+  const activeMouseMove = useRef<((e: MouseEvent) => void) | null>(null);
+  const activeMouseUp = useRef<(() => void) | null>(null);
+
   const startResizing = (e: React.MouseEvent) => {
     e.preventDefault();
     const th = (e.target as HTMLElement).parentElement as HTMLTableHeaderCellElement;
@@ -72,8 +75,12 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
     const onMouseUp = () => {
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
+      activeMouseMove.current = null;
+      activeMouseUp.current = null;
     };
 
+    activeMouseMove.current = onMouseMove;
+    activeMouseUp.current = onMouseUp;
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
   };
@@ -96,11 +103,27 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
     const onMouseUp = () => {
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
+      activeMouseMove.current = null;
+      activeMouseUp.current = null;
     };
 
+    activeMouseMove.current = onMouseMove;
+    activeMouseUp.current = onMouseUp;
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
   };
+
+  // Cleanup on unmount to prevent ghost listeners
+  useEffect(() => {
+    return () => {
+      if (activeMouseMove.current) {
+        document.removeEventListener('mousemove', activeMouseMove.current);
+      }
+      if (activeMouseUp.current) {
+        document.removeEventListener('mouseup', activeMouseUp.current);
+      }
+    };
+  }, []);
 
   const calculateVendorTotal = (vendorName: string) => {
     return items.reduce((sum, item) => {
@@ -168,9 +191,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
       if (field === 'qty' || field === 'weight') {
         const newQty = parseFloat(item.qty) || 0;
         const newWeight = parseFloat(item.weight) || 0;
-        // Logic fix: only fallback to qty if weight is explicitly 0 and we are NOT editing weight, 
-        // or if weight was never intended to be used.
-        const multiplier = newWeight > 0 ? newWeight : newQty;
+        const multiplier = (prev.multiplyByWeight && newWeight > 0) ? newWeight : newQty;
 
         if (item.vendorQuotes) {
           item.vendorQuotes = item.vendorQuotes.map((q: any) => ({
@@ -243,7 +264,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
       }
 
       const weightVal = parseFloat(item.weight) || 0;
-      const multiplier = weightVal > 0 ? weightVal : qty;
+      const multiplier = (prev.multiplyByWeight && weightVal > 0) ? weightVal : qty;
       currentQuote.totalAmount = ((parseFloat(currentQuote.netRate) || 0) * multiplier).toFixed(2);
 
       if (qIndex >= 0) {
@@ -256,6 +277,26 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
       return { ...prev, items: newItems };
     });
   };
+
+  // Effect to recalculate all totals when multiplyByWeight changes
+  useEffect(() => {
+    setData((prev: any) => {
+      const newItems = prev.items.map((item: any) => {
+        const qty = parseFloat(item.qty) || 0;
+        const weight = parseFloat(item.weight) || 0;
+        const multiplier = (prev.multiplyByWeight && weight > 0) ? weight : qty;
+        
+        return {
+          ...item,
+          vendorQuotes: (item.vendorQuotes || []).map((q: any) => ({
+            ...q,
+            totalAmount: ((parseFloat(q.netRate) || 0) * multiplier).toFixed(2)
+          }))
+        };
+      });
+      return { ...prev, items: newItems };
+    });
+  }, [data.multiplyByWeight]);
 
   const removeItem = (itemIndex: number) => {
     if (readOnly) return;

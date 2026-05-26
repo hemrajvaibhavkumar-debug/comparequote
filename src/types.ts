@@ -40,6 +40,7 @@ export interface Item {
 export interface ComparisonData {
   items: Item[];
   vendors: string[];
+  multiplyByWeight?: boolean;
 }
 
 export interface CompanySettings {
@@ -123,6 +124,8 @@ export interface PurchaseOrder {
   };
   total_amount: number;
   status?: 'PENDING' | 'APPROVED' | 'REJECTED' | string;
+  rejection_remarks?: string;
   approved_by?: string;
   approved_at?: string;
+  pdf_base64?: string;
 }

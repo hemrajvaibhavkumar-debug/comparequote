@@ -6,7 +6,7 @@ import { ComparisonData, HeaderInfo } from './types';
 import { ComparisonTable } from './components/ComparisonTable';
 import * as Papa from 'papaparse';
 import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
+import * as htmlToImage from 'html-to-image';
 import { useAuth } from './context/AuthContext';
 
 declare const google: any;
@@ -44,7 +44,7 @@ const Builder: React.FC = () => {
 
   const [data, setData] = useState<ComparisonData>(() => {
     const saved = localStorage.getItem('quote_draft_data');
-    return saved ? JSON.parse(saved) : { items: [], vendors: [] };
+    return saved ? JSON.parse(saved) : { items: [], vendors: [], multiplyByWeight: false };
   });
 
   const [inputText, setInputText] = useState('');
@@ -312,6 +312,8 @@ const Builder: React.FC = () => {
             let mrp = parseFloat(q.mrp) || 0;
             const disc = parseFloat(q.discount) || 0;
             const qty = Number(item.qty) || 0;
+            const weight = Number(item.weight) || 0;
+            const multiplier = (data.multiplyByWeight && weight > 0) ? weight : qty;
 
             // Enforce Discount as Percentage
             if (disc > 0 && mrp > 0) {
@@ -330,7 +332,7 @@ const Builder: React.FC = () => {
               mrp: Number(mrp.toFixed(2)),
               discount: disc, // Keep the numeric percentage
               netRate: Number(nr.toFixed(2)),
-              totalAmount: Number((nr * qty).toFixed(2))
+              totalAmount: Number((nr * multiplier).toFixed(2))
             };
           });
 
@@ -631,6 +633,16 @@ const Builder: React.FC = () => {
           <div className="p-5 border-b border-black flex justify-between items-center print-hidden">
             <h2 className="text-sm font-bold text-black uppercase tracking-wider">Comparison Table</h2>
             <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 pr-4 border-r border-black/10">
+                <label className="text-[10px] font-bold uppercase text-black cursor-pointer select-none" htmlFor="multiplyByWeight">Multiply by Weight (WT)</label>
+                <input 
+                  id="multiplyByWeight"
+                  type="checkbox" 
+                  checked={data.multiplyByWeight || false} 
+                  onChange={e => setData(prev => ({ ...prev, multiplyByWeight: e.target.checked }))} 
+                  className="w-4 h-4 accent-black cursor-pointer"
+                />
+              </div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold uppercase text-black">Font Size: {fontSize}px</span>
                 <input 

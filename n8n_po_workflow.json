@@ -1,0 +1,90 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "send-po-email",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "18432b7a-8f5c-4e8a-a43c-3837b7891234",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Extract variables from the webhook body\nconst body = $input.item.json.body;\nconst base64Data = body.pdfBase64;\nconst poNo = body.poNo || 'PO';\n\n// Create a binary item for the PDF\n// n8n expects binary data in a specific structure\nreturn {\n  json: body,\n  binary: {\n    data: {\n      data: base64Data,\n      mimeType: 'application/pdf',\n      fileName: `Purchase_Order_${poNo}.pdf` \n    }\n  }\n};"
+      },
+      "id": "2c543d8b-9e6d-4f9a-b54d-4948c8905678",
+      "name": "Base64 to PDF",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        620,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "emailType": "text",
+        "toList": "={{ $json.vendorEmail }}",
+        "subject": "=New Purchase Order ({{ $json.poNo }}) - Hemraj Industries",
+        "body": "=Dear {{ $json.vendorName }},\n\nPlease find attached the approved Purchase Order ({{ $json.poNo }}) for your reference.\n\nIf you have any questions regarding this order, please reply to this email.\n\nBest regards,\nProcurement Team\nHemraj Industries",
+        "appendAttachements": true,
+        "attachmentsUi": {
+          "attachmentsValues": [
+            {
+              "binaryPropertyName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3d654e9c-0f7a-4b0b-c65e-5059d9016789",
+      "name": "Gmail Send",
+      "type": "n8n-nodes-base.googleGmail",
+      "typeVersion": 2,
+      "position": [
+        840,
+        300
+      ],
+      "credentials": {
+        "googleGmailOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Google Gmail account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Base64 to PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Base64 to PDF": {
+      "main": [
+        [
+          {
+            "node": "Gmail Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

@@ -1,16 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import POForm from './POForm';
 import POPreview from './POPreview';
 import { PurchaseOrder, CompanySettings, TermsTemplate, VendorMaster } from '../../types';
-import { Save, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Save, ArrowLeft, ShieldCheck, Loader2 } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import * as htmlToImage from 'html-to-image';
+import jsPDF from 'jspdf';
 
 const POMaker: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const editId = queryParams.get('edit');
+  const previewRef = useRef<HTMLDivElement>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   
   const { token, user, logout } = useAuth();
   const canAccess = user?.role === 'SUPERADMIN' || user?.permissions.includes('ACCESS_PO_MAKER');
@@ -113,7 +118,7 @@ const POMaker: React.FC = () => {
         generatePONo(po.version || 'hemraj_rice');
       }
     }
-  }, [po.version, canAccess]);
+  }, [po.version, po.po_no, canAccess, editId]);
 
   const fetchPO = async (id: string) => {
     try {
@@ -193,35 +198,98 @@ const POMaker: React.FC = () => {
     }
   };
 
+  const generatePDFBase64 = async (): Promise<string | null> => {
+    if (!previewRef.current || !po) {
+      console.error("[generatePDFBase64] Missing ref or PO data");
+      return null;
+    }
+    try {
+      // 1. Switch to Paged Mode for capture
+      setIsExporting(true);
+      // Wait for React to render the paged view
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      const pagedContainer = previewRef.current.querySelector('.pdf-paged-view');
+      if (!pagedContainer) {
+        console.error("[generatePDFBase64] Paged container not found");
+        setIsExporting(false);
+        return null;
+      }
+
+      const pages = pagedContainer.querySelectorAll('.pdf-page');
+      if (pages.length === 0) {
+        console.error("[generatePDFBase64] No pages found to capture");
+        setIsExporting(false);
+        return null;
+      }
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = 210;
+      const pageHeight = 297;
+
+      for (let i = 0; i < pages.length; i++) {
+        if (i > 0) pdf.addPage();
+        
+        const pageEl = pages[i] as HTMLElement;
+        const canvas = await htmlToImage.toPng(pageEl, { 
+          pixelRatio: 2, 
+          backgroundColor: '#ffffff',
+          style: { margin: '0', padding: '0' }
+        });
+
+        pdf.addImage(canvas, 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
+      }
+
+      const pdfOutput = pdf.output('datauristring');
+      setIsExporting(false);
+      return pdfOutput.split(',')[1];
+    } catch (e) {
+      console.error("[generatePDFBase64] Paged Error:", e);
+      setIsExporting(false);
+      return null;
+    }
+  };
+
   const handleSave = async () => {
     if (!po.po_no || !po.vendor_name) {
       alert('Please enter PO No and Vendor Name');
       return;
     }
-    const method = editId ? 'PUT' : 'POST';
-    const url = editId ? `/api/po/${editId}` : '/api/po';
 
-    const res = await fetch(url, {
-      method,
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(po)
-    });
-    
-    if (res.status === 401 || res.status === 403) {
-      logout();
-      return;
-    }
+    try {
+      setIsGenerating(true);
+      const pdf_base64 = await generatePDFBase64();
+      
+      const method = editId ? 'PUT' : 'POST';
+      const url = editId ? `/api/po/${editId}` : '/api/po';
 
-    if (res.ok) {
-      alert(`PO ${editId ? 'updated' : 'saved'} successfully!`);
-      if (!editId) {
-        localStorage.removeItem('po_maker_draft');
+      const res = await fetch(url, {
+        method,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ ...po, pdf_base64 })
+      });
+      
+      if (res.status === 401 || res.status === 403) {
+        logout();
+        return;
       }
+
+      if (res.ok) {
+        alert(`PO ${editId ? 'updated' : 'saved'} successfully with generated PDF snapshot!`);
+        if (!editId) {
+          localStorage.removeItem('po_maker_draft');
+        }
+      }
+      else alert(`Failed to ${editId ? 'update' : 'save'} PO`);
+    } catch (err) {
+      console.error("Save error", err);
+      alert("Error generating PDF or saving PO");
+    } finally {
+      setIsGenerating(false);
     }
-    else alert(`Failed to ${editId ? 'update' : 'save'} PO`);
   };
 
   const handleClearDraft = () => {
@@ -262,17 +330,27 @@ const POMaker: React.FC = () => {
             className="bg-white border border-black rounded-lg px-3 py-2 text-sm font-bold"
             value={po.version}
             onChange={e => setPo({...po, version: e.target.value as any})}
+            disabled={po.status === 'APPROVED'}
           >
             <option value="hemraj_rice">Hemraj Rice Mill</option>
             <option value="hemraj_ind">Hemraj Industries</option>
             <option value="radhashyam">Radhashyam Industries</option>
           </select>
-          <button 
-            onClick={handleSave}
-            className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-black/90 transition font-medium"
-          >
-            <Save className="w-4 h-4" /> Save to Database
-          </button>
+
+          {po.status !== 'APPROVED' ? (
+            <button 
+              onClick={handleSave}
+              disabled={isGenerating}
+              className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-black/90 transition font-medium disabled:opacity-50"
+            >
+              {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              {isGenerating ? 'Generating PDF & Saving...' : 'Save to Database'}
+            </button>
+          ) : (
+            <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg border border-emerald-200 font-bold text-xs uppercase tracking-widest">
+              <ShieldCheck className="w-4 h-4" /> Locked (Approved)
+            </div>
+          )}
         </div>
       </div>
 
@@ -290,8 +368,8 @@ const POMaker: React.FC = () => {
         </div>
 
         {/* Right Pane - Preview */}
-        <div className="w-1/2 overflow-y-auto p-8 bg-white border-black flex justify-center">
-          <POPreview po={po} setPo={setPo} settings={settings} />
+        <div className="w-1/2 overflow-y-auto p-8 bg-white border-black flex justify-center" ref={previewRef}>
+          <POPreview po={po} setPo={setPo} settings={settings} isPDF={isExporting} />
         </div>
       </div>
     </div>

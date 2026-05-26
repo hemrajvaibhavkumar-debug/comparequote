@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ComparisonTable } from './components/ComparisonTable';
 import { Download, Eye } from 'lucide-react';
 import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
+import * as htmlToImage from 'html-to-image';
 import { useAuth } from './context/AuthContext';
 
 export default function ViewTable() {

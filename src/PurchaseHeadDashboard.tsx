@@ -100,27 +100,38 @@ export default function PurchaseHeadDashboard() {
             <p className="text-gray-500 font-medium">Welcome back, <span className="text-blue-600">@{user?.username}</span>. Review and sign pending POs.</p>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <div className="flex flex-col sm:flex-row gap-4 items-center">
+            <div className="relative group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
               <input 
                 type="text" 
                 placeholder="Search POs..." 
-                className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full sm:w-64"
+                className="pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none w-full sm:w-64 transition-all text-sm font-medium"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
             </div>
-            <select 
-              className="px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-bold text-xs uppercase tracking-widest"
-              value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value)}
-            >
-              <option value="PENDING">Pending Approval</option>
-              <option value="APPROVED">Approved</option>
-              <option value="REJECTED">Rejected</option>
-              <option value="ALL">All POs</option>
-            </select>
+
+            <div className="flex items-center bg-gray-100 border border-gray-200 rounded-xl p-1 shrink-0">
+              {[
+                { id: 'PENDING', label: 'Pending' },
+                { id: 'APPROVED', label: 'Approved' },
+                { id: 'REJECTED', label: 'Rejected' },
+                { id: 'ALL', label: 'All POs' }
+              ].map(f => (
+                <button
+                  key={f.id}
+                  onClick={() => setStatusFilter(f.id)}
+                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                    statusFilter === f.id 
+                      ? 'bg-white text-blue-600 shadow-sm border border-gray-100' 
+                      : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
