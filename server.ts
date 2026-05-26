@@ -707,7 +707,8 @@ async function startServer() {
           ...data,
           status: 'PENDING',
           approved_by: null,
-          approved_at: null
+          approved_at: null,
+          rejection_remarks: null
         }
       });
       res.json(po);

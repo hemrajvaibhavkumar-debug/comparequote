@@ -97,8 +97,8 @@ export default function PurchaseHeadDashboard() {
   return (
     <div className="min-h-screen bg-slate-50/50 p-4 sm:p-8 relative">
       {/* Background ambient glows */}
-      <div className="ambient-glow ambient-indigo -top-20 -left-20 animate-pulse-slow" style={{ width: '400px', height: '400px' }}></div>
-      <div className="ambient-glow ambient-blue bottom-10 right-10 animate-pulse-slow" style={{ animationDelay: '3s', width: '400px', height: '400px' }}></div>
+      <div className="ambient-glow ambient-indigo -top-20 -left-20" style={{ width: '400px', height: '400px' }}></div>
+      <div className="ambient-glow ambient-blue bottom-10 right-10" style={{ width: '400px', height: '400px' }}></div>
 
       <div className="max-w-7xl mx-auto space-y-8 relative z-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-xs border border-slate-100">
@@ -229,6 +229,14 @@ export default function PurchaseHeadDashboard() {
                         <span className="text-slate-400 font-semibold text-xs uppercase tracking-wider">Amount:</span>
                         ₹{po.total_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </div>
+                      {poStatus === 'REJECTED' && po.rejection_remarks && (
+                        <div className="mt-2 p-2 bg-rose-50 border border-rose-100 rounded-lg">
+                          <p className="text-[9px] font-bold text-rose-500 uppercase tracking-tighter mb-0.5">Rejection Reason:</p>
+                          <p className="text-[10px] text-slate-600 font-medium leading-tight italic line-clamp-2">
+                            "{po.rejection_remarks}"
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </Link>
                   

@@ -105,7 +105,7 @@ const SavedPOs: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50/50 relative pb-24">
       {/* Background ambient blobs */}
-      <div className="ambient-glow ambient-indigo -top-20 -left-20 animate-pulse-slow"></div>
+      <div className="ambient-glow ambient-indigo -top-20 -left-20"></div>
 
       {/* Dynamic Full-Width Header */}
       <div className="bg-white/90 backdrop-blur-md border-b border-slate-150/80 sticky top-16 z-10">
@@ -201,8 +201,16 @@ const SavedPOs: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-5">
-                        <div className="flex justify-center">
+                        <div className="flex flex-col items-center gap-2">
                           {getStatusBadge(po.status || 'PENDING')}
+                          {po.status === 'REJECTED' && po.rejection_remarks && (
+                            <div className="max-w-[150px] text-center">
+                              <p className="text-[9px] font-bold text-rose-500 uppercase tracking-tighter mb-0.5">Reason:</p>
+                              <p className="text-[10px] text-slate-500 font-medium leading-tight italic line-clamp-2" title={po.rejection_remarks}>
+                                "{po.rejection_remarks}"
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-5">

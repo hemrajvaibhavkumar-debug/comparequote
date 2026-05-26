@@ -20,6 +20,8 @@ export default function POApprovalView() {
   const printRef = useRef<HTMLDivElement>(null);
 
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectRemarks, setRejectRemarks] = useState('');
 
   const canApprove = user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO');
 
@@ -70,18 +72,17 @@ export default function POApprovalView() {
   const handleStatusUpdate = async (newStatus: 'APPROVED' | 'REJECTED') => {
     if (!canApprove) return;
     
-    let remarks = '';
     if (newStatus === 'REJECTED') {
-      remarks = window.prompt("Please enter the reason for rejection:", "") || "";
-      if (remarks === null) return; // User cancelled
-      if (remarks.trim() === "") {
-        alert("A reason is required for rejection.");
-        return;
-      }
+      setShowRejectModal(true);
+      return;
     } else {
       if (!window.confirm(`Are you sure you want to approve this Purchase Order?`)) return;
     }
     
+    await executeStatusUpdate(newStatus, '');
+  };
+
+  const executeStatusUpdate = async (newStatus: 'APPROVED' | 'REJECTED', remarks: string) => {
     try {
       setSubmitting(true);
       
@@ -114,6 +115,8 @@ export default function POApprovalView() {
       if (res.ok) {
         const updatedPo = await res.json();
         setPo(updatedPo);
+        setShowRejectModal(false);
+        setRejectRemarks('');
         alert(`PO has been ${newStatus.toLowerCase()} successfully.`);
       } else {
         alert("Failed to update status");
@@ -268,6 +271,63 @@ export default function POApprovalView() {
   const handlePrint = () => {
     window.print();
   };
+
+  const RejectModal = () => (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-rose-100 text-rose-600 rounded-lg">
+              <XCircle className="w-5 h-5" />
+            </div>
+            <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">Reject Purchase Order</h3>
+          </div>
+          <button onClick={() => setShowRejectModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+            <XCircle className="w-6 h-6" />
+          </button>
+        </div>
+        
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Reason for Rejection</label>
+            <textarea 
+              autoFocus
+              className="w-full h-32 p-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-slate-800 text-sm font-medium transition-all resize-none"
+              placeholder="Please provide a clear reason for rejecting this PO..."
+              value={rejectRemarks}
+              onChange={(e) => setRejectRemarks(e.target.value)}
+            />
+          </div>
+          <p className="text-[10px] text-slate-400 font-semibold italic">
+            Note: This comment will be visible to the procurement team in the PO database.
+          </p>
+        </div>
+
+        <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-3">
+          <button 
+            onClick={() => setShowRejectModal(false)}
+            className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-100 transition-all active:scale-95"
+          >
+            Cancel
+          </button>
+          <button 
+            onClick={() => {
+              if (!rejectRemarks.trim()) {
+                alert("Please enter a reason for rejection.");
+                return;
+              }
+              executeStatusUpdate('REJECTED', rejectRemarks);
+            }}
+            disabled={submitting}
+            className="flex-1 px-4 py-2.5 bg-rose-600 text-white rounded-xl text-xs font-bold hover:bg-rose-700 shadow-md shadow-rose-200 disabled:opacity-50 transition-all active:scale-95 flex items-center justify-center gap-2"
+          >
+            {submitting ? <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <XCircle className="w-3.5 h-3.5" />}
+            Confirm Rejection
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   if (loading) return <div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderBottomColor: '#2563eb' }}></div></div>;
   if (!po) return <div className="p-8 text-center text-black">PO not found</div>;
@@ -529,6 +589,7 @@ export default function POApprovalView() {
           </div>
         </div>
       </div>
+      {showRejectModal && <RejectModal />}
     </div>
   );
 }
