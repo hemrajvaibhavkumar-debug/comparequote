@@ -11,9 +11,9 @@ interface POPreviewProps {
 
 const TermsAndNotes = ({ po }: { po: PurchaseOrder }) => (
   <div className="mt-4 no-break">
-    <div className="text-[10px] space-y-1 mb-6 text-black border border-black p-4 rounded font-bold text-left bg-[#fdfdfe]">
-      <p className="font-black text-[11px] underline mb-2 uppercase tracking-wide">Commercial Terms::</p>
-      <div className="grid grid-cols-[140px_1fr] gap-y-1.5">
+    <div className="text-[10px] space-y-1 mb-2 text-black border border-black p-2 rounded font-bold text-left bg-[#fdfdfe]">
+      <p className="font-black text-[11px] underline mb-1 uppercase tracking-wide">Commercial Terms::</p>
+      <div className="grid grid-cols-[140px_1fr] gap-y-1">
         <span className="uppercase text-[9px]">Tax ::</span> <span className="uppercase">{po.terms.tax}</span>
         <span className="uppercase text-[9px]">Packing ::</span> <span className="uppercase">{po.terms.packing}</span>
         <span className="uppercase text-[9px]">Forwarding ::</span> <span className="uppercase">{po.terms.notes}</span>
@@ -33,7 +33,7 @@ const TermsAndNotes = ({ po }: { po: PurchaseOrder }) => (
       </div>
     </div>
 
-    <div className="text-[10px] space-y-2 mb-8 uppercase italic font-black text-black border-l-4 border-black pl-4 py-2 text-left">
+    <div className="text-[10px] space-y-1 mb-2 uppercase italic font-black text-black border-l-4 border-black pl-4 py-1 text-left">
        <p>NOTE 1 :: <span className="underline">E-Way bill is mandatory for Rs 50,000 and above Purchase Value.</span></p>
        <p>NOTE 2 :: If we have any type of dispute from specification then we will reject material.</p>
        {(po.terms.manual_notes || []).map((note, idx) => (
@@ -150,16 +150,21 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions, isP
   );
 
   // --- MULTI-PAGE PAGING LOGIC ---
-  const ITEMS_PER_PAGE_FIRST = 10;
   const ITEMS_PER_PAGE_SUBSEQUENT = 18; 
 
   const splitItemsIntoPages = () => {
     const pages: POItem[][] = [];
     let currentItems = [...po.items];
     
+    // Determine Page 1 capacity
+    // If we have 8 or fewer items, we want to keep them on Page 1 with the terms.
+    // If we have more than 8 items, the terms will be pushed to Page 2, 
+    // allowing us to fill Page 1 with up to 15 items.
+    const itemsOnFirstPage = po.items.length <= 8 ? 8 : 15;
+    
     // Page 1
-    pages.push(currentItems.slice(0, ITEMS_PER_PAGE_FIRST));
-    currentItems = currentItems.slice(ITEMS_PER_PAGE_FIRST);
+    pages.push(currentItems.slice(0, itemsOnFirstPage));
+    currentItems = currentItems.slice(itemsOnFirstPage);
     
     // Subsequent Pages
     while (currentItems.length > 0) {
@@ -174,16 +179,15 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions, isP
       
       if (lastPageIdx === 0) {
         // First page is also the last page
-        // Page 1 has a large PO header, vendor box, and intro text (~77mm).
-        // It can only fit up to 2 items along with the totals and terms.
-        if (lastPageItems.length > 2) {
-          pages.push([]); // Push totals and terms to a fresh new page
+        // If there are more than 8 items, we MUST push terms and notes to a new page
+        // because we filled the first page with items (up to 15).
+        if (lastPageItems.length > 8) {
+          pages.push([]); 
         }
       } else {
-        // Subsequent pages do not have PO headers, but still need to fit table headers + totals + terms.
-        // They can fit up to 8 items comfortably without overflowing.
+        // Subsequent pages fit up to 8 items comfortably with terms.
         if (lastPageItems.length > 8) {
-          pages.push([]); // Push totals and terms to a fresh new page
+          pages.push([]); 
         }
       }
     }
@@ -192,6 +196,10 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions, isP
   };
 
   const itemPages = splitItemsIntoPages();
+
+  const lastItemsPageIdx = itemPages.length > 1 && itemPages[itemPages.length - 1].length === 0 
+    ? itemPages.length - 2 
+    : itemPages.length - 1;
 
   const HeaderContent = () => (
     <div className="w-full h-full flex flex-col justify-center bg-white">
@@ -476,9 +484,9 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions, isP
           transition: all 0.25s ease;
         }
 
-        .pdf-header { height: 50mm; border-bottom: 2px solid black; flex-shrink: 0; }
-        .pdf-footer { height: 70mm; border-top: 2px solid black; flex-shrink: 0; position: absolute; bottom: 0; left: 0; width: 100%; }
-        .pdf-body { flex: 1; padding: 5mm 15mm 75mm 15mm; overflow: hidden; position: relative; }
+        .pdf-header { height: 42mm; border-bottom: 2px solid black; flex-shrink: 0; }
+        .pdf-footer { height: 60mm; border-top: 2px solid black; flex-shrink: 0; position: absolute; bottom: 0; left: 0; width: 100%; }
+        .pdf-body { flex: 1; padding: 5mm 15mm 65mm 15mm; overflow: hidden; position: relative; }
 
         @media print {
           .pdf-paged-view { padding: 0 !important; gap: 0 !important; background: white !important; }
@@ -520,12 +528,12 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions, isP
               <div className="pdf-body">
                 {pageIdx === 0 && (
                   <>
-                    <div className="text-center mb-6">
+                    <div className="text-center mb-2">
                       <h2 className="inline-block border-b-2 border-black text-sm font-bold uppercase tracking-[0.2em] text-black pb-0.5">
                         Purchase Order
                       </h2>
                     </div>
-                    <div className="flex justify-between items-start mb-6 text-xs text-black">
+                    <div className="flex justify-between items-start mb-2 text-xs text-black">
                       <div className="border border-black p-2 rounded shadow-[1px_1px_0px_black]">
                         <p className="font-bold text-black uppercase">PO NO :: <span className="font-black text-sm">{po.po_no || 'HI /2026-27/00'}</span></p>
                       </div>
@@ -533,12 +541,12 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions, isP
                         <p className="font-bold text-black uppercase">Date : <span className="font-black text-sm">{formatDate(po.date)}</span></p>
                       </div>
                     </div>
-                    <div className="mb-6 text-[11px] text-black flex gap-4">
+                    <div className="mb-2 text-[11px] text-black flex gap-4">
                       <div className="font-bold pt-1 uppercase shrink-0">To,</div>
                       <div className="flex-1">
                         <p className="font-black text-sm text-black uppercase mb-1">{po.vendor_name || 'VENDOR NAME'}</p>
                         <p className="whitespace-pre-wrap max-w-[450px] text-black italic font-medium">{po.vendor_details.address}</p>
-                        <div className="mt-2 space-y-0.5 text-black grid grid-cols-2 gap-x-8 border-t border-black/10 pt-2 font-bold text-left text-[10px]">
+                        <div className="mt-1 space-y-0.5 text-black grid grid-cols-2 gap-x-8 border-t border-black/10 pt-1 font-bold text-left text-[10px]">
                           <p><span className="uppercase text-[8px] mr-1">STATE :</span> {po.vendor_details.state}</p>
                           <p><span className="uppercase text-[8px] mr-1">GSTIN :</span> {po.vendor_details.gstin}</p>
                           <p><span className="uppercase text-[8px] mr-1">Mail ID :</span> {po.vendor_details.mail}</p>
@@ -546,7 +554,7 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions, isP
                         </div>
                       </div>
                     </div>
-                    <p className="text-[10px] mb-4 italic text-black leading-relaxed font-bold text-left">
+                    <p className="text-[10px] mb-2 italic text-black leading-relaxed font-bold text-left">
                       Dear Sir/Madam, As per your Quotation Ref No.:-<EditableText value={po.quote_ref_type || 'MAIL'} onChange={val => updatePO('quote_ref_type', val.toUpperCase())} />, Ref Doc no:-<span className="text-black font-black uppercase mx-1 underline">{po.quote_doc_no || 'N/A'}</span>, Ref Date:-<EditableText value={po.quote_date || po.date} onChange={val => updatePO('quote_date', val)} />, We are sending the order so please supply the materials on urgent basis:-
                     </p>
                   </>
@@ -554,11 +562,14 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions, isP
 
                 {pageItems.length > 0 && <ItemsTable items={pageItems} />}
 
-                {pageIdx === itemPages.length - 1 && (
+                {pageIdx === lastItemsPageIdx && (
                   <div className="mt-4">
                     <TotalsSection />
-                    <TermsAndNotes po={po} />
                   </div>
+                )}
+
+                {pageIdx === itemPages.length - 1 && (
+                  <TermsAndNotes po={po} />
                 )}
               </div>
               <div className="pdf-footer"><FooterContent /></div>
