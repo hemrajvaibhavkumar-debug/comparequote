@@ -60,6 +60,44 @@ const SavedPOs: React.FC = () => {
     }
   };
 
+  const handleUpdateComment = async (commentId: string, text: string) => {
+    if (!selectedPO) return;
+    try {
+      const res = await fetch(`/api/po/${selectedPO.id}/comments/${commentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ text })
+      });
+      if (res.ok) {
+        const updatedPO = await res.json();
+        setPos(prev => prev.map(p => p.id === updatedPO.id ? updatedPO : p));
+        setSelectedPO(updatedPO);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!selectedPO) return;
+    try {
+      const res = await fetch(`/api/po/${selectedPO.id}/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const updatedPO = await res.json();
+        setPos(prev => prev.map(p => p.id === updatedPO.id ? updatedPO : p));
+        setSelectedPO(updatedPO);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const openComments = (po: PurchaseOrder) => {
     setSelectedPO(po);
     setIsCommentsOpen(true);
@@ -327,6 +365,7 @@ const SavedPOs: React.FC = () => {
         onClose={() => setIsCommentsOpen(false)}
         comments={selectedPO?.internal_comments || []}
         onAddComment={handleAddComment}
+        onDeleteComment={handleDeleteComment}
         title={`PO #${selectedPO?.po_no} - ${selectedPO?.vendor_name}`}
       />
     </div>

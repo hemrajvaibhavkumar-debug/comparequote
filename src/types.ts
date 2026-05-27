@@ -7,6 +7,7 @@ export interface HeaderInfo {
 }
 
 export interface InternalComment {
+  id: string;
   text: string;
   author: string;
   date: string;

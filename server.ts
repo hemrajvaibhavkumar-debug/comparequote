@@ -806,6 +806,7 @@ async function startServer() {
 
       const comments = Array.isArray(po.internal_comments) ? [...po.internal_comments] : [];
       comments.push({
+        id: Date.now().toString(), // Add unique ID for easier deletion
         text,
         author: user.username,
         date: new Date().toISOString()
@@ -820,6 +821,55 @@ async function startServer() {
       res.json(updated);
     } catch (error) {
       res.status(500).json({ error: "Failed to add comment" });
+    }
+  });
+
+  app.delete("/api/po/:id/comments/:commentId", authenticateToken, async (req, res) => {
+    try {
+      const { id, commentId } = req.params;
+      const po = await prisma.purchaseOrder.findUnique({ where: { id: Number(id) } });
+      if (!po) return res.status(404).json({ error: "PO not found" });
+
+      const comments = Array.isArray(po.internal_comments) ? [...(po.internal_comments as any[])] : [];
+      const filtered = comments.filter((c: any) => c.id === commentId || c.id === Number(commentId) ? false : true); 
+      // Handle both string and number IDs for safety during migration
+      const finalFiltered = comments.filter((c: any) => String(c.id) !== String(commentId));
+
+      const updated = await prisma.purchaseOrder.update({
+        where: { id: Number(id) },
+        data: { internal_comments: finalFiltered }
+      });
+
+      dbCache.clearPattern("po:");
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete comment" });
+    }
+  });
+
+  app.put("/api/po/:id/comments/:commentId", authenticateToken, async (req, res) => {
+    try {
+      const { id, commentId } = req.params;
+      const { text } = req.body;
+      const po = await prisma.purchaseOrder.findUnique({ where: { id: Number(id) } });
+      if (!po) return res.status(404).json({ error: "PO not found" });
+
+      const comments = Array.isArray(po.internal_comments) ? [...(po.internal_comments as any[])] : [];
+      const index = comments.findIndex((c: any) => String(c.id) === String(commentId));
+      
+      if (index === -1) return res.status(404).json({ error: "Comment not found" });
+      
+      comments[index] = { ...comments[index], text, date: new Date().toISOString() };
+
+      const updated = await prisma.purchaseOrder.update({
+        where: { id: Number(id) },
+        data: { internal_comments: comments }
+      });
+
+      dbCache.clearPattern("po:");
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update comment" });
     }
   });
 
@@ -1126,6 +1176,7 @@ async function startServer() {
 
       const comments = Array.isArray(comp.internal_comments) ? [...comp.internal_comments] : [];
       comments.push({
+        id: Date.now().toString(),
         text,
         author: user.username,
         date: new Date().toISOString()
@@ -1140,6 +1191,27 @@ async function startServer() {
       res.json(updated);
     } catch (error) {
       res.status(500).json({ error: "Failed to add comment" });
+    }
+  });
+
+  app.delete("/api/comparisons/:id/comments/:commentId", authenticateToken, async (req, res) => {
+    try {
+      const { id, commentId } = req.params;
+      const comp = await prisma.comparison.findUnique({ where: { id: Number(id) } });
+      if (!comp) return res.status(404).json({ error: "Comparison not found" });
+
+      const comments = Array.isArray(comp.internal_comments) ? [...comp.internal_comments] : [];
+      const filtered = comments.filter((c: any) => c.id !== commentId);
+
+      const updated = await prisma.comparison.update({
+        where: { id: Number(id) },
+        data: { internal_comments: filtered }
+      });
+
+      dbCache.clearPattern("comparisons:");
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete comment" });
     }
   });
 

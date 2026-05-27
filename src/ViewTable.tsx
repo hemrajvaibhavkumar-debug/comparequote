@@ -50,15 +50,30 @@ export default function ViewTable() {
       });
   }, [id, token]);
 
-  const handleAddComment = async (text: string) => {
+  const handleUpdateComment = async (commentId: string, text: string) => {
     try {
-      const res = await fetch(`/api/comparisons/${id}/comments`, {
-        method: 'POST',
+      const res = await fetch(`/api/comparisons/${id}/comments/${commentId}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ text })
+      });
+      if (res.ok) {
+        const updatedRecord = await res.json();
+        setRecord(updatedRecord);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      const res = await fetch(`/api/comparisons/${id}/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
         const updatedRecord = await res.json();
@@ -238,6 +253,8 @@ export default function ViewTable() {
         onClose={() => setIsCommentsOpen(false)}
         comments={record.internal_comments || []}
         onAddComment={handleAddComment}
+        onUpdateComment={handleUpdateComment}
+        onDeleteComment={handleDeleteComment}
         title={`Comparison #${record.doc_no}`}
       />
     </div>

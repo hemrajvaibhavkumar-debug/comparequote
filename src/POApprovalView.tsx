@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CheckCircle, XCircle, ArrowLeft, Download, ShieldCheck, Stamp, Printer, Mail, Send, RotateCcw, MessageSquare, StickyNote } from 'lucide-react';
+import { CheckCircle, XCircle, ArrowLeft, Download, ShieldCheck, Stamp, Printer, Mail, Send, RotateCcw, MessageSquare, StickyNote, ChevronRight } from 'lucide-react';
 import POPreview from './components/POMaker/POPreview';
 import { useAuth } from './context/AuthContext';
 import { PurchaseOrder, CompanySettings } from './types';
@@ -280,16 +280,32 @@ export default function POApprovalView() {
       setSubmitting(false);
     }
   };
-  const handleAddComment = async (text: string) => {
+  const handleUpdateComment = async (commentId: string, text: string) => {
     if (!po) return;
     try {
-      const res = await fetch(`/api/po/${po.id}/comments`, {
-        method: 'POST',
+      const res = await fetch(`/api/po/${po.id}/comments/${commentId}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ text })
+      });
+      if (res.ok) {
+        const updatedPO = await res.json();
+        setPo(updatedPO);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!po) return;
+    try {
+      const res = await fetch(`/api/po/${po.id}/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
         const updatedPO = await res.json();
@@ -497,22 +513,22 @@ export default function POApprovalView() {
             {!po.internal_comments || po.internal_comments.length === 0 ? (
               <p className="text-xs text-slate-400 font-medium italic">No internal points recorded for this PO.</p>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 {po.internal_comments.slice(-3).map((note, idx) => (
-                  <div key={idx} className="flex gap-3 text-sm">
-                    <div className="w-1 h-auto bg-slate-200 rounded-full shrink-0" />
+                  <div key={note.id || idx} className="flex gap-3 text-sm items-start">
+                    <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-slate-900 shrink-0" />
                     <div>
                       <div className="flex items-center gap-2 mb-0.5">
                         <span className="text-[10px] font-black text-slate-800 uppercase">{note.author}</span>
                         <span className="text-[8px] font-bold text-slate-400 uppercase">{new Date(note.date).toLocaleDateString('en-IN')}</span>
                       </div>
-                      <p className="text-slate-600 font-medium leading-relaxed line-clamp-2">{note.text}</p>
+                      <p className="text-slate-600 font-medium leading-relaxed line-clamp-3">{note.text}</p>
                     </div>
                   </div>
                 ))}
                 {po.internal_comments.length > 3 && (
-                  <button onClick={() => setIsCommentsOpen(true)} className="text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest mt-2 cursor-pointer">
-                    + {po.internal_comments.length - 3} more notes
+                  <button onClick={() => setIsCommentsOpen(true)} className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 uppercase tracking-widest mt-2 cursor-pointer flex items-center gap-1">
+                    View all {po.internal_comments.length} points <ChevronRight className="w-3 h-3" />
                   </button>
                 )}
               </div>
@@ -760,6 +776,8 @@ export default function POApprovalView() {
         onClose={() => setIsCommentsOpen(false)}
         comments={po.internal_comments || []}
         onAddComment={handleAddComment}
+        onUpdateComment={handleUpdateComment}
+        onDeleteComment={handleDeleteComment}
         title={`PO #${po.po_no}`}
       />
     </div>

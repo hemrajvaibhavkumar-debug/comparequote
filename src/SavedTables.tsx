@@ -78,6 +78,44 @@ export default function SavedTables() {
     }
   };
 
+  const handleUpdateComment = async (commentId: string, text: string) => {
+    if (!selectedTable) return;
+    try {
+      const res = await fetch(`/api/comparisons/${selectedTable.id}/comments/${commentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ text })
+      });
+      if (res.ok) {
+        const updatedTable = await res.json();
+        setTables(prev => prev.map(t => t.id === updatedTable.id ? updatedTable : t));
+        setSelectedTable(updatedTable);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!selectedTable) return;
+    try {
+      const res = await fetch(`/api/comparisons/${selectedTable.id}/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const updatedTable = await res.json();
+        setTables(prev => prev.map(t => t.id === updatedTable.id ? updatedTable : t));
+        setSelectedTable(updatedTable);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const openComments = (e: React.MouseEvent, table: any) => {
     e.preventDefault();
     e.stopPropagation();
@@ -267,6 +305,8 @@ export default function SavedTables() {
         onClose={() => setIsCommentsOpen(false)}
         comments={selectedTable?.internal_comments || []}
         onAddComment={handleAddComment}
+        onUpdateComment={handleUpdateComment}
+        onDeleteComment={handleDeleteComment}
         title={`Comparison #${selectedTable?.doc_no}`}
       />
     </div>
