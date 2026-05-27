@@ -645,6 +645,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                   "BEFORE DRAWING",
                   "BEFORE DISPATCH",
                   "AFTER DISPATCH",
+                  "LOADING",
                   "AFTER SUCCESSFULLY COMMISSIONING",
                   "BEFORE SUCCESSFULLY COMMISSIONING"
                 ];
