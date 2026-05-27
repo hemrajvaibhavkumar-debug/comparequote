@@ -50,6 +50,25 @@ export default function ViewTable() {
       });
   }, [id, token]);
 
+  const handleAddComment = async (text: string) => {
+    try {
+      const res = await fetch(`/api/comparisons/${id}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ text })
+      });
+      if (res.ok) {
+        const updatedRecord = await res.json();
+        setRecord(updatedRecord);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleUpdateComment = async (commentId: string, text: string) => {
     try {
       const res = await fetch(`/api/comparisons/${id}/comments/${commentId}`, {

@@ -280,6 +280,26 @@ export default function POApprovalView() {
       setSubmitting(false);
     }
   };
+  const handleAddComment = async (text: string) => {
+    if (!po) return;
+    try {
+      const res = await fetch(`/api/po/${po.id}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ text })
+      });
+      if (res.ok) {
+        const updatedPO = await res.json();
+        setPo(updatedPO);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleUpdateComment = async (commentId: string, text: string) => {
     if (!po) return;
     try {

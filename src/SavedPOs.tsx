@@ -365,6 +365,7 @@ const SavedPOs: React.FC = () => {
         onClose={() => setIsCommentsOpen(false)}
         comments={selectedPO?.internal_comments || []}
         onAddComment={handleAddComment}
+        onUpdateComment={handleUpdateComment}
         onDeleteComment={handleDeleteComment}
         title={`PO #${selectedPO?.po_no} - ${selectedPO?.vendor_name}`}
       />
