@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { Search, Filter, Calendar, User, Factory, ChevronRight, FileText, Trash2, Eye, ShieldCheck } from 'lucide-react';
+import { Search, Filter, Calendar, User, Factory, ChevronRight, FileText, Trash2, Eye, ShieldCheck, MessageSquare } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import { useApiCache } from './context/ApiCacheContext';
+import CommentsModal from './components/CommentsModal';
 
 export default function SavedTables() {
   const [tables, setTables] = useState<any[]>([]);
@@ -11,6 +12,10 @@ export default function SavedTables() {
   const [filterPlant, setFilterPlant] = useState('');
   const [filterPreparedBy, setFilterPreparedBy] = useState('');
   
+  // Comments State
+  const [selectedTable, setSelectedTable] = useState<any | null>(null);
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+
   const { token, user, logout } = useAuth();
   const { fetchComparisons, invalidateComparisons } = useApiCache();
   const canView = user?.role === 'SUPERADMIN' || user?.permissions.includes('VIEW_SAVED_TABLES');
@@ -50,6 +55,34 @@ export default function SavedTables() {
         console.error(err);
         setLoading(false);
       });
+  };
+
+  const handleAddComment = async (text: string) => {
+    if (!selectedTable) return;
+    try {
+      const res = await fetch(`/api/comparisons/${selectedTable.id}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ text })
+      });
+      if (res.ok) {
+        const updatedTable = await res.json();
+        setTables(prev => prev.map(t => t.id === updatedTable.id ? updatedTable : t));
+        setSelectedTable(updatedTable);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const openComments = (e: React.MouseEvent, table: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedTable(table);
+    setIsCommentsOpen(true);
   };
 
   const deleteTable = async (id: number, e: React.MouseEvent) => {
@@ -203,6 +236,16 @@ export default function SavedTables() {
                     </td>
                     <td className="px-6 py-4.5 text-right">
                       <div className="flex justify-end gap-2.5">
+                        <button 
+                          onClick={(e) => openComments(e, t)}
+                          className="p-2 hover:bg-slate-100 text-slate-400 hover:text-indigo-600 border border-transparent hover:border-indigo-100 rounded-xl transition-all shadow-none hover:shadow-xs cursor-pointer relative"
+                          title="Internal Comments"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                          {t.internal_comments && t.internal_comments.length > 0 && (
+                            <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-indigo-600 rounded-full border border-white"></span>
+                          )}
+                        </button>
                         <Link to={`/saved/${t.id}`} className="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-900 border border-transparent hover:border-slate-200 rounded-xl transition-all shadow-none hover:shadow-xs" title="View Table">
                           <Eye className="w-4 h-4" />
                         </Link>
@@ -218,6 +261,14 @@ export default function SavedTables() {
           </div>
         )}
       </div>
+
+      <CommentsModal 
+        isOpen={isCommentsOpen}
+        onClose={() => setIsCommentsOpen(false)}
+        comments={selectedTable?.internal_comments || []}
+        onAddComment={handleAddComment}
+        title={`Comparison #${selectedTable?.doc_no}`}
+      />
     </div>
   );
 }

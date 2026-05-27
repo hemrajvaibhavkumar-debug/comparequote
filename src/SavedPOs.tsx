@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { PurchaseOrder } from './types';
-import { FileText, Eye, Edit, Trash2, Search, ArrowLeft, ShieldCheck, CheckCircle, XCircle, Clock, Filter, ChevronRight, IndianRupee } from 'lucide-react';
+import { PurchaseOrder, InternalComment } from './types';
+import { FileText, Eye, Edit, Trash2, Search, ArrowLeft, ShieldCheck, CheckCircle, XCircle, Clock, Filter, ChevronRight, IndianRupee, MessageSquare } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import { useApiCache } from './context/ApiCacheContext';
+import CommentsModal from './components/CommentsModal';
 
 const SavedPOs: React.FC = () => {
   const [pos, setPos] = useState<PurchaseOrder[]>([]);
@@ -12,6 +13,10 @@ const SavedPOs: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const navigate = useNavigate();
   
+  // Comments State
+  const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null);
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+
   const { token, user, logout } = useAuth();
   const { fetchPOs: fetchPOsFromCache, invalidatePOs } = useApiCache();
   const canView = user?.role === 'SUPERADMIN' || user?.permissions.includes('VIEW_SAVED_POS');
@@ -32,6 +37,32 @@ const SavedPOs: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAddComment = async (text: string) => {
+    if (!selectedPO) return;
+    try {
+      const res = await fetch(`/api/po/${selectedPO.id}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ text })
+      });
+      if (res.ok) {
+        const updatedPO = await res.json();
+        setPos(prev => prev.map(p => p.id === updatedPO.id ? updatedPO : p));
+        setSelectedPO(updatedPO);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const openComments = (po: PurchaseOrder) => {
+    setSelectedPO(po);
+    setIsCommentsOpen(true);
   };
 
   const handleDelete = async (id: number) => {
@@ -214,6 +245,16 @@ const SavedPOs: React.FC = () => {
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex justify-end items-center gap-2">
+                          <button 
+                            onClick={() => openComments(po)}
+                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 border border-transparent hover:border-indigo-100 rounded-xl transition-all shadow-none hover:shadow-xs cursor-pointer relative"
+                            title="Internal Comments"
+                          >
+                            <MessageSquare className="w-4.5 h-4.5" />
+                            {po.internal_comments && po.internal_comments.length > 0 && (
+                              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-600 rounded-full border-2 border-white"></span>
+                            )}
+                          </button>
                           {po.status !== 'APPROVED' && (
                             <button 
                               onClick={() => navigate(`/po-maker?edit=${po.id}`)}
@@ -280,6 +321,14 @@ const SavedPOs: React.FC = () => {
           </div>
         </div>
       )}
+
+      <CommentsModal 
+        isOpen={isCommentsOpen}
+        onClose={() => setIsCommentsOpen(false)}
+        comments={selectedPO?.internal_comments || []}
+        onAddComment={handleAddComment}
+        title={`PO #${selectedPO?.po_no} - ${selectedPO?.vendor_name}`}
+      />
     </div>
   );
 };

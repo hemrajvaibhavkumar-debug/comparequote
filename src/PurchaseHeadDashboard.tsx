@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Filter, Calendar, User, Factory, ChevronRight, FileText, CheckCircle, XCircle, Clock, ShieldCheck } from 'lucide-react';
+import { Search, Filter, Calendar, User, Factory, ChevronRight, FileText, CheckCircle, XCircle, Clock, ShieldCheck, MessageSquare } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
+import CommentsModal from './components/CommentsModal';
 
 export default function PurchaseHeadDashboard() {
   const [pos, setPos] = useState<any[]>([]);
@@ -11,6 +12,10 @@ export default function PurchaseHeadDashboard() {
   const [actioningId, setActioningId] = useState<number | null>(null);
   const { token, logout, user } = useAuth();
   
+  // Comments State
+  const [selectedPO, setSelectedPO] = useState<any | null>(null);
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+
   const canApprove = user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO');
 
   useEffect(() => {
@@ -41,6 +46,34 @@ export default function PurchaseHeadDashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAddComment = async (text: string) => {
+    if (!selectedPO) return;
+    try {
+      const res = await fetch(`/api/po/${selectedPO.id}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ text })
+      });
+      if (res.ok) {
+        const updatedPO = await res.json();
+        setPos(prev => prev.map(p => p.id === updatedPO.id ? updatedPO : p));
+        setSelectedPO(updatedPO);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const openComments = (e: React.MouseEvent, po: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedPO(po);
+    setIsCommentsOpen(true);
   };
 
   const handleQuickStatusUpdate = async (id: number, newStatus: 'APPROVED' | 'REJECTED', e: React.MouseEvent) => {
@@ -213,11 +246,23 @@ export default function PurchaseHeadDashboard() {
                   className="bg-white rounded-2xl shadow-xs border border-slate-100 hover:shadow-md hover:border-slate-300 transition-all duration-300 group overflow-hidden relative flex flex-col"
                 >
                   <Link to={`/approve-po/${po.id}`} className="p-6 flex-1 cursor-pointer">
-                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex justify-between items-start mb-4">
                       <div className="p-2.5 bg-slate-100 text-slate-900 rounded-xl group-hover:bg-slate-900 group-hover:text-white transition-all shadow-xs duration-300">
                         <FileText className="w-5 h-5" />
                       </div>
-                      {getStatusBadge(poStatus)}
+                      <div className="flex flex-col items-end gap-2">
+                        {getStatusBadge(poStatus)}
+                        <button 
+                          onClick={(e) => openComments(e, po)}
+                          className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all cursor-pointer relative"
+                          title="Internal Comments"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                          {po.internal_comments && po.internal_comments.length > 0 && (
+                            <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-indigo-600 rounded-full border border-white"></span>
+                          )}
+                        </button>
+                      </div>
                     </div>
                     
                     <h3 className="text-lg font-extrabold text-slate-850 group-hover:text-slate-900 transition-colors uppercase tracking-tight">
@@ -290,6 +335,14 @@ export default function PurchaseHeadDashboard() {
           </div>
         )}
       </div>
+
+      <CommentsModal 
+        isOpen={isCommentsOpen}
+        onClose={() => setIsCommentsOpen(false)}
+        comments={selectedPO?.internal_comments || []}
+        onAddComment={handleAddComment}
+        title={`PO #${selectedPO?.po_no} - ${selectedPO?.vendor_name}`}
+      />
     </div>
   );
 }

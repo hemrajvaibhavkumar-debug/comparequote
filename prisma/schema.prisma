@@ -23,14 +23,15 @@ model Plant {
 }
 
 model Comparison {
-  id           Int        @id @default(autoincrement())
-  doc_no       String     @unique
-  created_at   DateTime   @default(now())
-  data         Json
-  executive    Executive? @relation(fields: [executive_id], references: [id])
-  executive_id Int?
-  plant        Plant?     @relation(fields: [plant_id], references: [id])
-  plant_id     Int?
+  id                Int        @id @default(autoincrement())
+  doc_no            String     @unique
+  created_at        DateTime   @default(now())
+  data              Json
+  internal_comments Json?      // Array of objects: { text, date, author }
+  executive         Executive? @relation(fields: [executive_id], references: [id])
+  executive_id      Int?
+  plant             Plant?     @relation(fields: [plant_id], references: [id])
+  plant_id          Int?
 
   @@index([created_at(sort: Desc)])
 }
@@ -95,6 +96,7 @@ model PurchaseOrder {
   approved_by       String?
   approved_at       DateTime?
   pdf_base64        String?
+  internal_comments Json?      // Array of objects: { text, date, author }
   created_at        DateTime  @default(now())
 }
 

@@ -6,6 +6,12 @@ export interface HeaderInfo {
   plantName: string;
 }
 
+export interface InternalComment {
+  text: string;
+  author: string;
+  date: string;
+}
+
 export interface VendorQuote {
   vendorName: string;
   make: string;
@@ -41,6 +47,17 @@ export interface ComparisonData {
   items: Item[];
   vendors: string[];
   multiplyByWeight?: boolean;
+  internal_comments?: InternalComment[];
+}
+
+export interface ComparisonRecord {
+  id: number;
+  doc_no: string;
+  created_at: string;
+  data: ComparisonData;
+  executive?: any;
+  plant?: any;
+  internal_comments?: InternalComment[];
 }
 
 export interface CompanySettings {
@@ -134,4 +151,5 @@ export interface PurchaseOrder {
   approved_by?: string;
   approved_at?: string;
   pdf_base64?: string;
+  internal_comments?: InternalComment[];
 }

@@ -794,6 +794,35 @@ async function startServer() {
     }
   });
 
+  // Comments for PO
+  app.post("/api/po/:id/comments", authenticateToken, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const { text } = req.body;
+      const user = (req as any).user;
+
+      const po = await prisma.purchaseOrder.findUnique({ where: { id } });
+      if (!po) return res.status(404).json({ error: "PO not found" });
+
+      const comments = Array.isArray(po.internal_comments) ? [...po.internal_comments] : [];
+      comments.push({
+        text,
+        author: user.username,
+        date: new Date().toISOString()
+      });
+
+      const updated = await prisma.purchaseOrder.update({
+        where: { id },
+        data: { internal_comments: comments }
+      });
+
+      dbCache.clearPattern("po:");
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to add comment" });
+    }
+  });
+
   // Approval Workflow
   app.put("/api/po/:id/status", authenticateToken, requirePermission("APPROVE_PO"), async (req, res) => {
     try {
@@ -1082,6 +1111,35 @@ async function startServer() {
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: String(err) });
+    }
+  });
+
+  // Comments for Comparison
+  app.post("/api/comparisons/:id/comments", authenticateToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { text } = req.body;
+      const user = (req as any).user;
+
+      const comp = await prisma.comparison.findUnique({ where: { id } });
+      if (!comp) return res.status(404).json({ error: "Comparison not found" });
+
+      const comments = Array.isArray(comp.internal_comments) ? [...comp.internal_comments] : [];
+      comments.push({
+        text,
+        author: user.username,
+        date: new Date().toISOString()
+      });
+
+      const updated = await prisma.comparison.update({
+        where: { id },
+        data: { internal_comments: comments }
+      });
+
+      dbCache.clearPattern("comparisons:");
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to add comment" });
     }
   });
 
