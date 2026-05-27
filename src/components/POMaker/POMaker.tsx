@@ -316,7 +316,7 @@ const POMaker: React.FC = () => {
       <div className="ambient-glow ambient-indigo -top-40 -right-40" />
       <div className="ambient-glow ambient-blue -bottom-40 -left-40" />
 
-      <div className="glass-navbar px-6 py-3 flex items-center justify-between shrink-0 relative z-10 shadow-sm">
+      <div className="glass-navbar px-6 py-3 flex items-center justify-between shrink-0 relative z-10">
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate(-1)} 

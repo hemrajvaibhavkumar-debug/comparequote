@@ -402,38 +402,38 @@ const Builder: React.FC = () => {
   return (
     <div {...getRootProps()} className={`min-h-screen bg-slate-50/50 p-4 md:p-8 font-sans transition-colors relative ${isDragActive ? 'bg-slate-100/60' : ''}`}>
       {isDragActive && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-indigo-900/10 backdrop-blur-xs pointer-events-none border-4 border-indigo-500 border-dashed m-4 rounded-3xl animate-pulse-slow">
-          <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 border border-indigo-50">
-            <Upload className="w-16 h-16 text-indigo-600 animate-bounce" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 backdrop-blur-xs pointer-events-none border-4 border-black border-dashed m-4 rounded-3xl animate-pulse-slow">
+          <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 border border-black/10">
+            <Upload className="w-16 h-16 text-black animate-bounce" />
             <p className="text-xl font-bold text-slate-800">Drop files anywhere to upload</p>
             <p className="text-xs text-slate-400 font-medium">QuoteCompare AI will extract quotations automatically</p>
           </div>
         </div>
       )}
       <div className="max-w-7xl mx-auto space-y-8 relative z-10">
-        {/* Background ambient blobs */}
-        <div className="ambient-glow ambient-indigo -top-40 -left-40 animate-pulse-slow" style={{ width: '350px', height: '350px' }}></div>
-        <div className="ambient-glow ambient-blue top-60 right-0 animate-pulse-slow" style={{ animationDelay: '3s', width: '350px', height: '350px' }}></div>
+        {/* Background ambient blobs - Neutralized */}
+        <div className="ambient-glow ambient-slate -top-40 -left-40 animate-pulse-slow" style={{ width: '350px', height: '350px' }}></div>
+        <div className="ambient-glow ambient-slate top-60 right-0 animate-pulse-slow" style={{ animationDelay: '3s', width: '350px', height: '350px' }}></div>
 
-        <header className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-sm border border-slate-100 print-hidden transition-all">
+        <header className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-sm border border-slate-200 print-hidden transition-all">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-tr from-indigo-600 to-blue-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-150 animate-float">
+            <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center shadow-lg shadow-slate-200 animate-float">
               <TableIcon className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-black bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent tracking-tight">Compare Workspace</h1>
-              <p className="text-slate-400 text-xs font-semibold mt-0.5">Analyze, refine, and merge multiple quotations</p>
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight">Compare Workspace</h1>
+              <p className="text-slate-500 text-xs font-semibold mt-0.5">Analyze, refine, and merge multiple quotations</p>
             </div>
           </div>
           
           <div className="flex flex-wrap items-center gap-3">
-             <button onClick={saveToNeon} disabled={isSaving || !data.items.length} className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 disabled:opacity-50 transition-all shadow-md shadow-emerald-100 active:scale-95 cursor-pointer">
+             <button onClick={saveToNeon} disabled={isSaving || !data.items.length} className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-semibold hover:bg-black disabled:opacity-50 transition-all shadow-md shadow-slate-100 active:scale-95 cursor-pointer">
                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />} Save to DB
              </button>
-             <button onClick={handlePrint} disabled={!data.items.length} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-md shadow-indigo-100 active:scale-95 cursor-pointer">
+             <button onClick={handlePrint} disabled={!data.items.length} className="flex items-center gap-2 px-5 py-2.5 bg-black text-white rounded-xl text-sm font-semibold hover:bg-slate-800 disabled:opacity-50 transition-all shadow-md shadow-slate-200 active:scale-95 cursor-pointer">
                <FileText className="w-4 h-4" /> Export/Print PDF
              </button>
-             <button onClick={clearDraft} className="flex items-center gap-2 px-5 py-2.5 bg-white text-slate-700 rounded-xl text-sm font-semibold hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-all border border-slate-200 shadow-xs active:scale-95 cursor-pointer">
+             <button onClick={clearDraft} className="flex items-center gap-2 px-5 py-2.5 bg-white text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-50 hover:text-black hover:border-black transition-all border border-slate-200 shadow-xs active:scale-95 cursor-pointer">
                <RotateCcw className="w-4 h-4" /> RESET ALL
              </button>
              <button onClick={() => setShowSettings(!showSettings)} className="flex items-center gap-2 px-4 py-2.5 bg-white text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-50 transition-all border border-slate-200 shadow-xs cursor-pointer">
@@ -443,10 +443,10 @@ const Builder: React.FC = () => {
         </header>
 
         {showSettings && (
-          <div className="bg-white/95 backdrop-blur-md p-6 rounded-2xl shadow-md border border-slate-100 space-y-6 animate-in slide-in-from-top-4 duration-300 print-hidden">
+          <div className="bg-white/95 backdrop-blur-md p-6 rounded-2xl shadow-md border border-slate-200 space-y-6 animate-in slide-in-from-top-4 duration-300 print-hidden">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h2 className="text-md font-bold text-slate-800 flex items-center gap-2">
-                <SettingsIcon className="w-5 h-5 text-indigo-600" /> Predefined Master Options
+                <SettingsIcon className="w-5 h-5 text-black" /> Predefined Master Options
               </h2>
               <button onClick={() => setShowSettings(false)} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer">
                 <X className="w-4 h-4 text-slate-500" />
@@ -463,16 +463,16 @@ const Builder: React.FC = () => {
                       value={newPreparedBy} 
                       onChange={e => setNewPreparedBy(e.target.value)} 
                       placeholder="Name..." 
-                      className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-indigo-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/10 text-slate-800 transition-all font-medium"
+                      className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-black rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 text-slate-800 transition-all font-medium"
                     />
                     <input 
                       type="text" 
                       value={newPreparedByDesignation} 
                       onChange={e => setNewPreparedByDesignation(e.target.value)} 
                       placeholder="Designation..." 
-                      className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-indigo-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/10 text-slate-800 transition-all font-medium"
+                      className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-black rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 text-slate-800 transition-all font-medium"
                     />
-                    <button onClick={addExecutive} className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all shadow-md shadow-indigo-100 cursor-pointer active:scale-[0.98]">Add Executive</button>
+                    <button onClick={addExecutive} className="w-full py-2.5 bg-black hover:bg-slate-800 text-white rounded-xl text-sm font-semibold transition-all shadow-md shadow-slate-100 cursor-pointer active:scale-[0.98]">Add Executive</button>
                   </div>
                 ) : (
                   <p className="text-[10px] text-slate-400 italic font-semibold">Only administrators can add/remove master options.</p>
@@ -481,7 +481,7 @@ const Builder: React.FC = () => {
                   {dbExecutives.map(opt => (
                     <span key={opt.id} className="px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-xs transition-colors group">
                       {opt.name} {opt.designation && <span className="opacity-60 text-[10px]">({opt.designation})</span>} 
-                      {canManageSettings && <X className="w-3.5 h-3.5 cursor-pointer opacity-40 hover:opacity-100 hover:text-rose-600 transition-all" onClick={() => removeExecutive(opt.id)} />}
+                      {canManageSettings && <X className="w-3.5 h-3.5 cursor-pointer opacity-40 hover:opacity-100 hover:text-black transition-all" onClick={() => removeExecutive(opt.id)} />}
                     </span>
                   ))}
                 </div>
@@ -496,16 +496,16 @@ const Builder: React.FC = () => {
                       value={newPlantName} 
                       onChange={e => setNewPlantName(e.target.value)} 
                       placeholder="Plant Name..." 
-                      className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-indigo-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/10 text-slate-800 transition-all font-medium"
+                      className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-black rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 text-slate-800 transition-all font-medium"
                     />
                     <input 
                       type="text" 
                       value={newPlantLocation} 
                       onChange={e => setNewPlantLocation(e.target.value)} 
                       placeholder="Location..." 
-                      className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-indigo-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/10 text-slate-800 transition-all font-medium"
+                      className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-black rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 text-slate-800 transition-all font-medium"
                     />
-                    <button onClick={addPlant} className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all shadow-md shadow-indigo-100 cursor-pointer active:scale-[0.98]">Add Plant</button>
+                    <button onClick={addPlant} className="w-full py-2.5 bg-black hover:bg-slate-800 text-white rounded-xl text-sm font-semibold transition-all shadow-md shadow-slate-100 cursor-pointer active:scale-[0.98]">Add Plant</button>
                   </div>
                 ) : (
                   <p className="text-[10px] text-slate-400 italic font-semibold">Only administrators can add/remove master options.</p>
@@ -514,7 +514,7 @@ const Builder: React.FC = () => {
                   {dbPlants.map(opt => (
                     <span key={opt.id} className="px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-xs transition-colors group">
                       {opt.name} {opt.location && <span className="opacity-60 text-[10px]">({opt.location})</span>} 
-                      {canManageSettings && <X className="w-3.5 h-3.5 cursor-pointer opacity-40 hover:opacity-100 hover:text-rose-600 transition-all" onClick={() => removePlant(opt.id)} />}
+                      {canManageSettings && <X className="w-3.5 h-3.5 cursor-pointer opacity-40 hover:opacity-100 hover:text-black transition-all" onClick={() => removePlant(opt.id)} />}
                     </span>
                   ))}
                 </div>
@@ -524,7 +524,7 @@ const Builder: React.FC = () => {
         )}
 
         <div className="grid grid-cols-12 gap-8 print-hidden">
-          <div className="col-span-12 lg:col-span-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-5 relative">
+          <div className="col-span-12 lg:col-span-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5 relative">
             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Document Metadata</h2>
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
@@ -532,13 +532,13 @@ const Builder: React.FC = () => {
                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Doc No.</label>
                   <button 
                     onClick={() => generateDocNo(true)}
-                    className="text-[10px] font-bold text-slate-400 hover:text-indigo-600 flex items-center gap-1 mb-0.5 transition-colors cursor-pointer"
+                    className="text-[10px] font-bold text-slate-400 hover:text-black flex items-center gap-1 mb-0.5 transition-colors cursor-pointer"
                     title="Reset to latest chronological number"
                   >
                     <RotateCcw className="w-2.5 h-2.5" /> RESET
                   </button>
                 </div>
-                <input type="text" value={header.docNo} onChange={e => setHeader({...header, docNo: e.target.value})} className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-indigo-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/10 text-slate-800 font-bold transition-all" placeholder="C0124-1" />
+                <input type="text" value={header.docNo} onChange={e => setHeader({...header, docNo: e.target.value})} className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-black rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 text-slate-800 font-bold transition-all" placeholder="C0124-1" />
               </div>
               <div>
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Prepared By</label>
@@ -550,7 +550,7 @@ const Builder: React.FC = () => {
                     const exec = dbExecutives.find(x => x.id === id);
                     if (exec) setHeader({...header, preparedBy: exec.name});
                   }} 
-                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-indigo-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/10 text-slate-800 transition-all font-medium cursor-pointer"
+                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-black rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 text-slate-800 transition-all font-medium cursor-pointer"
                 >
                   <option value="">Select Executive</option>
                   {dbExecutives.map(opt => <option key={opt.id} value={opt.id}>{opt.name}</option>)}
@@ -566,7 +566,7 @@ const Builder: React.FC = () => {
                     const plant = dbPlants.find(x => x.id === id);
                     if (plant) setHeader({...header, plantName: plant.name});
                   }} 
-                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-indigo-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/10 text-slate-800 transition-all font-medium cursor-pointer"
+                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-black rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 text-slate-800 transition-all font-medium cursor-pointer"
                 >
                   <option value="">Select Plant</option>
                   {dbPlants.map(opt => <option key={opt.id} value={opt.id}>{opt.name}</option>)}
@@ -578,7 +578,7 @@ const Builder: React.FC = () => {
                   type="date" 
                   value={header.indentDate} 
                   onChange={e => setHeader({...header, indentDate: e.target.value})} 
-                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-indigo-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/10 text-slate-800 transition-all font-medium" 
+                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-black rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 text-slate-800 transition-all font-medium" 
                 />
               </div>
 
@@ -587,24 +587,24 @@ const Builder: React.FC = () => {
                 <textarea 
                   value={extractionPrompt} 
                   onChange={e => setExtractionPrompt(e.target.value)} 
-                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-indigo-500 rounded-xl text-sm min-h-[90px] focus:outline-none focus:ring-2 focus:ring-indigo-500/10 text-slate-800 transition-all font-medium" 
+                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-black rounded-xl text-sm min-h-[90px] focus:outline-none focus:ring-2 focus:ring-black/5 text-slate-800 transition-all font-medium" 
                   placeholder="e.g. 'The data is in one line', 'Ignore vendor X', 'Focus on specific columns'"
                 />
               </div>
             </div>
           </div>
 
-          <div className="col-span-12 lg:col-span-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-5">
+          <div className="col-span-12 lg:col-span-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Extraction Source</h2>
             {canExtract ? (
               <>
                 <div 
                   onClick={() => (document.querySelector('input[type="file"]') as HTMLInputElement)?.click()}
-                  className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer ${isDragActive ? 'border-indigo-500 bg-indigo-50/20' : 'border-slate-200 hover:border-indigo-500 hover:bg-slate-50/50 bg-slate-50/30'}`}
+                  className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer ${isDragActive ? 'border-black bg-slate-50' : 'border-slate-200 hover:border-black hover:bg-slate-50/50 bg-slate-50/30'}`}
                 >
                   <input {...getInputProps()} />
-                  <Upload className={`w-10 h-10 mx-auto mb-3 transition-transform duration-300 ${isDragActive ? 'text-indigo-600 scale-110' : 'text-slate-400 hover:scale-105'}`} />
-                  <p className="text-sm text-slate-600 font-semibold">Drop PDF/Images anywhere or <span className="text-indigo-600 underline">browse files</span></p>
+                  <Upload className={`w-10 h-10 mx-auto mb-3 transition-transform duration-300 ${isDragActive ? 'text-black scale-110' : 'text-slate-400 hover:scale-105'}`} />
+                  <p className="text-sm text-slate-600 font-semibold">Drop PDF/Images anywhere or <span className="text-black underline">browse files</span></p>
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Supports PDF, JPEG, JPG, PNG files</p>
                 </div>
                 
@@ -612,17 +612,17 @@ const Builder: React.FC = () => {
                   <div className="flex flex-wrap gap-2 pt-1">
                     {files.map((f, i) => (
                       <span key={i} className="px-3 py-1.5 bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-[10px] font-bold flex items-center gap-2 shadow-xs transition-colors hover:bg-slate-200">
-                        {f.name} <Trash2 className="w-3 h-3 text-slate-400 hover:text-rose-600 cursor-pointer transition-colors" onClick={() => setFiles(files.filter((_, idx) => idx !== i))} />
+                        {f.name} <Trash2 className="w-3 h-3 text-slate-400 hover:text-black cursor-pointer transition-colors" onClick={() => setFiles(files.filter((_, idx) => idx !== i))} />
                       </span>
                     ))}
                   </div>
                 )}
 
-                <textarea value={inputText} onChange={e => setInputText(e.target.value)} placeholder="Or paste quotation text content here..." className="w-full h-32 px-4 py-3 bg-slate-50/50 border border-slate-200 focus:border-indigo-500 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/10 text-slate-800 font-medium transition-all" />
+                <textarea value={inputText} onChange={e => setInputText(e.target.value)} placeholder="Or paste quotation text content here..." className="w-full h-32 px-4 py-3 bg-slate-50/50 border border-slate-200 focus:border-black rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-black/5 text-slate-800 font-medium transition-all" />
 
                 <div className="flex gap-3">
                   <div className="flex flex-col gap-2 flex-1">
-                    <button onClick={handleExtract} disabled={isExtracting || (!inputText && !files.length)} className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-blue-500 hover:from-indigo-700 hover:to-blue-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-md shadow-indigo-100 hover:shadow-indigo-200 cursor-pointer active:scale-[0.98]">
+                    <button onClick={handleExtract} disabled={isExtracting || (!inputText && !files.length)} className="w-full py-3.5 bg-black hover:bg-slate-800 text-white rounded-xl font-bold text-xs uppercase tracking-widest disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-md shadow-slate-100 hover:shadow-slate-200 cursor-pointer active:scale-[0.98]">
                       {isExtracting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />} Extract Quotation Data
                     </button>
                   </div>
@@ -638,7 +638,7 @@ const Builder: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-5 border-b border-slate-100 bg-slate-50/30 flex justify-between items-center print-hidden">
             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Comparison Summary Grid</h2>
             <div className="flex items-center gap-4">
@@ -649,7 +649,7 @@ const Builder: React.FC = () => {
                   type="checkbox" 
                   checked={data.multiplyByWeight || false} 
                   onChange={e => setData(prev => ({ ...prev, multiplyByWeight: e.target.checked }))} 
-                  className="w-4.5 h-4.5 accent-indigo-600 rounded-lg border-slate-300 cursor-pointer"
+                  className="w-4.5 h-4.5 accent-black rounded-lg border-slate-300 cursor-pointer"
                 />
               </div>
               <div className="flex items-center gap-2.5">
@@ -661,10 +661,10 @@ const Builder: React.FC = () => {
                   step="0.5"
                   value={fontSize} 
                   onChange={e => setFontSize(parseFloat(e.target.value))} 
-                  className="w-32 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                  className="w-32 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-black"
                 />
               </div>
-              {isExtracting && <span className="flex items-center gap-2 text-indigo-600 animate-pulse text-xs font-bold"><Loader2 className="w-3 h-3 animate-spin" /> AI Analyzing...</span>}
+              {isExtracting && <span className="flex items-center gap-2 text-black animate-pulse text-xs font-bold"><Loader2 className="w-3 h-3 animate-spin" /> AI Analyzing...</span>}
             </div>
           </div>
           <div className="p-5">

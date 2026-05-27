@@ -660,11 +660,14 @@ async function startServer() {
         take: 50
       });
       res.json(pos);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch POs" });
+    } catch (error: any) {
+      console.error("[Backend] Error fetching POs:", error.message || error);
+      res.status(500).json({ 
+        error: "Failed to fetch POs", 
+        details: error.message || String(error) 
+      });
     }
   });
-
   app.post("/api/po", authenticateToken, async (req, res) => {
     try {
       const { id, created_at, ...data } = req.body;

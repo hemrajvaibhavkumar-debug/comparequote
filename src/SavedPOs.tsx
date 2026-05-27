@@ -62,21 +62,21 @@ const SavedPOs: React.FC = () => {
     switch (s) {
       case 'APPROVED':
         return (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-900 text-white rounded-full border border-slate-900 shadow-sm">
             <CheckCircle className="w-3.5 h-3.5" />
             <span className="text-[10px] font-black uppercase tracking-wider">Approved</span>
           </div>
         );
       case 'REJECTED':
         return (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-rose-50 text-red-700 rounded-full border border-rose-100">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white text-slate-900 rounded-full border border-slate-900 shadow-sm">
             <XCircle className="w-3.5 h-3.5" />
             <span className="text-[10px] font-black uppercase tracking-wider">Rejected</span>
           </div>
         );
       default:
         return (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full border border-amber-100">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 text-slate-500 rounded-full border border-slate-200 shadow-xs">
             <Clock className="w-3.5 h-3.5" />
             <span className="text-[10px] font-black uppercase tracking-wider">Pending</span>
           </div>
@@ -86,11 +86,11 @@ const SavedPOs: React.FC = () => {
 
   if (!canView) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center bg-white m-8 rounded-2xl border border-black shadow-sm">
-        <ShieldCheck className="w-16 h-16 text-gray-400 mb-4" />
-        <h2 className="text-2xl font-bold text-black uppercase tracking-tight">Access Restricted</h2>
-        <p className="text-gray-500 mt-2 max-w-md">You do not have the 'VIEW_SAVED_POS' permission required to view the Purchase Order database.</p>
-        <Link to="/" className="mt-8 px-6 py-2 bg-black text-white rounded-lg font-bold text-xs uppercase tracking-widest">Back to Dashboard</Link>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center bg-white m-8 rounded-2xl border border-slate-200 shadow-sm">
+        <ShieldCheck className="w-16 h-16 text-slate-400 mb-4" />
+        <h2 className="text-2xl font-bold text-slate-900 uppercase tracking-tight">Access Restricted</h2>
+        <p className="text-slate-500 mt-2 max-w-md font-medium">You do not have the 'VIEW_SAVED_POS' permission required to view the Purchase Order database.</p>
+        <Link to="/" className="mt-8 px-6 py-2 bg-slate-900 text-white rounded-lg font-bold text-xs uppercase tracking-widest shadow-md shadow-slate-200 hover:bg-black transition-all active:scale-95">Back to Dashboard</Link>
       </div>
     );
   }
@@ -105,7 +105,7 @@ const SavedPOs: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50/50 relative pb-24">
       {/* Background ambient blobs */}
-      <div className="ambient-glow ambient-indigo -top-20 -left-20"></div>
+      <div className="ambient-glow bg-slate-200/50 -top-20 -left-20"></div>
 
       {/* Dynamic Full-Width Header */}
       <div className="bg-white/90 backdrop-blur-md border-b border-slate-150/80 sticky top-16 z-10">
@@ -118,18 +118,18 @@ const SavedPOs: React.FC = () => {
               <ArrowLeft className="w-5 h-5 text-slate-600" />
             </button>
             <div>
-              <h1 className="text-2xl font-black bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent tracking-tight uppercase">PO Database</h1>
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight uppercase">PO Database</h1>
               <p className="text-sm text-slate-400 font-semibold mt-0.5">Manage and track all finalized purchase orders</p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative group">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-650 transition-colors" />
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
               <input 
                 type="text"
                 placeholder="Search POs..."
-                className="pl-10 pr-4 py-2.5 bg-slate-50/60 border border-slate-200 focus:border-indigo-500 rounded-xl w-full md:w-72 focus:outline-none focus:ring-2 focus:ring-indigo-500/15 text-slate-800 transition-all text-sm font-medium"
+                className="pl-10 pr-4 py-2.5 bg-slate-50/60 border border-slate-200 focus:border-slate-900 rounded-xl w-full md:w-72 focus:outline-none focus:ring-2 focus:ring-slate-900/10 text-slate-800 transition-all text-sm font-medium"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
@@ -142,7 +142,7 @@ const SavedPOs: React.FC = () => {
                   onClick={() => setStatusFilter(f)}
                   className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
                     statusFilter === f 
-                      ? 'bg-white text-indigo-650 shadow-xs border border-slate-100' 
+                      ? 'bg-white text-slate-900 shadow-xs border border-slate-100' 
                       : 'text-slate-400 hover:text-slate-600'
                   }`}
                 >
@@ -158,7 +158,7 @@ const SavedPOs: React.FC = () => {
       <div className="p-6">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-32 gap-4">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-slate-900"></div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Loading Records...</p>
           </div>
         ) : filteredPOs.length > 0 ? (
@@ -179,7 +179,7 @@ const SavedPOs: React.FC = () => {
                     <tr key={po.id} className="hover:bg-slate-50/50 transition-colors group">
                       <td className="px-6 py-5">
                         <div className="flex flex-col">
-                          <span className="font-extrabold text-slate-800 group-hover:text-indigo-600 transition-colors">#{po.po_no}</span>
+                          <span className="font-extrabold text-slate-800 group-hover:text-slate-900 transition-colors uppercase tracking-tight">#{po.po_no}</span>
                           <span className="text-[10px] font-bold text-slate-400 uppercase mt-1 flex items-center gap-1.5">
                             <Clock className="w-3.5 h-3.5" /> {new Date(po.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                           </span>
@@ -205,7 +205,7 @@ const SavedPOs: React.FC = () => {
                           {getStatusBadge(po.status || 'PENDING')}
                           {po.status === 'REJECTED' && po.rejection_remarks && (
                             <div className="max-w-[150px] text-center">
-                              <p className="text-[9px] font-bold text-rose-500 uppercase tracking-tighter mb-0.5">Reason:</p>
+                              <p className="text-[9px] font-bold text-slate-900 uppercase tracking-tighter mb-0.5 underline decoration-slate-300">Reason:</p>
                               <p className="text-[10px] text-slate-500 font-medium leading-tight italic line-clamp-2" title={po.rejection_remarks}>
                                 "{po.rejection_remarks}"
                               </p>
@@ -218,7 +218,7 @@ const SavedPOs: React.FC = () => {
                           {po.status !== 'APPROVED' && (
                             <button 
                               onClick={() => navigate(`/po-maker?edit=${po.id}`)}
-                              className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50/50 border border-transparent hover:border-indigo-100 rounded-xl transition-all shadow-none hover:shadow-xs cursor-pointer"
+                              className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 border border-transparent hover:border-slate-200 rounded-xl transition-all shadow-none hover:shadow-xs cursor-pointer"
                               title="Edit Revision"
                             >
                               <Edit className="w-4.5 h-4.5" />
@@ -226,7 +226,7 @@ const SavedPOs: React.FC = () => {
                           )}
                           <Link 
                             to={`/approve-po/${po.id}`}
-                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-100 rounded-xl transition-all shadow-none hover:shadow-xs"
+                            className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 border border-transparent hover:border-slate-200 rounded-xl transition-all shadow-none hover:shadow-xs"
                             title="View Document"
                           >
                             <Eye className="w-4.5 h-4.5" />
@@ -234,7 +234,7 @@ const SavedPOs: React.FC = () => {
                           {po.status !== 'APPROVED' && (
                             <button 
                               onClick={() => handleDelete(po.id!)}
-                              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-100 rounded-xl transition-all shadow-none hover:shadow-xs cursor-pointer"
+                              className="p-2 text-slate-400 hover:text-black hover:bg-slate-100 border border-transparent hover:border-slate-200 rounded-xl transition-all shadow-none hover:shadow-xs cursor-pointer"
                               title="Delete PO"
                             >
                               <Trash2 className="w-4.5 h-4.5" />
@@ -258,7 +258,7 @@ const SavedPOs: React.FC = () => {
             </div>
             <h3 className="text-xl font-bold text-slate-800 uppercase tracking-tight">No Records Found</h3>
             <p className="text-slate-400 mt-2 font-semibold text-sm">Try adjusting your filters or search terms.</p>
-            <Link to="/po-maker" className="mt-8 inline-flex items-center gap-2 px-6 py-3 bg-indigo-650 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-md shadow-indigo-100 cursor-pointer active:scale-95">
+            <Link to="/po-maker" className="mt-8 inline-flex items-center gap-2 px-6 py-3 bg-slate-900 hover:bg-black text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg shadow-slate-200 cursor-pointer active:scale-95">
               Create New PO
             </Link>
           </div>
@@ -274,7 +274,7 @@ const SavedPOs: React.FC = () => {
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-black uppercase text-slate-400 tracking-tighter">Combined Value</span>
-            <div className="flex items-center text-sm font-black text-emerald-400">
+            <div className="flex items-center text-sm font-black text-white">
                <IndianRupee className="w-3.5 h-3.5" />
                {filteredPOs.reduce((acc, po) => acc + (Number(po.total_amount) || 0), 0).toLocaleString('en-IN')}
             </div>

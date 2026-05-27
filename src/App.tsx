@@ -47,12 +47,12 @@ function AppContent() {
     return location.pathname.startsWith(path);
   };
 
-  const navLinkStyle = (path: string, colorClass = 'indigo') => {
-    const active = isActive(path);
-    return `px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-1.5 border border-transparent ${
+  const navLinkStyle = (path: string, colorClass = 'slate', customActive?: boolean) => {
+    const active = customActive !== undefined ? customActive : isActive(path);
+    return `px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-1.5 border ${
       active
-        ? `bg-indigo-50 text-indigo-600 border-indigo-100/50 shadow-xs`
-        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+        ? `bg-slate-100/80 text-slate-900 border-slate-200 shadow-sm`
+        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent'
     }`;
   };
 
@@ -64,32 +64,32 @@ function AppContent() {
             <div className="flex justify-between h-16">
               <div className="flex items-center gap-6">
                 <Link to="/" className="flex items-center gap-2.5 font-bold text-xl tracking-tight text-slate-900 hover:opacity-90 transition-opacity">
-                  <span className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-blue-500 flex items-center justify-center text-white shadow-md shadow-indigo-200">
+                  <span className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-md shadow-slate-200">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2.5"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>
                   </span>
                   <span className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent font-black tracking-tight">QuoteCompare</span>
                 </Link>
                 
                 <div className="hidden sm:flex space-x-1.5 ml-4 items-center">
-                  <Link to="/" className={navLinkStyle('/', 'indigo')}>Compare</Link>
-                  <Link to="/saved" className={isActive('/saved') && !isActive('/saved-pos') ? 'px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-1.5 border bg-indigo-50 text-indigo-600 border-indigo-100/50 shadow-xs' : 'px-3.5 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-transparent'}>Saved Tables</Link>
-                  
-                  <div className="h-5 w-px bg-slate-200 mx-2"></div>
-                  
-                  <Link to="/po-maker" className={navLinkStyle('/po-maker', 'indigo')}>
-                    <FileText className="w-4 h-4" /> PO Maker
-                  </Link>
-                  <Link to="/saved-pos" className={navLinkStyle('/saved-pos', 'indigo')}>
-                    <Database className="w-4 h-4" /> Saved POs
-                  </Link>
-                  
                   {(user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO') || user?.permissions.includes('VIEW_APPROVAL_HUB')) && (
-                    <Link to="/purchase-head" className={navLinkStyle('/purchase-head', 'blue')}>
+                    <Link to="/purchase-head" className={navLinkStyle('/purchase-head')}>
                       <ShieldCheck className="w-4 h-4" /> Approval Hub
                     </Link>
                   )}
+
+                  <Link to="/" className={navLinkStyle('/')}>Compare</Link>
+                  <Link to="/saved" className={navLinkStyle('/saved', 'slate', isActive('/saved') && !isActive('/saved-pos'))}>Saved Tables</Link>
                   
-                  <Link to="/settings" className={navLinkStyle('/settings', 'indigo')}>
+                  <div className="h-5 w-px bg-slate-200 mx-2"></div>
+                  
+                  <Link to="/po-maker" className={navLinkStyle('/po-maker')}>
+                    <FileText className="w-4 h-4" /> PO Maker
+                  </Link>
+                  <Link to="/saved-pos" className={navLinkStyle('/saved-pos')}>
+                    <Database className="w-4 h-4" /> Saved POs
+                  </Link>
+                  
+                  <Link to="/settings" className={navLinkStyle('/settings')}>
                     <SettingsIcon className="w-4 h-4" /> Settings
                   </Link>
                 </div>
@@ -97,7 +97,7 @@ function AppContent() {
               <div className="flex items-center">
                  <button 
                    onClick={logout}
-                   className="px-4 py-1.5 rounded-xl text-[10px] font-black text-slate-600 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-100 transition-all duration-200 uppercase tracking-wider cursor-pointer shadow-xs hover:shadow-sm"
+                   className="px-4 py-1.5 rounded-xl text-[10px] font-black text-slate-600 hover:text-white hover:bg-slate-900 border border-slate-200 hover:border-slate-900 transition-all duration-200 uppercase tracking-wider cursor-pointer shadow-xs hover:shadow-sm"
                  >
                    Logout
                  </button>
