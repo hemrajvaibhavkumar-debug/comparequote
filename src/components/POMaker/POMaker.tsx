@@ -5,6 +5,7 @@ import { PurchaseOrder, CompanySettings, TermsTemplate, VendorMaster } from '../
 import { Save, ArrowLeft, ShieldCheck, Loader2 } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useApiCache } from '../../context/ApiCacheContext';
 import * as htmlToImage from 'html-to-image';
 import jsPDF from 'jspdf';
 
@@ -18,6 +19,13 @@ const POMaker: React.FC = () => {
   const [isExporting, setIsExporting] = useState(false);
   
   const { token, user, logout } = useAuth();
+  const {
+    fetchCompanySettings: getCompanySettingsFromCache,
+    fetchTermsTemplates: getTermsTemplatesFromCache,
+    fetchVendors: getVendorsFromCache,
+    fetchComparisons: getComparisonsFromCache,
+    invalidatePOs
+  } = useApiCache();
   const canAccess = user?.role === 'SUPERADMIN' || user?.permissions.includes('ACCESS_PO_MAKER');
 
   const [po, setPo] = useState<PurchaseOrder>(() => {
@@ -139,60 +147,37 @@ const POMaker: React.FC = () => {
   };
 
   const fetchSettings = async () => {
-    const res = await fetch('/api/settings/company', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (res.status === 401 || res.status === 403) {
-      logout();
-      return;
+    try {
+      const data = await getCompanySettingsFromCache();
+      setSettings(data);
+    } catch (e) {
+      console.error("Error fetching settings", e);
     }
-    const data = await res.json();
-    setSettings(data);
   };
 
   const fetchTemplates = async () => {
-    const res = await fetch('/api/settings/terms', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (res.status === 401 || res.status === 403) {
-      logout();
-      return;
-    }
-    if (res.ok) {
-      const data = await res.json();
+    try {
+      const data = await getTermsTemplatesFromCache();
       setTemplates(Array.isArray(data) ? data : []);
-    } else {
+    } catch (e) {
+      console.error("Error fetching templates", e);
       setTemplates([]);
     }
   };
 
   const fetchVendors = async () => {
-    const res = await fetch('/api/settings/vendors', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (res.status === 401 || res.status === 403) {
-      logout();
-      return;
-    }
-    if (res.ok) {
-      const data = await res.json();
+    try {
+      const data = await getVendorsFromCache();
       setVendors(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error("Error fetching vendors", e);
     }
   };
 
   const fetchComparisons = async () => {
     try {
-      const res = await fetch('/api/comparisons?limit=100', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.status === 401 || res.status === 403) {
-        logout();
-        return;
-      }
-      if (res.ok) {
-        const data = await res.json();
-        setComparisons(data);
-      }
+      const data = await getComparisonsFromCache();
+      setComparisons(data);
     } catch (e) {
       console.error("Error fetching comparisons", e);
     }
@@ -278,6 +263,7 @@ const POMaker: React.FC = () => {
       }
 
       if (res.ok) {
+        invalidatePOs();
         alert(`PO ${editId ? 'updated' : 'saved'} successfully with generated PDF snapshot!`);
         if (!editId) {
           localStorage.removeItem('po_maker_draft');

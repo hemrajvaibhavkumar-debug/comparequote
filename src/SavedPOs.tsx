@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { PurchaseOrder } from './types';
 import { FileText, Eye, Edit, Trash2, Search, ArrowLeft, ShieldCheck, CheckCircle, XCircle, Clock, Filter, ChevronRight, IndianRupee } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
+import { useApiCache } from './context/ApiCacheContext';
 
 const SavedPOs: React.FC = () => {
   const [pos, setPos] = useState<PurchaseOrder[]>([]);
@@ -12,28 +13,20 @@ const SavedPOs: React.FC = () => {
   const navigate = useNavigate();
   
   const { token, user, logout } = useAuth();
+  const { fetchPOs: fetchPOsFromCache, invalidatePOs } = useApiCache();
   const canView = user?.role === 'SUPERADMIN' || user?.permissions.includes('VIEW_SAVED_POS');
 
   useEffect(() => {
     if (canView) {
-      fetchPOs();
+      fetchPOs(false);
     }
   }, [canView]);
 
-  const fetchPOs = async () => {
+  const fetchPOs = async (forceRefresh = false) => {
     try {
       setLoading(true);
-      const res = await fetch('/api/po', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.status === 401 || res.status === 403) {
-        logout();
-        return;
-      }
-      if (res.ok) {
-        const data = await res.json();
-        setPos(data);
-      }
+      const data = await fetchPOsFromCache(forceRefresh);
+      setPos(data);
     } catch (err) {
       console.error('Failed to fetch POs', err);
     } finally {
@@ -50,6 +43,7 @@ const SavedPOs: React.FC = () => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
+        invalidatePOs();
         setPos(pos.filter(po => po.id !== id));
       }
     } catch (err) {

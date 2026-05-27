@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CompanySettings, TermsTemplate, VendorMaster } from '../../types';
 import { Save, Plus, Trash2, Building2, Users, ShieldCheck, FileText } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useApiCache } from '../../context/ApiCacheContext';
 import UserManagement from './UserManagement';
 
 const POSettings: React.FC = () => {
@@ -17,6 +18,16 @@ const POSettings: React.FC = () => {
   const [editingRole, setEditingRole] = useState<{id: number, name: string} | null>(null);
   
   const { token, user } = useAuth();
+  const {
+    fetchCompanySettings: getCompanySettingsFromCache,
+    fetchTermsTemplates: getTermsTemplatesFromCache,
+    fetchVendors: getVendorsFromCache,
+    fetchRoles: getRolesFromCache,
+    invalidateCompanySettings,
+    invalidateTermsTemplates,
+    invalidateVendors,
+    invalidateRoles
+  } = useApiCache();
   const isSuperAdmin = user?.role === 'SUPERADMIN';
 
   useEffect(() => {
@@ -26,55 +37,40 @@ const POSettings: React.FC = () => {
     fetchRoles();
   }, []);
 
-  const fetchSettings = async () => {
-    const res = await fetch('/api/settings/company', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const data = await res.json();
-    setSettings(data);
-    setLoading(false);
+  const fetchSettings = async (forceRefresh = false) => {
+    try {
+      const data = await getCompanySettingsFromCache(forceRefresh);
+      setSettings(data);
+      setLoading(false);
+    } catch (e) {
+      console.error("Failed to fetch settings:", e);
+      setLoading(false);
+    }
   };
 
-  const fetchTemplates = async () => {
+  const fetchTemplates = async (forceRefresh = false) => {
     try {
-      const res = await fetch('/api/settings/terms', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setTemplates(Array.isArray(data) ? data : []);
-      } else {
-        setTemplates([]);
-      }
+      const data = await getTermsTemplatesFromCache(forceRefresh);
+      setTemplates(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Failed to fetch templates:", error);
       setTemplates([]);
     }
   };
 
-  const fetchVendors = async () => {
+  const fetchVendors = async (forceRefresh = false) => {
     try {
-      const res = await fetch('/api/settings/vendors', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setVendors(Array.isArray(data) ? data : []);
-      }
+      const data = await getVendorsFromCache(forceRefresh);
+      setVendors(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Failed to fetch vendors:", error);
     }
   };
 
-  const fetchRoles = async () => {
+  const fetchRoles = async (forceRefresh = false) => {
     try {
-      const res = await fetch('/api/roles', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setRoles(data);
-      }
+      const data = await getRolesFromCache(forceRefresh);
+      setRoles(data);
     } catch (error) {
       console.error("Failed to fetch roles:", error);
     }
@@ -91,7 +87,11 @@ const POSettings: React.FC = () => {
       },
       body: JSON.stringify(settings)
     });
-    if (res.ok) alert('Settings saved successfully!');
+    if (res.ok) {
+      invalidateCompanySettings();
+      fetchSettings(true);
+      alert('Settings saved successfully!');
+    }
     else alert('Failed to save settings');
   };
 
@@ -106,7 +106,8 @@ const POSettings: React.FC = () => {
       body: JSON.stringify(newTemplate)
     });
     setNewTemplate({});
-    fetchTemplates();
+    invalidateTermsTemplates();
+    fetchTemplates(true);
   };
 
   const handleDeleteTemplate = async (id: number) => {
@@ -115,7 +116,8 @@ const POSettings: React.FC = () => {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }
     });
-    fetchTemplates();
+    invalidateTermsTemplates();
+    fetchTemplates(true);
   };
 
   const handleAddVendor = async () => {
@@ -129,7 +131,8 @@ const POSettings: React.FC = () => {
       body: JSON.stringify(newVendor)
     });
     setNewVendor({});
-    fetchVendors();
+    invalidateVendors();
+    fetchVendors(true);
   };
 
   const handleDeleteVendor = async (id: number) => {
@@ -138,7 +141,8 @@ const POSettings: React.FC = () => {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }
     });
-    fetchVendors();
+    invalidateVendors();
+    fetchVendors(true);
   };
 
   const handleAddRole = async () => {
@@ -165,7 +169,8 @@ const POSettings: React.FC = () => {
       });
     }
     setNewRole('');
-    fetchRoles();
+    invalidateRoles();
+    fetchRoles(true);
   };
 
   const handleDeleteRole = async (id: number) => {
@@ -179,7 +184,8 @@ const POSettings: React.FC = () => {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }
     });
-    fetchRoles();
+    invalidateRoles();
+    fetchRoles(true);
   };
 
   if (loading) return <div className="p-8 text-center text-black">Loading settings...</div>;

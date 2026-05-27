@@ -10,6 +10,7 @@ import PurchaseHeadDashboard from './PurchaseHeadDashboard';
 import POApprovalView from './POApprovalView';
 import { Settings as SettingsIcon, FileText, Database, ShieldCheck } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ApiCacheProvider } from './context/ApiCacheContext';
 
 const ProtectedRoute = ({ children, permission }: { children: React.ReactNode, permission?: string }) => {
   const { isAuthenticated, user } = useAuth();
@@ -128,9 +129,11 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <AppContent />
-      </BrowserRouter>
+      <ApiCacheProvider>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <AppContent />
+        </BrowserRouter>
+      </ApiCacheProvider>
     </AuthProvider>
   );
 }

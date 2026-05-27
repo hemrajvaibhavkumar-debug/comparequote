@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { Search, Filter, Calendar, User, Factory, ChevronRight, FileText, Trash2, Eye, ShieldCheck } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
+import { useApiCache } from './context/ApiCacheContext';
 
 export default function SavedTables() {
   const [tables, setTables] = useState<any[]>([]);
@@ -11,28 +12,18 @@ export default function SavedTables() {
   const [filterPreparedBy, setFilterPreparedBy] = useState('');
   
   const { token, user, logout } = useAuth();
+  const { fetchComparisons, invalidateComparisons } = useApiCache();
   const canView = user?.role === 'SUPERADMIN' || user?.permissions.includes('VIEW_SAVED_TABLES');
 
   useEffect(() => {
     if (canView) {
-      fetchTables();
+      fetchTables(false);
     }
   }, [canView]);
 
-  const fetchTables = () => {
+  const fetchTables = (forceRefresh = false) => {
     setLoading(true);
-    fetch('/api/comparisons', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-      .then(res => {
-        if (res.status === 401 || res.status === 403) {
-          logout();
-          throw new Error("Session expired. Please log in again.");
-        }
-        return res.json();
-      })
+    fetchComparisons(forceRefresh)
       .then(data => {
         if (Array.isArray(data)) {
           // Sort by doc_no descending, handling the serial number
@@ -73,6 +64,7 @@ export default function SavedTables() {
         }
       });
       if (res.ok) {
+        invalidateComparisons();
         setTables(prev => prev.filter(t => t.id !== id));
       } else {
         alert("Failed to delete.");

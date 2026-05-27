@@ -8,6 +8,7 @@ import * as Papa from 'papaparse';
 import { jsPDF } from 'jspdf';
 import * as htmlToImage from 'html-to-image';
 import { useAuth } from './context/AuthContext';
+import { useApiCache } from './context/ApiCacheContext';
 
 declare const google: any;
 
@@ -16,6 +17,7 @@ interface DBPlant { id: number; name: string; location?: string; }
 
 const Builder: React.FC = () => {
   const { token, user, logout } = useAuth();
+  const { fetchMasters: getMastersFromCache, invalidateMasters, invalidateComparisons } = useApiCache();
   const canExtract = user?.role === 'SUPERADMIN' || user?.permissions.includes('ACCESS_COMPARE');
   const canManageSettings = user?.role === 'SUPERADMIN' || user?.permissions.includes('MANAGE_SETTINGS');
 
@@ -115,18 +117,9 @@ const Builder: React.FC = () => {
     if (savedFontSize) setFontSize(parseInt(savedFontSize));
   }, []);
 
-  const fetchMasters = async () => {
+  const fetchMasters = async (forceRefresh = false) => {
     try {
-      const res = await fetch('/api/masters', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (res.status === 401 || res.status === 403) {
-        logout();
-        return;
-      }
-
-      const d = await res.json();
+      const d = await getMastersFromCache(forceRefresh);
       if (d.executives) setDbExecutives(d.executives);
       if (d.plants) setDbPlants(d.plants);
     } catch (e) {
@@ -148,7 +141,8 @@ const Builder: React.FC = () => {
       if (res.ok) {
         setNewPreparedBy('');
         setNewPreparedByDesignation('');
-        fetchMasters();
+        invalidateMasters();
+        fetchMasters(true);
       }
     } catch (e) { alert("Error adding executive"); }
   };
@@ -160,7 +154,10 @@ const Builder: React.FC = () => {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (res.ok) fetchMasters();
+      if (res.ok) {
+        invalidateMasters();
+        fetchMasters(true);
+      }
     } catch (e) { alert("Error deleting executive"); }
   };
 
@@ -178,7 +175,8 @@ const Builder: React.FC = () => {
       if (res.ok) {
         setNewPlantName('');
         setNewPlantLocation('');
-        fetchMasters();
+        invalidateMasters();
+        fetchMasters(true);
       }
     } catch (e) { alert("Error adding plant"); }
   };
@@ -190,7 +188,10 @@ const Builder: React.FC = () => {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (res.ok) fetchMasters();
+      if (res.ok) {
+        invalidateMasters();
+        fetchMasters(true);
+      }
     } catch (e) { alert("Error deleting plant"); }
   };
 
@@ -240,6 +241,7 @@ const Builder: React.FC = () => {
         const errData = await res.json();
         throw new Error(errData.error || "Failed to save.");
       }
+      invalidateComparisons();
       alert("Successfully saved to database!");
     } catch (err: any) {
       alert(err.message);

@@ -10,6 +10,7 @@ import { ComparisonDataSchema, SaveComparisonSchema } from "./src/schemas.ts";
 import jwt from "jsonwebtoken";
 import { rateLimit } from "express-rate-limit";
 import bcrypt from "bcryptjs";
+import { dbCache } from "./src/services/dbCache.ts";
 
 import OpenAI from "openai";
 import pdf from "pdf-extraction";
@@ -169,9 +170,14 @@ async function startServer() {
   // User Management API (SuperAdmin Only)
   app.get("/api/users", authenticateToken, requirePermission("MANAGE_USERS"), async (req, res) => {
     try {
+      const cacheKey = "users:list";
+      const cached = dbCache.get<any[]>(cacheKey);
+      if (cached) return res.json(cached);
+
       const users = await prisma.user.findMany({
         select: { id: true, username: true, role: true, permissions: true, created_at: true }
       });
+      dbCache.set(cacheKey, users);
       res.json(users);
     } catch (e) {
       res.status(500).json({ error: "Failed to fetch users" });
@@ -185,6 +191,7 @@ async function startServer() {
       const user = await prisma.user.create({
         data: { username, password: hashedPassword, role, permissions }
       });
+      dbCache.delete("users:list");
       res.json({ success: true, id: user.id });
     } catch (e) {
       res.status(500).json({ error: "Failed to create user. Username might be taken." });
@@ -202,6 +209,7 @@ async function startServer() {
         where: { id: parseInt(req.params.id) },
         data: updateData
       });
+      dbCache.delete("users:list");
       res.json({ success: true });
     } catch (e) {
       res.status(500).json({ error: "Failed to update user" });
@@ -215,6 +223,7 @@ async function startServer() {
       if (user?.role === 'SUPERADMIN') return res.status(403).json({ error: "Cannot delete SuperAdmin" });
       
       await prisma.user.delete({ where: { id } });
+      dbCache.delete("users:list");
       res.json({ success: true });
     } catch (e) {
       res.status(500).json({ error: "Failed to delete user" });
@@ -427,11 +436,17 @@ async function startServer() {
   
   app.get("/api/masters", authenticateToken, async (req, res) => {
     try {
+      const cacheKey = "masters:all";
+      const cached = dbCache.get<any>(cacheKey);
+      if (cached) return res.json(cached);
+
       const [executives, plants] = await Promise.all([
         prisma.executive.findMany({ orderBy: { name: 'asc' } }),
         prisma.plant.findMany({ orderBy: { name: 'asc' } })
       ]);
-      res.json({ executives, plants });
+      const result = { executives, plants };
+      dbCache.set(cacheKey, result);
+      res.json(result);
     } catch (err) {
       res.status(500).json({ error: String(err) });
     }
@@ -441,6 +456,7 @@ async function startServer() {
     try {
       const { name, designation } = req.body;
       const executive = await prisma.executive.create({ data: { name, designation } });
+      dbCache.delete("masters:all");
       res.json(executive);
     } catch (err) {
       res.status(500).json({ error: String(err) });
@@ -450,6 +466,7 @@ async function startServer() {
   app.delete("/api/executives/:id", authenticateToken, async (req, res) => {
     try {
       await prisma.executive.delete({ where: { id: parseInt(req.params.id) } });
+      dbCache.delete("masters:all");
       res.json({ success: true });
     } catch (err) {
       res.status(500).json({ error: String(err) });
@@ -460,6 +477,7 @@ async function startServer() {
     try {
       const { name, location } = req.body;
       const plant = await prisma.plant.create({ data: { name, location } });
+      dbCache.delete("masters:all");
       res.json(plant);
     } catch (err) {
       res.status(500).json({ error: String(err) });
@@ -471,6 +489,10 @@ async function startServer() {
   // Company Settings
   app.get("/api/settings/company", authenticateToken, async (req, res) => {
     try {
+      const cacheKey = "settings:company";
+      const cached = dbCache.get<any>(cacheKey);
+      if (cached) return res.json(cached);
+
       let settings = await prisma.companySettings.findFirst();
       if (!settings) {
         settings = await prisma.companySettings.create({ 
@@ -488,6 +510,7 @@ async function startServer() {
           } 
         });
       }
+      dbCache.set(cacheKey, settings);
       res.json(settings);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch settings" });
@@ -501,6 +524,7 @@ async function startServer() {
         update: req.body,
         create: { ...req.body, id: 1 },
       });
+      dbCache.delete("settings:company");
       res.json(settings);
     } catch (error) {
       res.status(500).json({ error: "Failed to update settings" });
@@ -510,7 +534,12 @@ async function startServer() {
   // Terms Templates
   app.get("/api/settings/terms", authenticateToken, async (req, res) => {
     try {
+      const cacheKey = "settings:terms";
+      const cached = dbCache.get<any[]>(cacheKey);
+      if (cached) return res.json(cached);
+
       const templates = await prisma.termsTemplate.findMany();
+      dbCache.set(cacheKey, templates);
       res.json(templates);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch templates" });
@@ -520,6 +549,7 @@ async function startServer() {
   app.post("/api/settings/terms", authenticateToken, async (req, res) => {
     try {
       const template = await prisma.termsTemplate.create({ data: req.body });
+      dbCache.delete("settings:terms");
       res.json(template);
     } catch (error) {
       res.status(500).json({ error: "Failed to create template" });
@@ -529,6 +559,7 @@ async function startServer() {
   app.delete("/api/settings/terms/:id", authenticateToken, async (req, res) => {
     try {
       await prisma.termsTemplate.delete({ where: { id: Number(req.params.id) } });
+      dbCache.delete("settings:terms");
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to delete template" });
@@ -538,9 +569,14 @@ async function startServer() {
   // Vendors
   app.get("/api/settings/vendors", authenticateToken, async (req, res) => {
     try {
+      const cacheKey = "settings:vendors";
+      const cached = dbCache.get<any[]>(cacheKey);
+      if (cached) return res.json(cached);
+
       const vendors = await prisma.vendorMaster.findMany({
         orderBy: { name: "asc" },
       });
+      dbCache.set(cacheKey, vendors);
       res.json(vendors);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch vendors" });
@@ -550,6 +586,7 @@ async function startServer() {
   app.post("/api/settings/vendors", authenticateToken, async (req, res) => {
     try {
       const vendor = await prisma.vendorMaster.create({ data: req.body });
+      dbCache.delete("settings:vendors");
       res.json(vendor);
     } catch (error) {
       res.status(500).json({ error: "Failed to create vendor" });
@@ -559,6 +596,7 @@ async function startServer() {
   app.delete("/api/settings/vendors/:id", authenticateToken, async (req, res) => {
     try {
       await prisma.vendorMaster.delete({ where: { id: Number(req.params.id) } });
+      dbCache.delete("settings:vendors");
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to delete vendor" });
@@ -626,6 +664,10 @@ async function startServer() {
   app.get("/api/po/latest", authenticateToken, async (req, res) => {
     try {
       const { version } = req.query;
+      const cacheKey = `po:latest:${version}`;
+      const cached = dbCache.get<any>(cacheKey);
+      if (cached !== null) return res.json(cached);
+
       const now = new Date();
       const year = now.getFullYear();
       const month = now.getMonth();
@@ -647,7 +689,9 @@ async function startServer() {
         },
         select: { po_no: true }
       });
-      res.json({ latest: latest?.po_no || null });
+      const result = { latest: latest?.po_no || null };
+      dbCache.set(cacheKey, result);
+      res.json(result);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch latest PO" });
     }
@@ -655,10 +699,15 @@ async function startServer() {
 
   app.get("/api/po", authenticateToken, async (req, res) => {
     try {
+      const cacheKey = "po:list";
+      const cached = dbCache.get<any[]>(cacheKey);
+      if (cached) return res.json(cached);
+
       const pos = await prisma.purchaseOrder.findMany({
         orderBy: { created_at: "desc" },
         take: 50
       });
+      dbCache.set(cacheKey, pos);
       res.json(pos);
     } catch (error: any) {
       console.error("[Backend] Error fetching POs:", error.message || error);
@@ -673,6 +722,7 @@ async function startServer() {
       const { id, created_at, ...data } = req.body;
       if (data.date) data.date = new Date(data.date);
       const po = await prisma.purchaseOrder.create({ data });
+      dbCache.clearPattern("po:");
       res.json(po);
     } catch (error: any) {
       console.error("[Backend] PO Save Error:", error);
@@ -688,8 +738,13 @@ async function startServer() {
 
   app.get("/api/po/:id", authenticateToken, async (req, res) => {
     try {
+      const cacheKey = `po:detail:${req.params.id}`;
+      const cached = dbCache.get<any>(cacheKey);
+      if (cached) return res.json(cached);
+
       const po = await prisma.purchaseOrder.findUnique({ where: { id: Number(req.params.id) } });
       if (!po) return res.status(404).json({ error: "PO not found" });
+      dbCache.set(cacheKey, po);
       res.json(po);
     } catch (error) {
       console.error("[Backend] PO Fetch Error:", error);
@@ -714,6 +769,7 @@ async function startServer() {
           rejection_remarks: null
         }
       });
+      dbCache.clearPattern("po:");
       res.json(po);
     } catch (error) {
       console.error("[Backend] PO Update Error:", error);
@@ -731,6 +787,7 @@ async function startServer() {
       }
 
       await prisma.purchaseOrder.delete({ where: { id } });
+      dbCache.clearPattern("po:");
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to delete PO" });
@@ -760,6 +817,7 @@ async function startServer() {
         where: { id: Number(req.params.id) },
         data: updateData
       });
+      dbCache.clearPattern("po:");
       res.json(po);
     } catch (error) {
       console.error("[Backend] PO Status Update Error:", error);
@@ -811,6 +869,7 @@ async function startServer() {
   app.delete("/api/plants/:id", authenticateToken, async (req, res) => {
     try {
       await prisma.plant.delete({ where: { id: parseInt(req.params.id) } });
+      dbCache.delete("masters:all");
       res.json({ success: true });
     } catch (err) {
       res.status(500).json({ error: String(err) });
@@ -820,7 +879,12 @@ async function startServer() {
   // --- System Roles API ---
   app.get("/api/roles", authenticateToken, async (req, res) => {
     try {
+      const cacheKey = "roles:list";
+      const cached = dbCache.get<any[]>(cacheKey);
+      if (cached) return res.json(cached);
+
       const roles = await prisma.systemRole.findMany({ orderBy: { name: 'asc' } });
+      dbCache.set(cacheKey, roles);
       res.json(roles);
     } catch (e) {
       res.status(500).json({ error: "Failed to fetch roles" });
@@ -831,6 +895,7 @@ async function startServer() {
     try {
       const { name } = req.body;
       const role = await prisma.systemRole.create({ data: { name: name.toUpperCase() } });
+      dbCache.delete("roles:list");
       res.json(role);
     } catch (e) {
       res.status(500).json({ error: "Failed to create role. Name might be taken." });
@@ -844,6 +909,7 @@ async function startServer() {
         where: { id: parseInt(req.params.id) },
         data: { name: name.toUpperCase() }
       });
+      dbCache.delete("roles:list");
       res.json(role);
     } catch (e) {
       res.status(500).json({ error: "Failed to update role" });
@@ -859,6 +925,7 @@ async function startServer() {
         return res.status(403).json({ error: "Cannot delete core system roles" });
       }
       await prisma.systemRole.delete({ where: { id } });
+      dbCache.delete("roles:list");
       res.json({ success: true });
     } catch (e) {
       res.status(500).json({ error: "Failed to delete role" });
@@ -885,6 +952,7 @@ async function startServer() {
           plant_id: plant_id ? parseInt(plant_id) : null
         },
       });
+      dbCache.clearPattern("comparisons:");
       res.json({ success: true, comparison });
     } catch (err) {
       console.error(err);
@@ -894,6 +962,10 @@ async function startServer() {
 
   app.get("/api/comparisons/latest-year", authenticateToken, async (req, res) => {
     try {
+      const cacheKey = "comparisons:latest-year";
+      const cached = dbCache.get<any>(cacheKey);
+      if (cached) return res.json(cached);
+
       const year = new Date().getFullYear();
       const startOfYear = new Date(year, 0, 1);
       const endOfYear = new Date(year, 11, 31, 23, 59, 59);
@@ -911,7 +983,11 @@ async function startServer() {
         }
       });
 
-      if (records.length === 0) return res.json({ latest: null });
+      if (records.length === 0) {
+        const result = { latest: null };
+        dbCache.set(cacheKey, result);
+        return res.json(result);
+      }
 
       // Find the one with the highest numeric serial number
       const latest = records.reduce((prev, curr) => {
@@ -922,7 +998,9 @@ async function startServer() {
         return getSerial(curr.doc_no) > getSerial(prev.doc_no) ? curr : prev;
       });
 
-      res.json({ latest: latest.doc_no });
+      const result = { latest: latest.doc_no };
+      dbCache.set(cacheKey, result);
+      res.json(result);
     } catch (err) {
       res.status(500).json({ error: String(err) });
     }
@@ -931,6 +1009,10 @@ async function startServer() {
   app.get("/api/comparisons", authenticateToken, async (req, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 25;
+      const cacheKey = `comparisons:list:limit_${limit}`;
+      const cached = dbCache.get<any[]>(cacheKey);
+      if (cached) return res.json(cached);
+
       const comparisons = await prisma.comparison.findMany({
         take: limit,
         orderBy: { id: "desc" }, // Sort by ID descending to show most recently created first by default
@@ -939,6 +1021,7 @@ async function startServer() {
           plant: true
         }
       });
+      dbCache.set(cacheKey, comparisons);
       res.json(comparisons);
     } catch (err) {
       console.error(err);
@@ -948,11 +1031,16 @@ async function startServer() {
 
   app.get("/api/comparisons/:id", authenticateToken, async (req, res) => {
     try {
+      const cacheKey = `comparisons:detail:${req.params.id}`;
+      const cached = dbCache.get<any>(cacheKey);
+      if (cached) return res.json(cached);
+
       const comparison = await prisma.comparison.findUnique({
         where: { id: parseInt(req.params.id) },
         include: { executive: true, plant: true }
       });
       if (!comparison) return res.status(404).json({ error: "Not found" });
+      dbCache.set(cacheKey, comparison);
       res.json(comparison);
     } catch (err) {
       console.error(err);
@@ -972,6 +1060,7 @@ async function startServer() {
           plant_id: plant_id ? parseInt(plant_id) : null
         },
       });
+      dbCache.clearPattern("comparisons:");
       return res.status(200).json({ success: true, comparison });
     } catch (err) {
       console.error("PUT Error:", err);
@@ -984,6 +1073,7 @@ async function startServer() {
       await prisma.comparison.delete({
         where: { id: parseInt(req.params.id) },
       });
+      dbCache.clearPattern("comparisons:");
       res.json({ success: true });
     } catch (err) {
       console.error(err);
