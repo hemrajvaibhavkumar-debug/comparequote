@@ -414,8 +414,8 @@ const Builder: React.FC = () => {
       )}
       <div className="max-w-7xl mx-auto space-y-8 relative z-10">
         {/* Background ambient blobs - Neutralized */}
-        <div className="ambient-glow ambient-slate -top-40 -left-40 animate-pulse-slow" style={{ width: '350px', height: '350px' }}></div>
-        <div className="ambient-glow ambient-slate top-60 right-0 animate-pulse-slow" style={{ animationDelay: '3s', width: '350px', height: '350px' }}></div>
+        <div className="ambient-glow ambient-slate -top-40 -left-40 animate-pulse-slow print-hidden" style={{ width: '350px', height: '350px' }}></div>
+        <div className="ambient-glow ambient-slate top-60 right-0 animate-pulse-slow print-hidden" style={{ animationDelay: '3s', width: '350px', height: '350px' }}></div>
 
         <header className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-sm border border-slate-200 print-hidden transition-all">
           <div className="flex items-center gap-4">

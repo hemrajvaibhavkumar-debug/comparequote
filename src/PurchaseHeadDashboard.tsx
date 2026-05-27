@@ -223,7 +223,12 @@ export default function PurchaseHeadDashboard() {
                     <h3 className="text-lg font-extrabold text-slate-850 group-hover:text-slate-900 transition-colors uppercase tracking-tight">
                       PO #{po.po_no}
                     </h3>
-                    <p className="text-sm text-slate-500 mb-4 line-clamp-1 font-semibold uppercase tracking-tight">{po.vendor_name}</p>
+                    <p className="text-sm text-slate-500 mb-2 line-clamp-1 font-semibold uppercase tracking-tight">{po.vendor_name}</p>
+                    {po.created_by_name && (
+                      <p className="text-[10px] font-black text-slate-400 uppercase mb-4 flex items-center gap-1">
+                        <User className="w-3 h-3" /> By: {po.created_by_name}
+                      </p>
+                    )}
                     
                     <div className="space-y-2 pt-4 border-t border-slate-100">
                       <div className="flex items-center gap-2 text-xs text-slate-400 font-semibold uppercase">

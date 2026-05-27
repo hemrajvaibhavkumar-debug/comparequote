@@ -128,6 +128,7 @@ export interface PurchaseOrder {
     manual_notes?: string[];
   };
   total_amount: number;
+  created_by_name?: string;
   status?: 'PENDING' | 'APPROVED' | 'REJECTED' | string;
   rejection_remarks?: string;
   approved_by?: string;

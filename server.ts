@@ -828,7 +828,7 @@ async function startServer() {
   app.post("/api/po/:id/send", authenticateToken, async (req, res) => {
     try {
       const { id } = req.params;
-      const { pdfBase64, poNo, vendorEmail, vendorName, companyName } = req.body;
+      const { pdfBase64, poNo, vendorEmail, vendorName, companyName, date, displayDate, createdBy, ccEmails } = req.body;
       const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
 
       if (!n8nWebhookUrl) {
@@ -839,7 +839,7 @@ async function startServer() {
         return res.status(400).json({ error: "Missing required data (PDF or Vendor Email)" });
       }
 
-      console.log(`[n8n] Sending PO ${poNo} from ${companyName || 'Hemraj'} to vendor ${vendorEmail}...`);
+      console.log(`[n8n] Sending PO ${poNo} from ${companyName || 'Hemraj'} to vendor ${vendorEmail} (CC: ${ccEmails || 'none'})...`);
 
       const response = await fetch(n8nWebhookUrl, {
         method: 'POST',
@@ -849,6 +849,10 @@ async function startServer() {
           vendorEmail,
           vendorName,
           companyName: companyName || "Hemraj Industries",
+          date,
+          displayDate,
+          createdBy,
+          ccEmails,
           pdfBase64
         })
       });

@@ -238,6 +238,15 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
           </div>
           <div className="grid grid-cols-2 gap-4 col-span-2">
             <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">PO Date</label>
+              <input 
+                type="date"
+                className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                value={po.date || ''}
+                onChange={e => setPo({...po, date: e.target.value})}
+              />
+            </div>
+            <div>
               <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Quotation Ref Type</label>
               <select 
                 className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
@@ -473,6 +482,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                     <option value="Mtr">Mtr</option>
                     <option value="PCS">PCS</option>
                     <option value="NOS">NOS</option>
+                    <option value="PAIR">PAIR</option>
                   </select>
                 </div>
                 <div className="col-span-3 md:col-span-3">

@@ -39,8 +39,8 @@ const POMaker: React.FC = () => {
     }
     return {
       po_no: '',
-      date: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }),
-      quote_date: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }),
+      date: new Date().toISOString().split('T')[0],
+      quote_date: new Date().toISOString().split('T')[0],
       quote_ref_type: 'MAIL',
       vendor_name: '',
       version: 'hemraj_rice',
@@ -319,6 +319,21 @@ const POMaker: React.FC = () => {
           >
             RESET DRAFT
           </button>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Created By:</span>
+            <select 
+              className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+              value={po.created_by_name || ''}
+              onChange={e => setPo({...po, created_by_name: e.target.value})}
+              disabled={po.status === 'APPROVED'}
+            >
+              <option value="">-- Employee --</option>
+              <option value="Debasish Samanta">Debasish Samanta</option>
+              <option value="Rakesh Pal">Rakesh Pal</option>
+              <option value="Souritra Ghoshal">Souritra Ghoshal</option>
+              <option value="Rupak Mukherjee">Rupak Mukherjee</option>
+            </select>
+          </div>
           <select 
             className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
             value={po.version}

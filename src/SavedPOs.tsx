@@ -177,6 +177,11 @@ const SavedPOs: React.FC = () => {
                           <span className="text-[10px] font-bold text-slate-400 uppercase mt-1 flex items-center gap-1.5">
                             <Clock className="w-3.5 h-3.5" /> {new Date(po.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                           </span>
+                          {po.created_by_name && (
+                            <span className="text-[9px] font-black text-slate-500 uppercase mt-1 bg-slate-100 px-1.5 py-0.5 rounded-md w-fit border border-slate-200 shadow-xs">
+                              Created By: {po.created_by_name}
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-5">

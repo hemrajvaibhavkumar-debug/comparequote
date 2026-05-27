@@ -89,6 +89,7 @@ model PurchaseOrder {
   items             Json // List of items
   terms             Json? // Snapshot of terms used
   total_amount      Float     @default(0)
+  created_by_name   String?
   status            String    @default("PENDING") // PENDING, APPROVED, REJECTED
   rejection_remarks String?
   approved_by       String?
