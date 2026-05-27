@@ -57,6 +57,10 @@ body {
   background: radial-gradient(circle, var(--color-indigo-400) 0%, transparent 70%);
 }
 
+.ambient-slate {
+  background: radial-gradient(circle, var(--color-slate-400) 0%, transparent 70%);
+}
+
 .ambient-blue {
   background: radial-gradient(circle, var(--color-blue-400) 0%, transparent 70%);
 }

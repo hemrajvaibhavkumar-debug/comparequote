@@ -443,7 +443,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
           }
 
           .comp-table input:focus, .comp-table textarea:focus {
-            background-color: #f0f9ff;
+            background-color: #f8fafc;
           }
 
           .comp-table th {
@@ -462,7 +462,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
           }
 
           .resizer:hover {
-            background-color: #3b82f6;
+            background-color: #000000;
           }
 
           .resizer-h {
@@ -477,7 +477,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
           }
 
           .resizer-h:hover {
-            background-color: #3b82f6;
+            background-color: #000000;
           }
 
           @media print {
