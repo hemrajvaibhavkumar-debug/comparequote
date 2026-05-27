@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { Search, Filter, Calendar, User, Factory, ChevronRight, FileText, Trash2, Eye, ShieldCheck, MessageSquare } from 'lucide-react';
+import { Search, Filter, Calendar, User, Factory, ChevronRight, FileText, Trash2, Eye, ShieldCheck, StickyNote } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import { useApiCache } from './context/ApiCacheContext';
 import CommentsModal from './components/CommentsModal';
@@ -241,7 +241,7 @@ export default function SavedTables() {
                           className="p-2 hover:bg-slate-100 text-slate-400 hover:text-indigo-600 border border-transparent hover:border-indigo-100 rounded-xl transition-all shadow-none hover:shadow-xs cursor-pointer relative"
                           title="Internal Comments"
                         >
-                          <MessageSquare className="w-4 h-4" />
+                          <StickyNote className="w-4 h-4" />
                           {t.internal_comments && t.internal_comments.length > 0 && (
                             <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-indigo-600 rounded-full border border-white"></span>
                           )}

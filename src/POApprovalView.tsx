@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CheckCircle, XCircle, ArrowLeft, Download, ShieldCheck, Stamp, Printer, Mail, Send, RotateCcw } from 'lucide-react';
+import { CheckCircle, XCircle, ArrowLeft, Download, ShieldCheck, Stamp, Printer, Mail, Send, RotateCcw, MessageSquare, StickyNote } from 'lucide-react';
 import POPreview from './components/POMaker/POPreview';
 import { useAuth } from './context/AuthContext';
 import { PurchaseOrder, CompanySettings } from './types';
 import * as htmlToImage from 'html-to-image';
 import jsPDF from 'jspdf';
+import CommentsModal from './components/CommentsModal';
 
 export default function POApprovalView() {
   const { id } = useParams();
@@ -22,10 +23,12 @@ export default function POApprovalView() {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [rejectRemarks, setRejectRemarks] = useState('');
   const [ccEmails, setCcEmails] = useState('');
 
   const canApprove = user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO');
+  const canAddNote = user?.role === 'SUPERADMIN' || user?.permissions.includes('ADD_INTERNAL_COMMENTS');
 
   useEffect(() => {
     if (po?.pdf_base64) {
@@ -277,6 +280,26 @@ export default function POApprovalView() {
       setSubmitting(false);
     }
   };
+  const handleAddComment = async (text: string) => {
+    if (!po) return;
+    try {
+      const res = await fetch(`/api/po/${po.id}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ text })
+      });
+      if (res.ok) {
+        const updatedPO = await res.json();
+        setPo(updatedPO);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -452,6 +475,49 @@ export default function POApprovalView() {
               <POPreview po={po} setPo={() => {}} settings={settings} />
             </div>
           )}
+        </div>
+        
+        {/* Internal Notes Section */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden mb-8 print-hidden">
+          <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 bg-slate-900 text-white rounded-lg">
+                <StickyNote className="w-4 h-4" />
+              </div>
+              <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">Internal Team Notes</h3>
+            </div>
+            <button 
+              onClick={() => setIsCommentsOpen(true)}
+              className="text-[10px] font-black uppercase text-indigo-600 hover:text-indigo-700 flex items-center gap-1 transition-colors cursor-pointer"
+            >
+              {canAddNote ? 'Add Point' : 'View All'} <ChevronRight className="w-3 h-3" />
+            </button>
+          </div>
+          <div className="p-6">
+            {!po.internal_comments || po.internal_comments.length === 0 ? (
+              <p className="text-xs text-slate-400 font-medium italic">No internal points recorded for this PO.</p>
+            ) : (
+              <div className="space-y-4">
+                {po.internal_comments.slice(-3).map((note, idx) => (
+                  <div key={idx} className="flex gap-3 text-sm">
+                    <div className="w-1 h-auto bg-slate-200 rounded-full shrink-0" />
+                    <div>
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-[10px] font-black text-slate-800 uppercase">{note.author}</span>
+                        <span className="text-[8px] font-bold text-slate-400 uppercase">{new Date(note.date).toLocaleDateString('en-IN')}</span>
+                      </div>
+                      <p className="text-slate-600 font-medium leading-relaxed line-clamp-2">{note.text}</p>
+                    </div>
+                  </div>
+                ))}
+                {po.internal_comments.length > 3 && (
+                  <button onClick={() => setIsCommentsOpen(true)} className="text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest mt-2 cursor-pointer">
+                    + {po.internal_comments.length - 3} more notes
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
         
         {/* Large Action Card at the Bottom */}
@@ -688,6 +754,14 @@ export default function POApprovalView() {
           </div>
         </div>
       )}
+
+      <CommentsModal 
+        isOpen={isCommentsOpen}
+        onClose={() => setIsCommentsOpen(false)}
+        comments={po.internal_comments || []}
+        onAddComment={handleAddComment}
+        title={`PO #${po.po_no}`}
+      />
     </div>
   );
 }

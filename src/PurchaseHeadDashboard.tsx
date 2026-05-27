@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Filter, Calendar, User, Factory, ChevronRight, FileText, CheckCircle, XCircle, Clock, ShieldCheck, MessageSquare } from 'lucide-react';
+import { Search, Filter, Calendar, User, Factory, ChevronRight, FileText, CheckCircle, XCircle, Clock, ShieldCheck, StickyNote } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import CommentsModal from './components/CommentsModal';
 
@@ -257,7 +257,7 @@ export default function PurchaseHeadDashboard() {
                           className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all cursor-pointer relative"
                           title="Internal Comments"
                         >
-                          <MessageSquare className="w-4 h-4" />
+                          <StickyNote className="w-4 h-4" />
                           {po.internal_comments && po.internal_comments.length > 0 && (
                             <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-indigo-600 rounded-full border border-white"></span>
                           )}

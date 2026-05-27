@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { PurchaseOrder, InternalComment } from './types';
-import { FileText, Eye, Edit, Trash2, Search, ArrowLeft, ShieldCheck, CheckCircle, XCircle, Clock, Filter, ChevronRight, IndianRupee, MessageSquare } from 'lucide-react';
+import { FileText, Eye, Edit, Trash2, Search, ArrowLeft, ShieldCheck, CheckCircle, XCircle, Clock, Filter, ChevronRight, IndianRupee, StickyNote } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import { useApiCache } from './context/ApiCacheContext';
 import CommentsModal from './components/CommentsModal';
@@ -250,7 +250,7 @@ const SavedPOs: React.FC = () => {
                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 border border-transparent hover:border-indigo-100 rounded-xl transition-all shadow-none hover:shadow-xs cursor-pointer relative"
                             title="Internal Comments"
                           >
-                            <MessageSquare className="w-4.5 h-4.5" />
+                            <StickyNote className="w-4.5 h-4.5" />
                             {po.internal_comments && po.internal_comments.length > 0 && (
                               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-600 rounded-full border-2 border-white"></span>
                             )}

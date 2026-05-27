@@ -1,19 +1,24 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ComparisonTable } from './components/ComparisonTable';
-import { Download, Eye } from 'lucide-react';
+import { Download, Eye, MessageSquare, StickyNote, ChevronRight } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import * as htmlToImage from 'html-to-image';
 import { useAuth } from './context/AuthContext';
+import CommentsModal from './components/CommentsModal';
 
 export default function ViewTable() {
   const { id } = useParams();
-  const { token, logout } = useAuth();
+  const { token, logout, user } = useAuth();
   const [record, setRecord] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
+  // Comments State
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+  const canAddNote = user?.role === 'SUPERADMIN' || user?.permissions.includes('ADD_INTERNAL_COMMENTS');
+
   // Local state for editing
   const [header, setHeader] = useState<any>(null);
   const [data, setData] = useState<any>(null);
@@ -44,6 +49,25 @@ export default function ViewTable() {
         setLoading(false);
       });
   }, [id, token]);
+
+  const handleAddComment = async (text: string) => {
+    try {
+      const res = await fetch(`/api/comparisons/${id}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ text })
+      });
+      if (res.ok) {
+        const updatedRecord = await res.json();
+        setRecord(updatedRecord);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const handleUpdate = async () => {
     setIsSaving(true);
@@ -137,6 +161,49 @@ export default function ViewTable() {
         </div>
       </div>
 
+      {/* Internal Notes Section */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6 print-hidden">
+        <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 bg-slate-900 text-white rounded-lg">
+              <StickyNote className="w-4 h-4" />
+            </div>
+            <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">Internal Team Notes</h3>
+          </div>
+          <button 
+            onClick={() => setIsCommentsOpen(true)}
+            className="text-[10px] font-black uppercase text-indigo-600 hover:text-indigo-700 flex items-center gap-1 transition-colors cursor-pointer"
+          >
+            {canAddNote ? 'Add Point' : 'View All'} <ChevronRight className="w-3 h-3" />
+          </button>
+        </div>
+        <div className="p-6">
+          {!record.internal_comments || record.internal_comments.length === 0 ? (
+            <p className="text-xs text-slate-400 font-medium italic">No internal points recorded for this comparison.</p>
+          ) : (
+            <div className="space-y-4">
+              {record.internal_comments.slice(-3).map((note: any, idx: number) => (
+                <div key={idx} className="flex gap-3 text-sm">
+                  <div className="w-1 h-auto bg-slate-200 rounded-full shrink-0" />
+                  <div>
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-[10px] font-black text-slate-800 uppercase">{note.author}</span>
+                      <span className="text-[8px] font-bold text-slate-400 uppercase">{new Date(note.date).toLocaleDateString('en-IN')}</span>
+                    </div>
+                    <p className="text-slate-600 font-medium leading-relaxed line-clamp-2">{note.text}</p>
+                  </div>
+                </div>
+              ))}
+              {record.internal_comments.length > 3 && (
+                <button onClick={() => setIsCommentsOpen(true)} className="text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest mt-2 cursor-pointer">
+                  + {record.internal_comments.length - 3} more notes
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
          <div className="p-5 border-b border-slate-100 flex justify-between items-center">
            <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest">Result Table {isEditing && <span className="ml-2 text-xs text-amber-600 font-bold uppercase tracking-widest bg-amber-50 px-2 py-1 rounded">Edit Mode Active</span>}</h2>
@@ -165,6 +232,14 @@ export default function ViewTable() {
             />
          </div>
       </div>
+
+      <CommentsModal 
+        isOpen={isCommentsOpen}
+        onClose={() => setIsCommentsOpen(false)}
+        comments={record.internal_comments || []}
+        onAddComment={handleAddComment}
+        title={`Comparison #${record.doc_no}`}
+      />
     </div>
   );
 }
