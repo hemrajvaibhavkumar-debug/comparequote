@@ -535,7 +535,7 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions, isP
                     </div>
                     <div className="flex justify-between items-start mb-2 text-xs text-black">
                       <div className="border border-black p-2 rounded shadow-[1px_1px_0px_black]">
-                        <p className="font-bold text-black uppercase">PO NO :: <span className="font-black text-sm">{po.po_no || 'HI /2026-27/00'}</span></p>
+                        <p className="font-bold text-black uppercase">PO NO :: <span className="font-black text-sm">{po.po_no || 'HI_2026-27_00'}</span></p>
                       </div>
                       <div className="border border-black p-2 rounded shadow-[1px_1px_0px_black]">
                         <p className="font-bold text-black uppercase">Date : <span className="font-black text-sm">{formatDate(po.date)}</span></p>

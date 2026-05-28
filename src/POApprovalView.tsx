@@ -216,7 +216,7 @@ export default function POApprovalView() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          poNo: po.po_no,
+          poNo: po.po_no.replace(/\//g, '_'),
           vendorEmail: vendorEmail,
           vendorName: po.vendor_name,
           companyName: companyName,
@@ -260,7 +260,7 @@ export default function POApprovalView() {
     if (po.pdf_base64) {
       const link = document.createElement('a');
       link.href = `data:application/pdf;base64,${po.pdf_base64}`;
-      link.download = `PO_${po.po_no || 'Draft'}.pdf`;
+      link.download = `PO_${(po.po_no || 'Draft').replace(/\//g, '_')}.pdf`;
       link.click();
       return;
     }
@@ -272,7 +272,7 @@ export default function POApprovalView() {
       if (generated) {
         const link = document.createElement('a');
         link.href = `data:application/pdf;base64,${generated}`;
-        link.download = `PO_${po.po_no || 'Draft'}.pdf`;
+        link.download = `PO_${(po.po_no || 'Draft').replace(/\//g, '_')}.pdf`;
         link.click();
       }
     } catch (e) {

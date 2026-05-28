@@ -240,4 +240,12 @@
     gap: 0 !important;
     space-y: 0 !important;
   }
+
+  /* Explicitly override print border stripping for the comparison sheet grid */
+  .comp-table th.border, 
+  .comp-table td.border,
+  .comp-table.border,
+  .comp-table table.border {
+    border: 1px solid #000000 !important;
+  }
 }

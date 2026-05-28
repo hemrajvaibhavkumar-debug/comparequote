@@ -78,7 +78,8 @@ const POMaker: React.FC = () => {
 
       let serial = 1;
       if (latest) {
-        const parts = latest.split('/');
+        // Handle both old '/' and new '_' formats
+        const parts = latest.includes('_') ? latest.split('_') : latest.split('/');
         const lastPart = parts[parts.length - 1];
         const lastSerial = parseInt(lastPart);
         if (!isNaN(lastSerial)) {
@@ -87,7 +88,7 @@ const POMaker: React.FC = () => {
       }
 
       const formattedSerial = serial.toString().padStart(2, '0');
-      const newPONo = `${prefix}/${yearRange}/${formattedSerial}`;
+      const newPONo = `${prefix}_${yearRange}_${formattedSerial}`;
       setPo(prev => ({ ...prev, po_no: newPONo }));
     } catch (e) {
       console.error("Error generating PO No", e);
@@ -119,7 +120,7 @@ const POMaker: React.FC = () => {
   useEffect(() => {
     if (!editId && canAccess) {
       const prefix = po.version === 'hemraj_rice' ? 'HRM' : po.version === 'hemraj_ind' ? 'HI' : 'RS';
-      const currentPrefix = po.po_no?.split('/')[0];
+      const currentPrefix = po.po_no?.includes('_') ? po.po_no?.split('_')[0] : po.po_no?.split('/')[0];
       const standardPrefixes = ['HRM', 'HI', 'RS'];
       
       if (!po.po_no || (standardPrefixes.includes(currentPrefix) && currentPrefix !== prefix)) {
