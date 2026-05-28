@@ -9,6 +9,7 @@ import { jsPDF } from 'jspdf';
 import * as htmlToImage from 'html-to-image';
 import { useAuth } from './context/AuthContext';
 import { useApiCache } from './context/ApiCacheContext';
+import { useToast } from './context/ToastContext';
 
 declare const google: any;
 
@@ -17,6 +18,7 @@ interface DBPlant { id: number; name: string; location?: string; }
 
 const Builder: React.FC = () => {
   const { token, user, logout } = useAuth();
+  const { showToast } = useToast();
   const { fetchMasters: getMastersFromCache, invalidateMasters, invalidateComparisons } = useApiCache();
   const canExtract = user?.role === 'SUPERADMIN' || user?.permissions.includes('ACCESS_COMPARE');
   const canManageSettings = user?.role === 'SUPERADMIN' || user?.permissions.includes('MANAGE_SETTINGS');
@@ -143,8 +145,9 @@ const Builder: React.FC = () => {
         setNewPreparedByDesignation('');
         invalidateMasters();
         fetchMasters(true);
+        showToast("Executive added successfully!");
       }
-    } catch (e) { alert("Error adding executive"); }
+    } catch (e) { showToast("Error adding executive", "error"); }
   };
 
   const removeExecutive = async (id: number) => {
@@ -157,8 +160,9 @@ const Builder: React.FC = () => {
       if (res.ok) {
         invalidateMasters();
         fetchMasters(true);
+        showToast("Executive deleted successfully!");
       }
-    } catch (e) { alert("Error deleting executive"); }
+    } catch (e) { showToast("Error deleting executive", "error"); }
   };
 
   const addPlant = async () => {
@@ -177,8 +181,9 @@ const Builder: React.FC = () => {
         setNewPlantLocation('');
         invalidateMasters();
         fetchMasters(true);
+        showToast("Plant added successfully!");
       }
-    } catch (e) { alert("Error adding plant"); }
+    } catch (e) { showToast("Error adding plant", "error"); }
   };
 
   const removePlant = async (id: number) => {
@@ -191,8 +196,9 @@ const Builder: React.FC = () => {
       if (res.ok) {
         invalidateMasters();
         fetchMasters(true);
+        showToast("Plant deleted successfully!");
       }
-    } catch (e) { alert("Error deleting plant"); }
+    } catch (e) { showToast("Error deleting plant", "error"); }
   };
 
   const clearDraft = () => {
@@ -212,7 +218,7 @@ const Builder: React.FC = () => {
 
   const saveToNeon = async () => {
     if (!header.docNo) {
-      alert("Please enter a Doc No. before saving.");
+      showToast("Please enter a Doc No. before saving.", "error");
       return;
     }
     setIsSaving(true);
@@ -242,9 +248,9 @@ const Builder: React.FC = () => {
         throw new Error(errData.error || "Failed to save.");
       }
       invalidateComparisons();
-      alert("Successfully saved to database!");
+      showToast("Successfully saved to database!");
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message || "Failed to save to database.", "error");
     } finally {
       setIsSaving(false);
     }
@@ -388,10 +394,11 @@ const Builder: React.FC = () => {
         // Clear input text and files after successful extraction to prevent duplicates on next click
         setInputText('');
         setFiles([]);
+        showToast("Quotations extracted and merged successfully!");
       }
     } catch (error: any) {
       console.error(error);
-      alert(error.message || "Failed to extract quotations.");
+      showToast(error.message || "Failed to extract quotations.", "error");
     } finally {
       setIsExtracting(false);
     }

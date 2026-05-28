@@ -7,11 +7,13 @@ import { PurchaseOrder, CompanySettings } from './types';
 import * as htmlToImage from 'html-to-image';
 import jsPDF from 'jspdf';
 import CommentsModal from './components/CommentsModal';
+import { useToast } from './context/ToastContext';
 
 export default function POApprovalView() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { token, user } = useAuth();
+  const { showToast } = useToast();
   const [po, setPo] = useState<PurchaseOrder | null>(null);
   const [settings, setSettings] = useState<CompanySettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -122,13 +124,13 @@ export default function POApprovalView() {
         setPo(updatedPo);
         setShowRejectModal(false);
         setRejectRemarks('');
-        alert(`PO has been ${newStatus.toLowerCase()} successfully.`);
+        showToast(`PO has been ${newStatus.toLowerCase()} successfully.`);
       } else {
-        alert("Failed to update status");
+        showToast("Failed to update status", "error");
       }
     } catch (e) {
       console.error(e);
-      alert("Error updating status");
+      showToast("Error updating status", "error");
     } finally {
       setSubmitting(false);
     }
@@ -203,7 +205,7 @@ export default function POApprovalView() {
       const pdfBase64 = po.pdf_base64 || await generatePDFBase64();
 
       if (!pdfBase64) {
-        alert("Failed to generate PDF for sending.");
+        showToast("Failed to generate PDF for sending.", "error");
         return;
       }
 
@@ -226,15 +228,15 @@ export default function POApprovalView() {
         })
       });
       if (res.ok) {
-        alert("Purchase Order has been sent to the vendor successfully.");
+        showToast("Purchase Order has been sent to the vendor successfully.");
         setShowSendModal(false);
       } else {
         const data = await res.json();
-        alert(`Failed to send PO: ${data.error || 'Unknown error'}`);
+        showToast(`Failed to send PO: ${data.error || 'Unknown error'}`, "error");
       }
     } catch (e) {
       console.error(e);
-      alert("Error sending PO to vendor.");
+      showToast("Error sending PO to vendor.", "error");
     } finally {
       setSending(false);
     }
@@ -244,7 +246,7 @@ export default function POApprovalView() {
     if (!po || po.status !== 'APPROVED') return;
     
     if (!po.vendor_details?.mail) {
-      alert("Vendor email is missing. Please update the vendor details first.");
+      showToast("Vendor email is missing. Please update the vendor details first.", "error");
       return;
     }
 
@@ -275,7 +277,7 @@ export default function POApprovalView() {
       }
     } catch (e) {
       console.error("Download error", e);
-      alert("Failed to generate PDF");
+      showToast("Failed to generate PDF", "error");
     } finally {
       setSubmitting(false);
     }
@@ -379,12 +381,12 @@ export default function POApprovalView() {
                 if (res.ok) {
                   const updatedPo = await res.json();
                   setPo(updatedPo);
-                  alert("Snapshot regenerated successfully.");
+                  showToast("Snapshot regenerated successfully.");
                 }
               }
             } catch (e) {
               console.error(e);
-              alert("Failed to regenerate snapshot.");
+              showToast("Failed to regenerate snapshot.", "error");
             } finally {
               setSubmitting(false);
             }
@@ -707,7 +709,7 @@ export default function POApprovalView() {
               <button 
                 onClick={() => {
                   if (!rejectRemarks.trim()) {
-                    alert("Please enter a reason for rejection.");
+                    showToast("Please enter a reason for rejection.", "error");
                     return;
                   }
                   executeStatusUpdate('REJECTED', rejectRemarks);

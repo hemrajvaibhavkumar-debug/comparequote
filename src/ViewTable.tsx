@@ -6,10 +6,12 @@ import { jsPDF } from 'jspdf';
 import * as htmlToImage from 'html-to-image';
 import { useAuth } from './context/AuthContext';
 import CommentsModal from './components/CommentsModal';
+import { useToast } from './context/ToastContext';
 
 export default function ViewTable() {
   const { id } = useParams();
   const { token, logout, user } = useAuth();
+  const { showToast } = useToast();
   const [record, setRecord] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -134,12 +136,12 @@ export default function ViewTable() {
 
       if (!res.ok) throw new Error(result.error || "Failed to update");
       
-      alert("Changes saved successfully!");
+      showToast("Changes saved successfully!");
       setRecord((prev: any) => ({ ...prev, doc_no: payload.doc_no, data: payload.data }));
       setIsEditing(false);
     } catch (err: any) {
       console.error(err);
-      alert("Update Failed: " + err.message);
+      showToast("Update Failed: " + err.message, "error");
     } finally {
       setIsSaving(false);
     }

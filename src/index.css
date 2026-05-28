@@ -21,6 +21,28 @@
   --color-background: #ffffff;
   --color-foreground: #0f172a;
   --color-border: #e2e8f0;
+  
+  /* Modern HSL colors for Shadcn style */
+  --color-zinc-50: #fafafa;
+  --color-zinc-100: #f4f4f5;
+  --color-zinc-200: #e4e4e7;
+  --color-zinc-300: #d4d4d8;
+  --color-zinc-450: #a1a1aa;
+  --color-zinc-800: #27272a;
+  --color-zinc-900: #18181b;
+
+  --animate-slide-in: slide-in 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+  @keyframes slide-in {
+    from {
+      transform: translateY(12px) scale(0.96);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+  }
 }
 
 @layer base {
