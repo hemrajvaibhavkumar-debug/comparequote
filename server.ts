@@ -1110,6 +1110,26 @@ async function startServer() {
     }
   });
 
+  app.get("/api/comparisons/by-doc/:doc_no", authenticateToken, async (req, res) => {
+    try {
+      const { doc_no } = req.params;
+      const cacheKey = `comparisons:detail:doc_no:${doc_no}`;
+      const cached = dbCache.get<any>(cacheKey);
+      if (cached) return res.json(cached);
+
+      const comparison = await prisma.comparison.findUnique({
+        where: { doc_no: doc_no },
+        include: { executive: true, plant: true }
+      });
+      if (!comparison) return res.status(404).json({ error: "Not found" });
+      dbCache.set(cacheKey, comparison);
+      res.json(comparison);
+    } catch (err) {
+      console.error("[Backend] Fetch comparison by doc_no error:", err);
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
   app.get("/api/comparisons/:id", authenticateToken, async (req, res) => {
     try {
       const cacheKey = `comparisons:detail:${req.params.id}`;

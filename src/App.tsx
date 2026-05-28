@@ -24,7 +24,7 @@ const ProtectedRoute = ({ children, permission }: { children: React.ReactNode, p
 
     // Special case for Approval Hub: allow either full approve or read-only view
     if (permission === 'VIEW_APPROVAL_HUB') {
-       if (userPermissions.includes('VIEW_APPROVAL_HUB') || userPermissions.includes('APPROVE_PO')) {
+       if (userPermissions.includes('VIEW_APPROVAL_HUB') || userPermissions.includes('APPROVE_PO') || userPermissions.includes('VIEW_SAVED_POS')) {
          return <>{children}</>;
        }
     }
