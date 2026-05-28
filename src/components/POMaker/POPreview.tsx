@@ -131,23 +131,28 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions, isP
 
   const currentMeta = COMPANY_METADATA[po.version || 'hemraj_ind'];
 
-  const EditableText = ({ value, onChange, className = "" }: { value: string, onChange: (val: string) => void, className?: string }) => (
-    <span
-      contentEditable
-      suppressContentEditableWarning
-      className={`hover:underline focus:outline-none px-0.5 rounded transition-colors inline-block text-black ${className}`}
-      style={{ backgroundColor: 'transparent' }}
-      onBlur={(e) => onChange(e.currentTarget.textContent || '')}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          e.currentTarget.blur();
-        }
-      }}
-    >
-      {value}
-    </span>
-  );
+  const EditableText = ({ value, onChange, className = "" }: { value: string, onChange: (val: string) => void, className?: string }) => {
+    if (isPDF) {
+      return <span className={`text-black font-black uppercase mx-1 underline ${className}`}>{value}</span>;
+    }
+    return (
+      <span
+        contentEditable
+        suppressContentEditableWarning
+        className={`hover:underline focus:outline-none px-0.5 rounded transition-colors inline-block text-black ${className}`}
+        style={{ backgroundColor: 'transparent' }}
+        onBlur={(e) => onChange(e.currentTarget.textContent || '')}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            e.currentTarget.blur();
+          }
+        }}
+      >
+        {value}
+      </span>
+    );
+  };
 
   // --- MULTI-PAGE PAGING LOGIC ---
   const ITEMS_PER_PAGE_SUBSEQUENT = 18; 
@@ -533,12 +538,12 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions, isP
                         Purchase Order
                       </h2>
                     </div>
-                    <div className="flex justify-between items-start mb-2 text-xs text-black">
-                      <div className="border border-black p-2 rounded shadow-[1px_1px_0px_black]">
-                        <p className="font-bold text-black uppercase">PO NO :: <span className="font-black text-sm">{po.po_no || 'HI_2026-27_00'}</span></p>
+                    <div className="flex justify-between items-start mb-2 text-xs text-black whitespace-nowrap">
+                      <div className="border border-black p-2 rounded shadow-[1px_1px_0px_black] whitespace-nowrap">
+                        <p className="font-bold text-black uppercase whitespace-nowrap">PO NO :: <span className="font-black text-sm whitespace-nowrap">{po.po_no || 'HI_2026-27_00'}</span></p>
                       </div>
-                      <div className="border border-black p-2 rounded shadow-[1px_1px_0px_black]">
-                        <p className="font-bold text-black uppercase">Date : <span className="font-black text-sm">{formatDate(po.date)}</span></p>
+                      <div className="border border-black p-2 rounded shadow-[1px_1px_0px_black] whitespace-nowrap">
+                        <p className="font-bold text-black uppercase whitespace-nowrap">Date : <span className="font-black text-sm whitespace-nowrap">{formatDate(po.date)}</span></p>
                       </div>
                     </div>
                     <div className="mb-2 text-[11px] text-black flex gap-4">

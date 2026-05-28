@@ -831,8 +831,6 @@ async function startServer() {
       if (!po) return res.status(404).json({ error: "PO not found" });
 
       const comments = Array.isArray(po.internal_comments) ? [...(po.internal_comments as any[])] : [];
-      const filtered = comments.filter((c: any) => c.id === commentId || c.id === Number(commentId) ? false : true); 
-      // Handle both string and number IDs for safety during migration
       const finalFiltered = comments.filter((c: any) => String(c.id) !== String(commentId));
 
       const updated = await prisma.purchaseOrder.update({

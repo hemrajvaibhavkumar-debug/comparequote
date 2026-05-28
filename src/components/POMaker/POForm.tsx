@@ -45,7 +45,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
       setPo(prev => ({
         ...prev,
         vendor_name: '',
-        vendor_details: { address: '', gstin: '', mail: '', ph: '', state: '' }
+        vendor_details: { address: '', gstin: '', mail: '', ph: '', state: '', cc: '' }
       }));
       return;
     }
@@ -62,7 +62,8 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
         gstin: vendor.gstin || '',
         state: vendor.state || '',
         ph: vendor.mobile_no || '',
-        mail: vendor.email || ''
+        mail: vendor.email || '',
+        cc: prev.vendor_details.cc || ''
       }
     }));
   };
@@ -370,6 +371,16 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                   className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
                   value={po.vendor_details.ph || ''}
                   onChange={e => updateVendorField('ph', e.target.value)}
+                />
+             </div>
+             <div className="col-span-2">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">CC Email IDs (Optional)</label>
+                <input 
+                  type="text"
+                  className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
+                  value={po.vendor_details.cc || ''}
+                  onChange={e => updateVendorField('cc', e.target.value)}
+                  placeholder="e.g. boss@hemrajgroup.co.in, team@hemrajgroup.co.in"
                 />
              </div>
           </div>

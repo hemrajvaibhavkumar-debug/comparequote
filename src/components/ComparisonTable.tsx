@@ -133,19 +133,22 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
   };
 
   const calculateVendorTax = (vendorName: string) => {
+    const firstQuote = items[0]?.vendorQuotes?.find(q => q.vendorName === vendorName);
+    const status = firstQuote?.gstStatus || '18% Extra';
+    const isInclusive = status.toLowerCase() === 'inclusive';
+    
+    if (isInclusive) return 0;
+    
+    let taxRate = 0;
+    if (status.includes('5%')) taxRate = 0.05;
+    else if (status.includes('12%')) taxRate = 0.12;
+    else if (status.includes('18%') || status.toLowerCase() === 'exclusive') taxRate = 0.18;
+    else if (status.includes('28%')) taxRate = 0.28;
+
     return items.reduce((sum, item) => {
       const quote = item.vendorQuotes?.find(q => q.vendorName === vendorName);
       if (!quote) return sum;
       const amount = Number(quote.totalAmount) || 0;
-      const status = quote.gstStatus || '18% Extra';
-      const isInclusive = status.toLowerCase() === 'inclusive';
-      let taxRate = 0;
-      if (!isInclusive) {
-        if (status.includes('5%')) taxRate = 0.05;
-        else if (status.includes('12%')) taxRate = 0.12;
-        else if (status.includes('18%') || status.toLowerCase() === 'exclusive') taxRate = 0.18;
-        else if (status.includes('28%')) taxRate = 0.28;
-      }
       return sum + (amount * taxRate);
     }, 0);
   };
@@ -302,7 +305,31 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
     if (readOnly) return;
     setData((prev: any) => {
       const newItems = [...prev.items];
+      const deletedItem = newItems[itemIndex];
       newItems.splice(itemIndex, 1);
+      
+      // Preserve commercial terms if the first item was deleted and there are items remaining
+      if (itemIndex === 0 && newItems.length > 0 && deletedItem?.vendorQuotes) {
+        newItems[0] = {
+          ...newItems[0],
+          vendorQuotes: (newItems[0].vendorQuotes || []).map((q: any) => {
+            const oldQuote = deletedItem.vendorQuotes.find((oq: any) => oq.vendorName === q.vendorName);
+            if (oldQuote) {
+              return {
+                ...q,
+                deliveryPeriod: oldQuote.deliveryPeriod,
+                readyStock: oldQuote.readyStock,
+                packingAndForwarding: oldQuote.packingAndForwarding,
+                freight: oldQuote.freight,
+                gstStatus: oldQuote.gstStatus,
+                extra: oldQuote.extra,
+                quoteDate: oldQuote.quoteDate
+              };
+            }
+            return q;
+          })
+        };
+      }
       return { ...prev, items: newItems };
     });
   };

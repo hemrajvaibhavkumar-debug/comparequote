@@ -24,10 +24,8 @@ export default function POApprovalView() {
 
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [showRejectModal, setShowRejectModal] = useState(false);
-  const [showSendModal, setShowSendModal] = useState(false);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [rejectRemarks, setRejectRemarks] = useState('');
-  const [ccEmails, setCcEmails] = useState('');
 
   const canApprove = user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO');
   const canAddNote = user?.role === 'SUPERADMIN' || user?.permissions.includes('ADD_INTERNAL_COMMENTS');
@@ -223,13 +221,12 @@ export default function POApprovalView() {
           date: po.date,
           displayDate: formattedDate,
           createdBy: po.created_by_name,
-          ccEmails: ccEmails,
+          ccEmails: po.vendor_details?.cc || '',
           pdfBase64: pdfBase64
         })
       });
       if (res.ok) {
         showToast("Purchase Order has been sent to the vendor successfully.");
-        setShowSendModal(false);
       } else {
         const data = await res.json();
         showToast(`Failed to send PO: ${data.error || 'Unknown error'}`, "error");
@@ -250,7 +247,11 @@ export default function POApprovalView() {
       return;
     }
 
-    setShowSendModal(true);
+    const recipient = po.vendor_details.mail;
+    const cc = po.vendor_details.cc ? ` (CC: ${po.vendor_details.cc})` : '';
+    if (window.confirm(`Are you sure you want to send PO #${po.po_no} to ${recipient}${cc}?`)) {
+      executeSendToVendor();
+    }
   };
 
   const handleDownload = async () => {
@@ -725,73 +726,7 @@ export default function POApprovalView() {
         </div>
       )}
 
-      {/* Send Modal */}
-      {showSendModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
-                  <Send className="w-5 h-5" />
-                </div>
-                <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">Send to Vendor</h3>
-              </div>
-              <button onClick={() => setShowSendModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
-                <XCircle className="w-6 h-6" />
-              </button>
-            </div>
-            
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Vendor Recipient</label>
-                <input 
-                  type="text"
-                  readOnly
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-500 text-sm font-bold cursor-not-allowed"
-                  value={vendorEmail}
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">CC Email IDs (Optional)</label>
-                <textarea 
-                  autoFocus
-                  className="w-full h-24 p-4 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-800 text-sm font-medium transition-all resize-none"
-                  placeholder="Enter email addresses separated by commas..."
-                  value={ccEmails}
-                  onChange={(e) => setCcEmails(e.target.value)}
-                />
-                <p className="text-[9px] text-slate-400 font-bold mt-2 uppercase tracking-tight">
-                  Separate multiple emails with commas (e.g. boss@co.in, team@co.in)
-                </p>
-              </div>
-
-              <div className="p-4 bg-indigo-50/50 border border-indigo-100 rounded-xl">
-                <p className="text-[10px] text-indigo-700 font-bold leading-relaxed">
-                  PO #{po?.po_no} from {companyName} will be sent as a PDF attachment.
-                </p>
-              </div>
-            </div>
-
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-3">
-              <button 
-                onClick={() => setShowSendModal(false)}
-                className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-100 transition-all active:scale-95"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={executeSendToVendor}
-                disabled={sending}
-                className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 shadow-md shadow-indigo-200 disabled:opacity-50 transition-all active:scale-95 flex items-center justify-center gap-2"
-              >
-                {sending ? <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Send className="w-3.5 h-3.5" />}
-                Send PO Now
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Send Modal removed as CC shifted to PO maker */}
 
       <CommentsModal 
         isOpen={isCommentsOpen}

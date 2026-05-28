@@ -130,6 +130,7 @@ export interface PurchaseOrder {
     mail: string;
     ph: string;
     state?: string;
+    cc?: string;
   };
   items: POItem[];
   terms: {

@@ -44,7 +44,7 @@ const POMaker: React.FC = () => {
       quote_ref_type: 'MAIL',
       vendor_name: '',
       version: 'hemraj_rice',
-      vendor_details: { address: '', gstin: '', mail: '', ph: '', state: '' },
+      vendor_details: { address: '', gstin: '', mail: '', ph: '', state: '', cc: '' },
       items: [{ sn: 1, make: '', itemName: '', qty: 0, uom: 'NOS', rate: 0, discount: 0, tax: 'GST @18%', amount: 0 }],
       terms: { tax: '', packing: '', payment: '', payment_milestones: [], freight: '', freight_amount: 0, freight_tax: 'GST @18%', delivery: '', contact_no: '', notes: '', manual_notes: [] },
       total_amount: 0

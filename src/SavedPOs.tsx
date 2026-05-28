@@ -240,7 +240,7 @@ const SavedPOs: React.FC = () => {
                 <tbody className="divide-y divide-slate-100">
                   {filteredPOs.map((po) => (
                     <tr key={po.id} className="hover:bg-slate-50/50 transition-colors group">
-                      <td className="px-6 py-5">
+                      <td className="px-6 py-5 cursor-pointer" onClick={() => navigate(`/approve-po/${po.id}`)}>
                         <div className="flex flex-col">
                           <span className="font-extrabold text-slate-800 group-hover:text-slate-900 transition-colors uppercase tracking-tight">#{po.po_no}</span>
                           <span className="text-[10px] font-bold text-slate-400 uppercase mt-1 flex items-center gap-1.5">
@@ -253,13 +253,13 @@ const SavedPOs: React.FC = () => {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-5">
+                      <td className="px-6 py-5 cursor-pointer" onClick={() => navigate(`/approve-po/${po.id}`)}>
                         <div className="flex flex-col">
                           <span className="font-extrabold text-slate-850 uppercase text-xs tracking-tight truncate max-w-xs">{po.vendor_name}</span>
                           <span className="text-[10px] font-bold text-slate-400 uppercase mt-1">GST: {po.vendor_details.gstin || 'N/A'}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-5 text-right">
+                      <td className="px-6 py-5 text-right cursor-pointer" onClick={() => navigate(`/approve-po/${po.id}`)}>
                         <div className="flex flex-col items-end">
                           <div className="flex items-center gap-0.5 text-sm font-black text-slate-850">
                             <IndianRupee className="w-3.5 h-3.5" />
@@ -268,7 +268,7 @@ const SavedPOs: React.FC = () => {
                           <span className="text-[9px] font-bold text-slate-400 uppercase mt-1">Total Payable</span>
                         </div>
                       </td>
-                      <td className="px-6 py-5">
+                      <td className="px-6 py-5 cursor-pointer" onClick={() => navigate(`/approve-po/${po.id}`)}>
                         <div className="flex flex-col items-center gap-2">
                           {getStatusBadge(po.status || 'PENDING')}
                           {po.status === 'REJECTED' && po.rejection_remarks && (
