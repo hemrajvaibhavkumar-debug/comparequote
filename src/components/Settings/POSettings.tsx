@@ -5,6 +5,15 @@ import { useAuth } from '../../context/AuthContext';
 import { useApiCache } from '../../context/ApiCacheContext';
 import UserManagement from './UserManagement';
 
+const CONTACT_OPTIONS = [
+  "+91 90462 40020 - soumen",
+  "+91 90461 76169 - vivek",
+  "+91 90461 76166 - amit",
+  "+91 90461 76150 - sayanta da",
+  "+91 62941 44047 - proloy da",
+  "+91 90461 41874 - Arpita"
+];
+
 const POSettings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'profile' | 'terms' | 'vendors' | 'users' | 'roles'>('profile');
   const [settings, setSettings] = useState<CompanySettings | null>(null);
@@ -357,12 +366,29 @@ const POSettings: React.FC = () => {
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Contact No</label>
-                  <input 
-                    type="text" 
-                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
-                    value={newTemplate.contact_no || ''}
-                    onChange={e => setNewTemplate({...newTemplate, contact_no: e.target.value})}
-                  />
+                  <div className="flex gap-2">
+                    <select 
+                      className="w-1/3 border border-slate-200 rounded-xl px-3 py-2 bg-white text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                      onChange={e => {
+                        if (e.target.value !== 'CUSTOM') {
+                          const numberOnly = e.target.value.split(' - ')[0];
+                          setNewTemplate({...newTemplate, contact_no: numberOnly});
+                        }
+                      }}
+                      value={CONTACT_OPTIONS.some(opt => opt.startsWith(newTemplate.contact_no || 'INVALID')) ? CONTACT_OPTIONS.find(opt => opt.startsWith(newTemplate.contact_no || '')) : (newTemplate.contact_no ? 'CUSTOM' : '')}
+                    >
+                      <option value="">Select Contact</option>
+                      {CONTACT_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                      <option value="CUSTOM">Custom...</option>
+                    </select>
+                    <input 
+                      type="text" 
+                      className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
+                      value={newTemplate.contact_no || ''}
+                      onChange={e => setNewTemplate({...newTemplate, contact_no: e.target.value})}
+                      placeholder="+91..."
+                    />
+                  </div>
                 </div>
                 <button 
                   onClick={handleAddTemplate}

@@ -29,7 +29,12 @@ const TermsAndNotes = ({ po }: { po: PurchaseOrder }) => (
         </div>
         <span className="uppercase text-[9px]">Freight ::</span> <span className="uppercase">{po.terms.freight} {po.terms.freight_amount ? `- ₹${Number(po.terms.freight_amount).toLocaleString()}` : ''}</span>
         <span className="uppercase text-[9px]">Delivery Period ::</span> <span className="uppercase">{po.terms.delivery}</span>
-        {po.terms.contact_no && <><span className="uppercase text-[9px]">Contact No ::</span> <span>{po.terms.contact_no}</span></>}
+        {po.terms.contact_no && (
+          <>
+            <span className="uppercase text-[9px]">Contact No ::</span> 
+            <span>{po.terms.contact_no.split(' - ')[0]}</span>
+          </>
+        )}
       </div>
     </div>
 
@@ -281,13 +286,13 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions, isP
       {/* Signature Block - Repeats on every page */}
       <div className="px-[15mm] pt-4 flex-1">
         <div className="flex justify-between items-start mb-2">
-          <div className="text-left text-[10px] font-bold text-black">
+          <div className="text-left text-[10px] font-bold text-black max-w-[65%]">
             <p>Yours faithfully,</p>
-            <p className="font-black text-xs uppercase mt-1">{currentMeta.name}</p>
+            <p className="font-black text-xs uppercase mt-1 leading-tight">{currentMeta.name}</p>
           </div>
-          <div className="text-right text-[10px] font-bold space-y-0.5 text-black">
-            <p>GSTIN : <span className="font-black">{currentMeta.gstin}</span></p>
-            <p>PAN : <span className="font-black">{currentMeta.pan}</span></p>
+          <div className="text-right text-[10px] font-bold flex flex-col items-end space-y-1 text-black shrink-0 ml-4">
+            <p className="whitespace-nowrap">GSTIN : <span className="font-black">{currentMeta.gstin}</span></p>
+            <p className="whitespace-nowrap">PAN : <span className="font-black">{currentMeta.pan}</span></p>
           </div>
         </div>
 

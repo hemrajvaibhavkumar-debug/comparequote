@@ -204,7 +204,7 @@ export default function ViewTable() {
             <div className="p-1.5 bg-slate-900 text-white rounded-lg">
               <StickyNote className="w-4 h-4" />
             </div>
-            <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">Internal Team Notes</h3>
+            <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">Comments</h3>
           </div>
           <button 
             onClick={() => setIsCommentsOpen(true)}

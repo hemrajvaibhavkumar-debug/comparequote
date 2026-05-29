@@ -293,15 +293,13 @@ const SavedPOs: React.FC = () => {
                               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-600 rounded-full border-2 border-white"></span>
                             )}
                           </button>
-                          {po.status !== 'APPROVED' && (
-                            <button 
-                              onClick={() => navigate(`/po-maker?edit=${po.id}`)}
-                              className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 border border-transparent hover:border-slate-200 rounded-xl transition-all shadow-none hover:shadow-xs cursor-pointer"
-                              title="Edit Revision"
-                            >
-                              <Edit className="w-4.5 h-4.5" />
-                            </button>
-                          )}
+                          <button 
+                            onClick={() => navigate(`/po-maker?edit=${po.id}`)}
+                            className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 border border-transparent hover:border-slate-200 rounded-xl transition-all shadow-none hover:shadow-xs cursor-pointer"
+                            title="Edit Revision"
+                          >
+                            <Edit className="w-4.5 h-4.5" />
+                          </button>
                           <Link 
                             to={`/approve-po/${po.id}`}
                             className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 border border-transparent hover:border-slate-200 rounded-xl transition-all shadow-none hover:shadow-xs"

@@ -758,15 +758,15 @@ async function startServer() {
       const { id, created_at, status, approved_by, approved_at, ...data } = req.body;
       if (data.date) data.date = new Date(data.date);
       
-      // Force status back to PENDING on update to require re-approval for revisions
+      // Update PO while preserving status if provided, otherwise default to PENDING
       const po = await prisma.purchaseOrder.update({
         where: { id: Number(req.params.id) },
         data: {
           ...data,
-          status: 'PENDING',
-          approved_by: null,
-          approved_at: null,
-          rejection_remarks: null
+          status: status || 'PENDING',
+          approved_by: approved_by !== undefined ? approved_by : null,
+          approved_at: approved_at !== undefined ? approved_at : null,
+          rejection_remarks: rejection_remarks !== undefined ? rejection_remarks : null
         }
       });
       dbCache.clearPattern("po:");
@@ -905,7 +905,7 @@ async function startServer() {
   app.post("/api/po/:id/send", authenticateToken, async (req, res) => {
     try {
       const { id } = req.params;
-      const { pdfBase64, poNo, vendorEmail, vendorName, companyName, date, displayDate, createdBy, ccEmails } = req.body;
+      const { pdfBase64, poNo, vendorEmail, vendorName, companyName, date, createdBy, ccEmails, contact_no } = req.body;
       const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
 
       if (!n8nWebhookUrl) {
@@ -916,7 +916,7 @@ async function startServer() {
         return res.status(400).json({ error: "Missing required data (PDF or Vendor Email)" });
       }
 
-      console.log(`[n8n] Sending PO ${poNo} from ${companyName || 'Hemraj'} to vendor ${vendorEmail} (CC: ${ccEmails || 'none'})...`);
+      console.log(`[n8n] Sending PO ${poNo} from ${companyName || 'Hemraj'} to vendor ${vendorEmail} (CC: ${ccEmails || 'none'}, Contact: ${contact_no || 'none'})...`);
 
       const response = await fetch(n8nWebhookUrl, {
         method: 'POST',
@@ -927,9 +927,9 @@ async function startServer() {
           vendorName,
           companyName: companyName || "Hemraj Industries",
           date,
-          displayDate,
           createdBy,
           ccEmails,
+          contact_no,
           pdfBase64
         })
       });

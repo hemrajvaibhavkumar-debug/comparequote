@@ -11,6 +11,15 @@ interface POFormProps {
   onGeneratePONo: () => void;
 }
 
+const CONTACT_OPTIONS = [
+  "+91 90462 40020 - soumen",
+  "+91 90461 76169 - vivek",
+  "+91 90461 76166 - amit",
+  "+91 90461 76150 - sayanta da",
+  "+91 62941 44047 - proloy da",
+  "+91 90461 41874 - Arpita"
+];
+
 const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparisons, onGeneratePONo }) => {
   const [bulkText, setBulkText] = useState('');
   const [isExtracting, setIsExtracting] = useState(false);
@@ -822,13 +831,29 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
           </div>
           <div className="col-span-2">
             <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Contact No</label>
-            <input 
-              type="text"
-              className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-              value={po.terms.contact_no || ''}
-              onChange={e => setPo({...po, terms: { ...po.terms, contact_no: e.target.value }})}
-              placeholder="e.g. +91 98765 43210"
-            />
+            <div className="flex gap-2">
+              <select 
+                className="mt-1 w-1/3 border border-slate-200 rounded-xl px-3 py-2 bg-white text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                onChange={e => {
+                  if (e.target.value !== 'CUSTOM') {
+                    const numberOnly = e.target.value.split(' - ')[0];
+                    setPo({...po, terms: { ...po.terms, contact_no: numberOnly }});
+                  }
+                }}
+                value={CONTACT_OPTIONS.some(opt => opt.startsWith(po.terms.contact_no || 'INVALID')) ? CONTACT_OPTIONS.find(opt => opt.startsWith(po.terms.contact_no || '')) : (po.terms.contact_no ? 'CUSTOM' : '')}
+              >
+                <option value="">Select Contact</option>
+                {CONTACT_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                <option value="CUSTOM">Custom...</option>
+              </select>
+              <input 
+                type="text"
+                className="mt-1 flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                value={po.terms.contact_no || ''}
+                onChange={e => setPo({...po, terms: { ...po.terms, contact_no: e.target.value }})}
+                placeholder="e.g. +91 98765 43210"
+              />
+            </div>
           </div>
           <div className="col-span-2">
             <div className="flex justify-between items-center mb-3 border-t border-slate-100 pt-4">

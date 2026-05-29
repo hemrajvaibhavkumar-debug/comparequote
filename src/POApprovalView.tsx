@@ -244,9 +244,9 @@ export default function POApprovalView() {
           vendorName: po.vendor_name,
           companyName: companyName,
           date: po.date,
-          displayDate: formattedDate,
           createdBy: po.created_by_name,
           ccEmails: po.vendor_details?.cc || '',
+          contact_no: (po.terms?.contact_no || '').split(' - ')[0],
           pdfBase64: pdfBase64
         })
       });
@@ -580,7 +580,7 @@ export default function POApprovalView() {
               <div className="p-1.5 bg-slate-900 text-white rounded-lg">
                 <StickyNote className="w-4 h-4" />
               </div>
-              <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">Internal Team Notes</h3>
+              <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">Comments</h3>
             </div>
             <button 
               onClick={() => setIsCommentsOpen(true)}
