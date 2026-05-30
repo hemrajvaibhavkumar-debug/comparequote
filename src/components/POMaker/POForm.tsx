@@ -283,7 +283,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             </button>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-1.5">
             <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Purchase Order No.</label>
             <input 
@@ -304,16 +304,6 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             />
           </div>
           <div className="space-y-1.5">
-            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Quot. Ref & Date</label>
-            <input 
-              type="text"
-              className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
-              value={po.quote_doc_no || ''}
-              onChange={e => setPo({...po, quote_doc_no: e.target.value})}
-              placeholder="e.g. Q/24/123 dtd 01.01.24"
-            />
-          </div>
-          <div className="space-y-1.5">
             <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">PO Classification</label>
             <select
               className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 cursor-pointer"
@@ -329,6 +319,45 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               <option value="Consumables">Consumables</option>
               <option value="Capital">Capital</option>
             </select>
+          </div>
+        </div>
+
+        <div className="border-t border-slate-100 dark:border-slate-800/80 pt-5 space-y-4">
+          <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Associated Quotation Details</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Quotation Ref Type</label>
+              <select
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 cursor-pointer"
+                value={po.quote_ref_type || 'MAIL'}
+                onChange={e => setPo({...po, quote_ref_type: e.target.value})}
+              >
+                <option value="MAIL">MAIL</option>
+                <option value="WHATSAPP">WHATSAPP</option>
+                <option value="LETTER">LETTER</option>
+                <option value="QUOTATION">QUOTATION</option>
+                <option value="DISCUSSIONS">DISCUSSIONS</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Quotation Ref/Doc No.</label>
+              <input 
+                type="text"
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
+                value={po.quote_doc_no || ''}
+                onChange={e => setPo({...po, quote_doc_no: e.target.value})}
+                placeholder="e.g. Q/24/123"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Quotation Date</label>
+              <input 
+                type="date"
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
+                value={po.quote_date || ''}
+                onChange={e => setPo({...po, quote_date: e.target.value})}
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -492,7 +521,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             <div key={index} className="p-5 bg-slate-50/50 dark:bg-slate-950/50 hover:bg-white dark:hover:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 relative group hover:shadow-md transition-all duration-200">
               <button 
                 onClick={() => removeItem(index)}
-                className="absolute -top-2.5 -right-2.5 bg-rose-600 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition shadow-lg border border-white dark:border-slate-800 hover:bg-rose-700 cursor-pointer"
+                className="absolute -top-2.5 -right-2.5 bg-rose-600 text-white p-1.5 rounded-full opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition shadow-lg border border-white dark:border-slate-800 hover:bg-rose-700 cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>

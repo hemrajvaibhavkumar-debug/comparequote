@@ -648,9 +648,9 @@ const Builder: React.FC = () => {
         </div>
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30 flex justify-between items-center print-hidden">
+          <div className="p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center print-hidden">
             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Comparison Summary Grid</h2>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center gap-3 pr-4 border-r border-slate-200 dark:border-slate-700">
                 <label className="text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400 cursor-pointer select-none" htmlFor="multiplyByWeight">Multiply by Weight (WT)</label>
                 <input 

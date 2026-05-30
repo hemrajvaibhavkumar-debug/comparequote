@@ -499,7 +499,14 @@ export default function PurchaseHeadDashboard() {
                     <div className="space-y-2 pt-4 border-t border-slate-100 dark:border-slate-800">
                       <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 font-semibold uppercase">
                         <Calendar className="w-4 h-4 text-slate-350 dark:text-slate-600" />
-                        {new Date(po.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        {(() => {
+                          const d = new Date(po.date);
+                          if (isNaN(d.getTime())) return po.date;
+                          const day = String(d.getDate()).padStart(2, '0');
+                          const month = String(d.getMonth() + 1).padStart(2, '0');
+                          const year = d.getFullYear();
+                          return `${day}/${month}/${year}`;
+                        })()}
                       </div>
                       <div className="flex items-center gap-2 text-sm text-slate-850 dark:text-slate-100 font-black">
                         <span className="text-slate-400 dark:text-slate-500 font-semibold text-xs uppercase tracking-wider">Amount:</span>

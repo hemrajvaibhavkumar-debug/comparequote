@@ -228,7 +228,14 @@ const SavedPOs: React.FC = () => {
                         <div className="flex flex-col">
                           <span className="font-extrabold text-slate-800 dark:text-slate-100 group-hover:text-slate-900 dark:group-hover:text-white transition-colors uppercase tracking-tight">#{po.po_no}</span>
                           <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mt-1 flex items-center gap-1.5">
-                            <Clock className="w-3.5 h-3.5" /> {new Date(po.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            <Clock className="w-3.5 h-3.5" /> {(() => {
+                              const d = new Date(po.date);
+                              if (isNaN(d.getTime())) return po.date;
+                              const day = String(d.getDate()).padStart(2, '0');
+                              const month = String(d.getMonth() + 1).padStart(2, '0');
+                              const year = d.getFullYear();
+                              return `${day}/${month}/${year}`;
+                            })()}
                           </span>
                           {po.created_by_name && (
                             <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase mt-1 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-md w-fit border border-slate-200 dark:border-slate-700 shadow-xs">

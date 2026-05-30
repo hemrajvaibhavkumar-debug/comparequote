@@ -54,6 +54,7 @@ const POMaker: React.FC = () => {
   const [templates, setTemplates] = useState<TermsTemplate[]>([]);
   const [vendors, setVendors] = useState<VendorMaster[]>([]);
   const [comparisons, setComparisons] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit');
 
   const generatePONo = async (version: string) => {
     try {
@@ -371,7 +372,7 @@ const POMaker: React.FC = () => {
       <div className="ambient-glow ambient-indigo -top-40 -right-40" />
       <div className="ambient-glow ambient-blue -bottom-40 -left-40" />
 
-      <div className="glass-navbar px-6 py-3 flex items-center justify-between shrink-0 relative z-10">
+      <div className="glass-navbar px-4 sm:px-6 py-3 flex flex-col md:flex-row gap-3 md:items-center md:justify-between shrink-0 relative z-10">
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate(-1)} 
@@ -381,7 +382,7 @@ const POMaker: React.FC = () => {
           </button>
           <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100 font-sans tracking-tight">Purchase Order Maker</h1>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 justify-start md:justify-end">
           <button 
             onClick={handleClearDraft}
             className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
@@ -432,9 +433,33 @@ const POMaker: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 flex overflow-hidden relative z-10">
+      {/* Mobile Tab Toggle */}
+      <div className="lg:hidden flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-2 shrink-0 relative z-20">
+        <button
+          onClick={() => setActiveTab('edit')}
+          className={`flex-1 py-2.5 text-center text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
+            activeTab === 'edit'
+              ? 'bg-slate-950 dark:bg-slate-100 text-white dark:text-slate-900 shadow-sm'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+          }`}
+        >
+          Edit Form
+        </button>
+        <button
+          onClick={() => setActiveTab('preview')}
+          className={`flex-1 py-2.5 text-center text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
+            activeTab === 'preview'
+              ? 'bg-slate-950 dark:bg-slate-100 text-white dark:text-slate-900 shadow-sm'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+          }`}
+        >
+          Preview PO
+        </button>
+      </div>
+
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative z-10">
         {/* Left Pane - Form */}
-        <div className="w-1/2 overflow-y-auto p-6 bg-slate-50 dark:bg-slate-950 border-r border-slate-200/80 dark:border-slate-800 custom-scrollbar">
+        <div className={`w-full lg:w-1/2 overflow-y-auto p-4 sm:p-6 bg-slate-50 dark:bg-slate-950 border-r border-slate-200/80 dark:border-slate-800 custom-scrollbar ${activeTab === 'edit' ? 'block' : 'hidden lg:block'}`}>
           <POForm 
             po={po} 
             setPo={setPo} 
@@ -446,9 +471,9 @@ const POMaker: React.FC = () => {
         </div>
 
         {/* Right Pane - Preview */}
-        <div className="w-1/2 overflow-auto p-8 bg-slate-100/40 dark:bg-slate-900/20 custom-scrollbar" ref={previewRef}>
+        <div className={`w-full lg:w-1/2 overflow-auto p-4 sm:p-8 bg-slate-100/40 dark:bg-slate-900/20 custom-scrollbar ${activeTab === 'preview' ? 'block' : 'hidden lg:block'}`} ref={previewRef}>
           <div className={`mx-auto w-full max-w-3xl transition-all duration-300 ${
-            isExporting ? '' : 'bg-white rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl dark:shadow-none overflow-hidden p-6'
+            isExporting ? '' : 'bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl dark:shadow-none overflow-hidden p-4 sm:p-6'
           }`}>
             <POPreview po={po} setPo={setPo} settings={settings} isPDF={isExporting} />
           </div>

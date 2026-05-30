@@ -111,9 +111,20 @@ const POPreview = React.memo<POPreviewProps>(({ po, setPo, settings, actions, is
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '';
     try {
-      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return dateStr;
+      
       const date = new Date(dateStr);
-      return date.toLocaleDateString('en-CA');
+      if (isNaN(date.getTime())) {
+        const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (match) {
+          return `${match[3]}/${match[2]}/${match[1]}`;
+        }
+        return dateStr;
+      }
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
     } catch (e) {
       return dateStr;
     }
@@ -584,7 +595,7 @@ const POPreview = React.memo<POPreviewProps>(({ po, setPo, settings, actions, is
                       </div>
                     </div>
                     <p className="text-[10px] mb-2 italic text-black leading-relaxed font-bold text-left">
-                      Dear Sir/Madam, As per your Quotation Ref No.:-<EditableText value={po.quote_ref_type || 'MAIL'} onChange={val => updatePO('quote_ref_type', val.toUpperCase())} />, Ref Doc no:-<span className="text-black font-black uppercase mx-1 underline">{po.quote_doc_no || 'N/A'}</span>, Ref Date:-<EditableText value={po.quote_date || po.date} onChange={val => updatePO('quote_date', val)} />, We are sending the order so please supply the materials on urgent basis:-
+                      Dear Sir/Madam, As per your Quotation Ref No.:-<EditableText value={po.quote_ref_type || 'MAIL'} onChange={val => updatePO('quote_ref_type', val.toUpperCase())} />, Ref Doc no:-<span className="text-black font-black uppercase mx-1 underline">{po.quote_doc_no || 'N/A'}</span>, Ref Date:-<EditableText value={formatDate(po.quote_date || po.date)} onChange={val => updatePO('quote_date', val)} />, We are sending the order so please supply the materials on urgent basis:-
                     </p>
                   </>
                 )}

@@ -1,6 +1,6 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
-import { Settings as SettingsIcon, FileText, Database, ShieldCheck, ClipboardList, Loader2, Sun, Moon } from 'lucide-react';
+import { Settings as SettingsIcon, FileText, Database, ShieldCheck, ClipboardList, Loader2, Sun, Moon, Menu, X } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ApiCacheProvider } from './context/ApiCacheContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -65,6 +65,7 @@ function AppContent() {
   const { isAuthenticated, logout, user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isActive = (path: string) => {
     if (path === '/') {
@@ -123,7 +124,9 @@ function AppContent() {
                   </Link>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              
+              {/* Desktop Menu Buttons */}
+              <div className="hidden sm:flex items-center gap-3">
                  <button
                    onClick={toggleTheme}
                    className="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer"
@@ -138,8 +141,122 @@ function AppContent() {
                    Logout
                  </button>
               </div>
+
+              {/* Mobile Hamburger Button */}
+              <div className="flex sm:hidden items-center gap-2">
+                 <button
+                   onClick={toggleTheme}
+                   className="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer"
+                   title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+                 >
+                   {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                 </button>
+                 <button
+                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                   className="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer"
+                 >
+                   {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                 </button>
+              </div>
             </div>
           </div>
+
+          {/* Mobile Collapsible Menu */}
+          {isMobileMenuOpen && (
+            <div className="sm:hidden border-t border-slate-100 dark:border-slate-800/80 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 py-3 space-y-1.5 shadow-lg relative z-50 animate-in slide-in-from-top duration-200">
+              {(user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO') || user?.permissions.includes('VIEW_APPROVAL_HUB')) && (
+                <Link 
+                  to="/purchase-head" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+                    isActive('/purchase-head')
+                      ? 'bg-slate-100 dark:bg-slate-800 text-slate-950 dark:text-white border border-slate-200 dark:border-slate-700'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  <ShieldCheck className="w-4 h-4" /> Approval Hub
+                </Link>
+              )}
+              <Link 
+                to="/" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+                  isActive('/') && !isActive('/saved') && !isActive('/saved-pos') && !isActive('/po-maker') && !isActive('/indents') && !isActive('/settings') && !isActive('/purchase-head')
+                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mr-0.5"><rect width="18" height="18" x="3" y="3" rx="2.5"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M12 3v18"/></svg> Compare
+              </Link>
+              <Link 
+                to="/saved" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+                  isActive('/saved') && !isActive('/saved-pos')
+                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+              >
+                <Database className="w-4 h-4 text-indigo-500" /> Saved Tables
+              </Link>
+              <Link 
+                to="/po-maker" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+                  isActive('/po-maker')
+                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+              >
+                <FileText className="w-4 h-4 text-indigo-500" /> PO Maker
+              </Link>
+              <Link 
+                to="/saved-pos" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+                  isActive('/saved-pos')
+                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+              >
+                <Database className="w-4 h-4 text-emerald-500" /> Saved POs
+              </Link>
+              <Link 
+                to="/indents" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+                  isActive('/indents')
+                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+              >
+                <ClipboardList className="w-4 h-4 text-teal-500" /> Indents
+              </Link>
+              <Link 
+                to="/settings" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+                  isActive('/settings')
+                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+              >
+                <SettingsIcon className="w-4 h-4 text-slate-500" /> Settings
+              </Link>
+              
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-2.5">
+                <button 
+                  onClick={() => {
+                    logout();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full text-center px-4 py-2.5 rounded-xl text-[10px] font-black text-rose-500 bg-rose-50 dark:bg-rose-950/20 hover:bg-rose-100 transition-all uppercase tracking-wider cursor-pointer"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          )}
         </nav>
       )}
 
