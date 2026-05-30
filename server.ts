@@ -354,7 +354,7 @@ async function startServer() {
 
       // 3. Gemini (Fallback - Native File Processing)
       console.log("[AI] Attempting extraction with Gemini (Fallback)...");
-      const modelName = "gemini-1.5-flash"; // Fixed model name
+      const modelName = "gemini-2.5-flash"; 
       const response = await ai.models.generateContent({
         model: modelName,
         contents: [
@@ -755,7 +755,7 @@ async function startServer() {
   app.put("/api/po/:id", authenticateToken, async (req, res) => {
     try {
       // Remove id from body to avoid primary key update attempt
-      const { id, created_at, status, approved_by, approved_at, ...data } = req.body;
+      const { id, created_at, status, approved_by, approved_at, rejection_remarks, ...data } = req.body;
       if (data.date) data.date = new Date(data.date);
       
       // Update PO while preserving status if provided, otherwise default to PENDING
@@ -944,6 +944,186 @@ async function startServer() {
     } catch (error) {
       console.error("[Backend] PO Send Error:", error);
       res.status(500).json({ error: "Internal server error while sending PO" });
+    }
+  });
+
+  // --- Indent API ---
+
+  app.get("/api/indents", authenticateToken, async (req, res) => {
+    try {
+      const indents = await prisma.indent.findMany({
+        orderBy: { created_at: "desc" }
+      });
+      res.json(indents);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch indents" });
+    }
+  });
+
+  app.post("/api/indents", authenticateToken, async (req, res) => {
+    try {
+      const { id, ...data } = req.body;
+      if (data.date) data.date = new Date(data.date);
+      
+      console.log("[Backend] Saving Indent:", data.indent_no);
+      const indent = await prisma.indent.create({ data });
+      res.json(indent);
+    } catch (error: any) {
+      console.error("[Backend] Indent Save Error:", error);
+      if (error.code === 'P2002') {
+        return res.status(400).json({ error: "Duplicate Indent Number" });
+      }
+      res.status(500).json({ error: "Failed to save indent", details: error.message });
+    }
+  });
+
+  app.put("/api/indents/:id", authenticateToken, async (req, res) => {
+    try {
+      const { id, created_at, updated_at, ...data } = req.body;
+      const indent = await prisma.indent.update({
+        where: { id: Number(req.params.id) },
+        data
+      });
+      res.json(indent);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update indent" });
+    }
+  });
+
+  app.put("/api/indents/:id/status", authenticateToken, requirePermission("APPROVE_PO"), async (req, res) => {
+    try {
+      const { status, remarks } = req.body;
+      const user = (req as any).user;
+      
+      const updateData: any = { status };
+      if (status === 'APPROVED') {
+        updateData.approved_by = user.username;
+        updateData.approved_at = new Date();
+        updateData.rejection_remarks = null;
+      } else if (status === 'REJECTED') {
+        updateData.rejection_remarks = remarks;
+        updateData.approved_by = null;
+        updateData.approved_at = null;
+      }
+      
+      const indent = await prisma.indent.update({
+        where: { id: Number(req.params.id) },
+        data: updateData
+      });
+      res.json(indent);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update indent status" });
+    }
+  });
+
+  app.delete("/api/indents/:id", authenticateToken, async (req, res) => {
+    try {
+      await prisma.indent.delete({ where: { id: Number(req.params.id) } });
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete indent" });
+    }
+  });
+
+  app.post("/api/extract-indent", authenticateToken, async (req, res) => {
+    try {
+      const { imageBase64 } = req.body;
+      if (!imageBase64) return res.status(400).json({ error: "Missing image data" });
+
+      const openRouterKey = process.env.OPENROUTER_API_KEY;
+      if (!openRouterKey) {
+        console.warn("[AI] OPENROUTER_API_KEY missing, falling back to native Gemini");
+      }
+
+      console.log(`[AI] Extracting Indent from image using ${openRouterKey ? 'OpenRouter (Gemini 2.5 Flash)' : 'Native Gemini 2.5 Flash'}...`);
+
+      const prompt = `Extract items from this order slip image into a structured JSON.
+      
+      JSON FORMAT:
+      {
+        "items": [
+          {
+            "itemName": "string",
+            "qty": number,
+            "uom": "string",
+            "applicationArea": "string",
+            "orderPlacedBy": "string",
+            "orderPassedBy": "string"
+          }
+        ]
+      }
+
+      INSTRUCTIONS:
+      - Item Name: Full description.
+      - Qty: Number.
+      - UOM: e.g., PCS, NOS, KG.
+      - Application Area: "item require for which" purpose/area.
+      - Order Placed By: Name of person who placed it.
+      - Order Passed By: Name of person who passed it.
+      - If multiple items exist, extract all.
+      - Return ONLY valid JSON.`;
+
+      let items = [];
+
+      if (openRouterKey) {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${openRouterKey}`,
+            "Content-Type": "application/json",
+            "HTTP-Referer": process.env.APP_URL || "http://localhost:3000",
+            "X-Title": "QuoteCompare AI"
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [
+              {
+                role: "user",
+                content: [
+                  { type: "text", text: prompt },
+                  {
+                    type: "image_url",
+                    image_url: {
+                      url: `data:image/jpeg;base64,${imageBase64}`
+                    }
+                  }
+                ]
+              }
+            ],
+            response_format: { type: "json_object" }
+          })
+        });
+
+        const data = await response.json();
+        if (data.choices && data.choices[0]) {
+          const content = data.choices[0].message.content;
+          const parsed = JSON.parse(content);
+          items = parsed.items || [];
+        } else {
+          console.error("[OpenRouter Error]:", data);
+          throw new Error("Failed to get response from OpenRouter");
+        }
+      } else {
+        const response = await ai.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: [{
+            role: "user",
+            parts: [
+              { text: prompt },
+              { inlineData: { mimeType: "image/jpeg", data: imageBase64 } }
+            ]
+          }],
+          config: { responseMimeType: "application/json" }
+        });
+
+        const parsed = JSON.parse(response.text || '{"items": []}');
+        items = parsed.items || [];
+      }
+
+      res.json({ items });
+    } catch (error: any) {
+      console.error("[AI Indent Error]:", error.message || error);
+      res.status(500).json({ error: "Failed to extract indent", details: error.message });
     }
   });
 

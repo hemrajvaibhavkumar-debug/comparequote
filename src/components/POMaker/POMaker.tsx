@@ -270,7 +270,17 @@ const POMaker: React.FC = () => {
           localStorage.removeItem('po_maker_draft');
         }
       }
-      else alert(`Failed to ${editId ? 'update' : 'save'} PO`);
+      else {
+        const errData = await res.json();
+        if (errData.error === "Duplicate PO Number") {
+          if (window.confirm(`${errData.details}\n\nWould you like to re-generate the PO number and try again?`)) {
+            await generatePONo(po.version || 'hemraj_rice');
+            setIsGenerating(false);
+            return;
+          }
+        }
+        alert(`Failed to ${editId ? 'update' : 'save'} PO: ${errData.error || 'Unknown error'}`);
+      }
     } catch (err) {
       console.error("Save error", err);
       alert("Error generating PDF or saving PO");
@@ -333,6 +343,7 @@ const POMaker: React.FC = () => {
               <option value="Rakesh Pal">Rakesh Pal</option>
               <option value="Souritra Ghoshal">Souritra Ghoshal</option>
               <option value="Rupak Mukherjee">Rupak Mukherjee</option>
+              <option value="Soumen">Soumen</option>
             </select>
           </div>
           <select 

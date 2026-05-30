@@ -8,7 +8,8 @@ import POSettings from './components/Settings/POSettings';
 import SavedPOs from './SavedPOs';
 import PurchaseHeadDashboard from './PurchaseHeadDashboard';
 import POApprovalView from './POApprovalView';
-import { Settings as SettingsIcon, FileText, Database, ShieldCheck } from 'lucide-react';
+import IndentDashboard from './components/Indent/IndentDashboard';
+import { Settings as SettingsIcon, FileText, Database, ShieldCheck, ClipboardList } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ApiCacheProvider } from './context/ApiCacheContext';
 
@@ -89,6 +90,9 @@ function AppContent() {
                   <Link to="/saved-pos" className={navLinkStyle('/saved-pos')}>
                     <Database className="w-4 h-4" /> Saved POs
                   </Link>
+                  <Link to="/indents" className={navLinkStyle('/indents')}>
+                    <ClipboardList className="w-4 h-4" /> Indents
+                  </Link>
                   
                   <Link to="/settings" className={navLinkStyle('/settings')}>
                     <SettingsIcon className="w-4 h-4" /> Settings
@@ -116,6 +120,7 @@ function AppContent() {
           <Route path="/saved/:id" element={<ProtectedRoute><ViewTable /></ProtectedRoute>} />
           <Route path="/po-maker" element={<ProtectedRoute><POMaker /></ProtectedRoute>} />
           <Route path="/saved-pos" element={<ProtectedRoute><SavedPOs /></ProtectedRoute>} />
+          <Route path="/indents" element={<ProtectedRoute><IndentDashboard /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><POSettings /></ProtectedRoute>} />
           <Route path="/purchase-head" element={<ProtectedRoute permission="VIEW_APPROVAL_HUB"><PurchaseHeadDashboard /></ProtectedRoute>} />
           <Route path="/approve-po/:id" element={<ProtectedRoute permission="VIEW_APPROVAL_HUB"><POApprovalView /></ProtectedRoute>} />

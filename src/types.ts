@@ -115,6 +115,32 @@ export interface POItem {
   amount: number;
 }
 
+export interface IndentItem {
+  itemName: string;
+  qty: number | string;
+  uom: string;
+  applicationArea: string;
+  orderPlacedBy: string;
+  orderPassedBy: string;
+}
+
+export interface Indent {
+  id?: number;
+  indent_no: string;
+  date: string;
+  department?: string;
+  items: IndentItem[];
+  total_items: number;
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED' | string;
+  created_by_name?: string;
+  rejection_remarks?: string;
+  approved_by?: string;
+  approved_at?: string;
+  internal_comments?: InternalComment[];
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface PurchaseOrder {
   id?: number;
   po_no: string;

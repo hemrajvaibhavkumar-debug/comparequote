@@ -199,8 +199,8 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
   };
 
   const freightAmount = Number(po.terms.freight_amount) || 0;
-  const freightTaxAmount = freightAmount * (getFreightTaxPercent() / 100);
-  const grandTotal = (po.total_amount || 0) + freightAmount + freightTaxAmount;
+  const freightTaxAmount = Number((freightAmount * (getFreightTaxPercent() / 100)).toFixed(2));
+  const grandTotal = Number(((po.total_amount || 0) + freightAmount + freightTaxAmount).toFixed(2));
 
   const applyTemplate = (templateId: string) => {
     const template = templates.find(t => t.id === Number(templateId));

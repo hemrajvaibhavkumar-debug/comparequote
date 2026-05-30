@@ -137,7 +137,7 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions, isP
   const currentMeta = COMPANY_METADATA[po.version || 'hemraj_ind'];
 
   const EditableText = ({ value, onChange, className = "" }: { value: string, onChange: (val: string) => void, className?: string }) => {
-    if (isPDF) {
+    if (isPDF || po.status === 'APPROVED') {
       return <span className={`text-black font-black uppercase mx-1 underline ${className}`}>{value}</span>;
     }
     return (
