@@ -99,82 +99,29 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
   const removeItem = (index: number) => {
     setPo(prev => {
       const newItems = prev.items.filter((_, i) => i !== index);
-      // Re-index serial numbers to keep them strictly sequential 1, 2, 3...
-      const reindexedItems = newItems.map((item, i) => ({ ...item, sn: i + 1 }));
-      const total = reindexedItems.reduce((acc, item) => acc + Number(item.amount), 0);
-      return { ...prev, items: reindexedItems, total_amount: total };
+      // Re-calculate SNs
+      const reindexed = newItems.map((item, i) => ({ ...item, sn: i + 1 }));
+      const newTotal = reindexed.reduce((sum, item) => sum + (item.amount || 0), 0);
+      return { ...prev, items: reindexed, total_amount: newTotal };
     });
-  };
-
-  const calculateItemAmount = (item: Partial<POItem>) => {
-    const qty = parseFloat(String(item.qty)) || 0;
-    const rate = parseFloat(String(item.rate)) || 0;
-    const discount = parseFloat(String(item.discount)) || 0;
-    const taxStr = String(item.tax);
-    const taxMatch = taxStr.match(/(\d+)%/);
-    const taxPercent = taxMatch ? parseFloat(taxMatch[1]) : 0;
-
-    const discountedRate = rate * (1 - discount / 100);
-    const amountWithTax = (qty * discountedRate) * (1 + taxPercent / 100);
-    return Number(amountWithTax.toFixed(2));
   };
 
   const updateItem = (index: number, field: keyof POItem, value: any) => {
     setPo(prev => {
       const newItems = [...prev.items];
       const item = { ...newItems[index], [field]: value };
-      item.amount = calculateItemAmount(item);
+      
+      const qty = parseFloat(item.qty as any) || 0;
+      const rate = parseFloat(item.rate as any) || 0;
+      const discount = parseFloat(item.discount as any) || 0;
+      
+      const discountedRate = rate * (1 - discount / 100);
+      item.amount = parseFloat((qty * discountedRate).toFixed(2));
+      
       newItems[index] = item;
-      
-      const total = newItems.reduce((acc, it) => acc + Number(it.amount), 0);
-      return { ...prev, items: newItems, total_amount: Number(total.toFixed(2)) };
+      const newTotal = newItems.reduce((sum, item) => sum + (item.amount || 0), 0);
+      return { ...prev, items: newItems, total_amount: newTotal };
     });
-  };
-
-  const handleBulkExtract = async () => {
-    if (!bulkText.trim()) return;
-    setIsExtracting(true);
-    try {
-      const res = await apiFetch('/api/extract-po-items', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: bulkText })
-      });
-      if (!res.ok) throw new Error("Extraction failed");
-      const data = await res.json();
-      
-      if (data.items && Array.isArray(data.items)) {
-        setPo(prev => {
-          const currentItems = [...prev.items];
-          const lastSn = currentItems.length > 0 ? Math.max(...currentItems.map(i => i.sn)) : 0;
-          
-          const newItems = data.items.map((item: any, idx: number) => {
-            const processedItem = {
-              ...item,
-              sn: lastSn + idx + 1,
-              qty: Number(item.qty) || 0,
-              rate: Number(item.rate) || 0,
-              discount: Number(item.discount) || 0,
-              tax: item.tax || 'GST @18%'
-            };
-            processedItem.amount = calculateItemAmount(processedItem);
-            return processedItem as POItem;
-          });
-
-          const updatedItems = [...currentItems, ...newItems];
-          const total = updatedItems.reduce((acc, it) => acc + Number(it.amount), 0);
-          return { ...prev, items: updatedItems, total_amount: Number(total.toFixed(2)) };
-        });
-        setBulkText('');
-        setShowBulkPaste(false);
-      }
-    } catch (err: any) {
-      if (err.message !== "Session expired") {
-        alert("Failed to extract items. Please try again.");
-      }
-    } finally {
-      setIsExtracting(false);
-    }
   };
 
   const updateFreightAmount = (val: number) => {
@@ -191,262 +138,325 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
     }));
   };
 
-  // Derived Totals
-  const getFreightTaxPercent = () => {
-    const taxStr = po.terms.freight_tax || 'GST @18%';
-    const taxMatch = taxStr.match(/(\d+)%/);
-    return taxMatch ? parseFloat(taxMatch[1]) : 0;
-  };
-
-  const freightAmount = Number(po.terms.freight_amount) || 0;
-  const freightTaxAmount = Number((freightAmount * (getFreightTaxPercent() / 100)).toFixed(2));
-  const grandTotal = Number(((po.total_amount || 0) + freightAmount + freightTaxAmount).toFixed(2));
-
-  const applyTemplate = (templateId: string) => {
-    const template = templates.find(t => t.id === Number(templateId));
+  const applyTemplate = (id: string) => {
+    const template = templates.find(t => String(t.id) === id);
     if (!template) return;
     setPo(prev => ({
       ...prev,
       terms: {
-        tax: template.tax || '',
-        packing: template.packing || '',
-        payment: template.payment || '',
-        freight: template.freight || '',
-        delivery: template.delivery || '',
-        contact_no: template.contact_no || '',
-        notes: template.notes || ''
+        ...prev.terms,
+        tax: template.tax || prev.terms.tax,
+        packing: template.packing || prev.terms.packing,
+        notes: template.notes || prev.terms.notes,
+        payment: template.payment || prev.terms.payment,
+        freight: template.freight || prev.terms.freight,
+        delivery: template.delivery || prev.terms.delivery,
+        warranty: template.warranty || prev.terms.warranty,
+        manual_notes: template.manual_notes ? [...template.manual_notes] : prev.terms.manual_notes,
+        payment_milestones: template.payment_milestones ? [...template.payment_milestones] : prev.terms.payment_milestones
       }
     }));
   };
 
+  const handleBulkExtract = async () => {
+    if (!bulkText.trim()) return;
+    setIsExtracting(true);
+    try {
+      const res = await apiFetch('/api/ai/extract-po-items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: bulkText })
+      });
+      const data = await res.json();
+      if (data.items && Array.isArray(data.items)) {
+        setPo(prev => {
+          const currentItems = [...prev.items];
+          const newItems = data.items.map((item: any, idx: number) => ({
+            sn: currentItems.length + idx + 1,
+            itemName: item.itemName,
+            make: item.make || '',
+            qty: parseFloat(item.qty) || 0,
+            uom: item.uom || 'NOS',
+            rate: parseFloat(item.rate) || 0,
+            discount: parseFloat(item.discount) || 0,
+            tax: 'GST @18%',
+            amount: (parseFloat(item.qty) || 0) * (parseFloat(item.rate) || 0) * (1 - (parseFloat(item.discount) || 0) / 100)
+          }));
+          const combined = [...currentItems, ...newItems];
+          return {
+            ...prev,
+            items: combined,
+            total_amount: combined.reduce((sum, it) => sum + (it.amount || 0), 0)
+          };
+        });
+        setBulkText('');
+        setShowBulkPaste(false);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Failed to extract items.");
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
+  const loadFromComparison = async (comp: any) => {
+    if (!comp?.id) return;
+    try {
+      const res = await apiFetch(`/api/comparisons/${comp.id}`);
+      const data = await res.json();
+      if (data?.data?.data?.items) {
+        // Find selected vendor if possible or prompt? 
+        // For now just take the first vendor or let user pick.
+        const vendors = data.data.data.vendors || [];
+        if (vendors.length === 0) return;
+        
+        let vendorName = vendors[0];
+        if (vendors.length > 1) {
+          const choice = window.prompt(`Select Vendor to load items from:\n${vendors.join(', ')}`, vendors[0]);
+          if (choice && vendors.includes(choice)) vendorName = choice;
+        }
+
+        const compItems = data.data.data.items;
+        const newPOItems: POItem[] = compItems.map((ci: any, idx: number) => {
+          const quote = ci.vendorQuotes?.find((q: any) => q.vendorName === vendorName);
+          const qty = parseFloat(ci.qty) || 0;
+          const rate = parseFloat(quote?.mrp) || 0;
+          const discount = parseFloat(quote?.discount) || 0;
+          const netRate = parseFloat(quote?.netRate) || 0;
+          
+          return {
+            sn: idx + 1,
+            itemName: ci.description || '',
+            make: quote?.make || '',
+            qty,
+            uom: ci.uom || 'NOS',
+            rate,
+            discount,
+            tax: 'GST @18%',
+            amount: parseFloat((qty * netRate).toFixed(2))
+          };
+        });
+
+        // Also update vendor details if found in master
+        const vMaster = vendors.find((v: any) => v.name === vendorName);
+        if (vMaster) {
+           handleVendorSelect(vendorName);
+        } else {
+           setPo(prev => ({ ...prev, vendor_name: vendorName }));
+        }
+
+        setPo(prev => ({
+          ...prev,
+          items: newPOItems,
+          total_amount: newPOItems.reduce((sum, it) => sum + (it.amount || 0), 0)
+        }));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const grandTotal = po.total_amount + (po.terms.freight_amount || 0);
+
   return (
-    <div className="space-y-8 pb-20">
-      {/* Header Info */}
-      <section className="glass-card p-6 rounded-2xl shadow-sm border border-slate-200/80 space-y-6">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <h2 className="text-sm font-bold text-slate-900 font-sans tracking-wide">PO Information</h2>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Basic Info */}
+      <section className="glass-card p-6 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 font-sans tracking-wide uppercase">General Information</h2>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Auto-Generation</span>
+            <button 
+              onClick={onGeneratePONo}
+              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 rounded-lg transition-colors cursor-pointer"
+              title="Regenerate PO Number"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="col-span-2">
-            <div className="flex justify-between items-end">
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">PO Number</label>
-              <button 
-                onClick={onGeneratePONo}
-                className="text-[10px] font-bold text-slate-500 hover:text-indigo-600 flex items-center gap-1 mb-0.5 transition-colors duration-200"
-                title="Generate next sequential number"
-              >
-                <RotateCcw className="w-2.5 h-2.5" /> RESET
-              </button>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="space-y-1.5">
+            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Purchase Order No.</label>
             <input 
               type="text"
-              className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
+              className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
               value={po.po_no || ''}
               onChange={e => setPo({...po, po_no: e.target.value})}
-              placeholder="e.g. HRM/2026-27/01"
+              placeholder="e.g. PO/24-25/001"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4 col-span-2">
-            <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">PO Date</label>
-              <input 
-                type="date"
-                className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                value={po.date || ''}
-                onChange={e => setPo({...po, date: e.target.value})}
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Quotation Ref Type</label>
-              <select 
-                className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
-                value={po.quote_ref_type || 'MAIL'}
-                onChange={e => setPo({...po, quote_ref_type: e.target.value})}
-              >
-                <option value="MAIL">MAIL</option>
-                <option value="WHATSAPP">WHATSAPP</option>
-                <option value="VERBAL">VERBAL</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Ref Doc No (Comparison)</label>
-              <div className="flex gap-2">
-                <select 
-                  className="mt-1 w-1/2 border border-slate-200 rounded-xl px-2 py-2 bg-white text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
-                  onChange={e => {
-                    if (e.target.value !== 'CUSTOM') {
-                      setPo({...po, quote_doc_no: e.target.value});
-                    }
-                  }}
-                  value={comparisons.some(c => c.doc_no === po.quote_doc_no) ? po.quote_doc_no : (po.quote_doc_no ? 'CUSTOM' : '')}
-                >
-                  <option value="">-- Select Doc --</option>
-                  {comparisons.map(c => <option key={c.id} value={c.doc_no}>{c.doc_no}</option>)}
-                  <option value="CUSTOM">Custom...</option>
-                </select>
-                <input 
-                  type="text"
-                  className="mt-1 flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
-                  value={po.quote_doc_no || ''}
-                  onChange={e => setPo({...po, quote_doc_no: e.target.value})}
-                  placeholder="Ref Doc No"
-                />
-              </div>
-            </div>
-            <div className="col-span-2">
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Quotation Date</label>
-              <input 
-                type="date"
-                className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                value={po.quote_date || ''}
-                onChange={e => setPo({...po, quote_date: e.target.value})}
-              />
-            </div>
+          <div className="space-y-1.5">
+            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">PO Date</label>
+            <input 
+              type="date"
+              className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
+              value={po.po_date || ''}
+              onChange={e => setPo({...po, po_date: e.target.value})}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Quot. Ref & Date</label>
+            <input 
+              type="text"
+              className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
+              value={po.quot_ref || ''}
+              onChange={e => setPo({...po, quot_ref: e.target.value})}
+              placeholder="e.g. Q/24/123 dtd 01.01.24"
+            />
           </div>
         </div>
       </section>
 
       {/* Vendor Details */}
-      <section className="glass-card p-6 rounded-2xl shadow-sm border border-slate-200/80 space-y-6">
-        <h2 className="text-sm font-bold text-slate-900 font-sans tracking-wide border-b border-slate-100 pb-3">Vendor Details</h2>
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+      <section className="glass-card p-6 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 font-sans tracking-wide uppercase">Vendor Details</h2>
+          <div className="flex gap-2">
+             <select 
+               className="text-xs bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 outline-none text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer"
+               onChange={e => handleVendorSelect(e.target.value)}
+               defaultValue=""
+             >
+               <option value="" disabled>Select from Master</option>
+               <option value="custom">-- CUSTOM / NEW --</option>
+               {vendors.map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
+             </select>
+             
+             <select 
+               className="text-xs bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/30 rounded-xl px-3 py-1.5 outline-none text-indigo-700 dark:text-indigo-400 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer"
+               onChange={e => {
+                 const comp = comparisons.find(c => String(c.id) === e.target.value);
+                 if (comp) loadFromComparison(comp);
+               }}
+               defaultValue=""
+             >
+               <option value="" disabled>Import from Comparison</option>
+               {comparisons.map(c => <option key={c.id} value={c.id}>{c.doc_no} ({new Date(c.created_at).toLocaleDateString()})</option>)}
+             </select>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
             <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Select Vendor</label>
-              <select 
-                className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
-                onChange={e => handleVendorSelect(e.target.value)}
-                value={po.vendor_name || ''}
-              >
-                <option value="">-- Select Vendor --</option>
-                <option value="custom">Manual Entry</option>
-                {vendors.map(v => (
-                  <option key={v.id} value={v.name}>{v.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Vendor Name</label>
+              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">Vendor Name</label>
               <input 
                 type="text"
-                className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-black focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 uppercase"
                 value={po.vendor_name || ''}
                 onChange={e => setPo({...po, vendor_name: e.target.value})}
+                placeholder="Full Company Name"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">Address</label>
+              <textarea 
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 h-24 resize-none"
+                value={po.vendor_details.address || ''}
+                onChange={e => updateVendorField('address', e.target.value)}
+                placeholder="Street, City, PIN"
               />
             </div>
           </div>
-          
           <div className="grid grid-cols-2 gap-4">
-             <div className="col-span-2">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Address</label>
-                <textarea 
-                  className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
-                  rows={2}
-                  value={po.vendor_details.address || ''}
-                  onChange={e => updateVendorField('address', e.target.value)}
-                />
-             </div>
-             <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">GSTIN</label>
-                <input 
-                  type="text"
-                  className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
-                  value={po.vendor_details.gstin || ''}
-                  onChange={e => updateVendorField('gstin', e.target.value)}
-                />
-             </div>
-             <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">State</label>
-                <input 
-                  type="text"
-                  className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
-                  value={po.vendor_details.state || ''}
-                  onChange={e => updateVendorField('state', e.target.value)}
-                />
-             </div>
-             <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Mail ID</label>
-                <input 
-                  type="email"
-                  className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
-                  value={po.vendor_details.mail || ''}
-                  onChange={e => updateVendorField('mail', e.target.value)}
-                />
-             </div>
-             <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Phone</label>
-                <input 
-                  type="text"
-                  className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
-                  value={po.vendor_details.ph || ''}
-                  onChange={e => updateVendorField('ph', e.target.value)}
-                />
-             </div>
-             <div className="col-span-2">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">CC Email IDs (Optional)</label>
-                <input 
-                  type="text"
-                  className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
-                  value={po.vendor_details.cc || ''}
-                  onChange={e => updateVendorField('cc', e.target.value)}
-                  placeholder="e.g. boss@hemrajgroup.co.in, team@hemrajgroup.co.in"
-                />
-             </div>
+            <div>
+              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">GSTIN</label>
+              <input 
+                type="text"
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 uppercase"
+                value={po.vendor_details.gstin || ''}
+                onChange={e => updateVendorField('gstin', e.target.value)}
+                placeholder="15-digit GSTIN"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">State</label>
+              <input 
+                type="text"
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 uppercase"
+                value={po.vendor_details.state || ''}
+                onChange={e => updateVendorField('state', e.target.value)}
+                placeholder="State Name"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">Contact No</label>
+              <input 
+                type="text"
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
+                value={po.vendor_details.ph || ''}
+                onChange={e => updateVendorField('ph', e.target.value)}
+                placeholder="Mobile / Phone"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">Email</label>
+              <input 
+                type="email"
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
+                value={po.vendor_details.mail || ''}
+                onChange={e => updateVendorField('mail', e.target.value)}
+                placeholder="vendor@mail.com"
+              />
+            </div>
+            <div className="col-span-2">
+              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">CC Emails (Optional)</label>
+              <input 
+                type="text"
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
+                value={po.vendor_details.cc || ''}
+                onChange={e => updateVendorField('cc', e.target.value)}
+                placeholder="email1@test.com, email2@test.com"
+              />
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Items */}
-      <section className="glass-card p-6 rounded-2xl shadow-sm border border-slate-200/80 space-y-6">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <h2 className="text-sm font-bold text-slate-900 font-sans tracking-wide">Items</h2>
+      {/* Items Section */}
+      <section className="glass-card p-6 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 font-sans tracking-wide uppercase">Order Items</h2>
           <div className="flex gap-2">
-             <button 
+            <button 
                onClick={() => setShowBulkPaste(!showBulkPaste)}
-               className="flex items-center gap-1.5 text-xs font-semibold border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 px-3 py-1.5 rounded-xl transition duration-200 shadow-sm cursor-pointer"
-             >
-               <ClipboardPaste className="w-3.5 h-3.5" /> Bulk Paste
-             </button>
-             <button 
+               className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-black dark:hover:bg-white transition shadow-md cursor-pointer"
+            >
+              <ClipboardPaste className="w-3.5 h-3.5" /> AI Bulk Paste
+            </button>
+            <button 
                onClick={addItem}
-               className="flex items-center gap-1.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-xl shadow-sm transition duration-200 hover:-translate-y-0.5 transform cursor-pointer"
-             >
-               <Plus className="w-3.5 h-3.5" /> Add Item
-             </button>
+               className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-indigo-700 transition shadow-md cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" /> Add New Item
+            </button>
           </div>
         </div>
 
         {showBulkPaste && (
-          <div className="p-5 bg-slate-50 border border-slate-200 rounded-xl space-y-4 shadow-inner">
-             <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Paste Spreadsheet Data</h3>
-                <p className="text-[10px] text-slate-400 italic">Example: "Item Description, Brand, 10 PCS, 500.00"</p>
+          <div className="p-4 bg-slate-900/5 dark:bg-slate-100/5 rounded-2xl border border-slate-200 dark:border-slate-800 animate-in slide-in-from-top duration-300">
+             <div className="flex justify-between items-center mb-2">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Paste quotation text here (AI will extract items)</p>
+                <button onClick={() => setShowBulkPaste(false)} className="text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"><Plus className="w-4 h-4 rotate-45" /></button>
              </div>
              <textarea 
-               className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all min-h-[100px]"
-               rows={4}
-               placeholder="Paste items from Excel or Sheets here..."
+               className="w-full h-32 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-slate-800 dark:text-slate-100 font-medium"
+               placeholder="Example: 10 nos of 2.5sqmm copper cable, 5 pcs 16A MCB Legrand..."
                value={bulkText}
                onChange={e => setBulkText(e.target.value)}
              />
-             <div className="flex justify-end gap-2">
-                <button 
-                  onClick={() => setShowBulkPaste(false)}
-                  className="text-xs font-semibold text-slate-500 hover:text-slate-700 px-3 py-2 rounded-xl transition cursor-pointer"
-                >
-                  Cancel
-                </button>
+             <div className="flex justify-end mt-3">
                 <button 
                   onClick={handleBulkExtract}
                   disabled={isExtracting || !bulkText.trim()}
-                  className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2 rounded-xl shadow-sm transition disabled:opacity-50 cursor-pointer"
+                  className="px-4 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-black dark:hover:bg-white disabled:opacity-50 transition shadow-lg cursor-pointer"
                 >
                   {isExtracting ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Processing...
-                    </>
+                    <><Loader2 className="w-3 h-3 animate-spin" /> Extracting...</>
                   ) : (
-                    'Extract Items'
+                    <><Plus className="w-3 h-3" /> Process Quotation</>
                   )}
                 </button>
              </div>
@@ -455,45 +465,45 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
 
         <div className="space-y-4">
           {po.items.map((item, index) => (
-            <div key={index} className="p-5 bg-slate-50/50 hover:bg-white rounded-2xl border border-slate-200/60 relative group hover:shadow-md transition-all duration-200">
+            <div key={index} className="p-5 bg-slate-50/50 dark:bg-slate-950/50 hover:bg-white dark:hover:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 relative group hover:shadow-md transition-all duration-200">
               <button 
                 onClick={() => removeItem(index)}
-                className="absolute -top-2.5 -right-2.5 bg-rose-600 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition shadow-lg border border-white hover:bg-rose-700 cursor-pointer"
+                className="absolute -top-2.5 -right-2.5 bg-rose-600 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition shadow-lg border border-white dark:border-slate-800 hover:bg-rose-700 cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
               <div className="grid grid-cols-12 gap-3">
                 <div className="col-span-12 md:col-span-6">
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Item Name / Description</label>
+                  <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Item Name / Description</label>
                   <input 
                     type="text"
-                    className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
+                    className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
                     value={item.itemName || ''}
                     onChange={e => updateItem(index, 'itemName', e.target.value)}
                   />
                 </div>
                 <div className="col-span-6 md:col-span-2">
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Make</label>
+                  <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Make</label>
                   <input 
                     type="text"
-                    className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
+                    className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
                     value={item.make || ''}
                     onChange={e => updateItem(index, 'make', e.target.value)}
                   />
                 </div>
                 <div className="col-span-3 md:col-span-2">
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Qty</label>
+                  <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Qty</label>
                   <input 
                     type="number"
-                    className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
+                    className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
                     value={item.qty || 0}
                     onChange={e => updateItem(index, 'qty', e.target.value)}
                   />
                 </div>
                 <div className="col-span-3 md:col-span-2">
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">UOM</label>
+                  <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">UOM</label>
                   <select 
-                    className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                    className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1.5 text-xs bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
                     value={item.uom || 'NOS'}
                     onChange={e => updateItem(index, 'uom', e.target.value)}
                   >
@@ -506,28 +516,28 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                   </select>
                 </div>
                 <div className="col-span-3 md:col-span-3">
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Rate</label>
+                  <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Rate</label>
                   <input 
                     type="number"
-                    className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
+                    className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
                     value={item.rate || 0}
                     onChange={e => updateItem(index, 'rate', e.target.value)}
                   />
                 </div>
                 <div className="col-span-3 md:col-span-3">
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Dis%</label>
+                  <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Dis%</label>
                   <input 
                     type="number"
                     step="0.001"
-                    className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
+                    className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
                     value={item.discount || 0}
                     onChange={e => updateItem(index, 'discount', e.target.value)}
                   />
                 </div>
                 <div className="col-span-3 md:col-span-3">
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tax</label>
+                  <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Tax</label>
                   <select 
-                    className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                    className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1.5 text-xs bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
                     value={item.tax || 'GST @18%'}
                     onChange={e => updateItem(index, 'tax', e.target.value)}
                   >
@@ -537,10 +547,10 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                   </select>
                 </div>
                 <div className="col-span-3 md:col-span-3">
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Amount</label>
+                  <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Amount</label>
                   <input 
                     type="number"
-                    className="w-full border border-slate-200/80 rounded-lg px-2.5 py-1.5 text-xs text-slate-600 bg-slate-100/50 font-bold outline-none cursor-not-allowed shadow-inner"
+                    className="w-full border border-slate-200/80 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-600 dark:text-slate-400 bg-slate-100/50 dark:bg-slate-800/50 font-bold outline-none cursor-not-allowed shadow-inner"
                     value={item.amount || 0}
                     readOnly
                   />
@@ -552,8 +562,8 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
           {po.items.length > 0 && (
             <div className="flex justify-end pt-3">
                <div className="text-right">
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Item Amount</p>
-                  <p className="text-lg font-black text-slate-900 mt-1">₹{po.total_amount.toLocaleString()}</p>
+                  <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Item Amount</p>
+                  <p className="text-lg font-black text-slate-900 dark:text-slate-100 mt-1">₹{po.total_amount.toLocaleString()}</p>
                </div>
             </div>
           )}
@@ -561,12 +571,12 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
       </section>
 
       {/* Commercial Terms */}
-      <section className="glass-card p-6 rounded-2xl shadow-sm border border-slate-200/80 space-y-6">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <h2 className="text-sm font-bold text-slate-900 font-sans tracking-wide">Commercial Terms</h2>
+      <section className="glass-card p-6 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 font-sans tracking-wide uppercase">Commercial Terms</h2>
           <div className="relative">
              <select 
-               className="text-xs bg-white border border-slate-200 rounded-xl px-3 py-1.5 outline-none text-slate-700 font-semibold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer"
+               className="text-xs bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 outline-none text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer"
                onChange={e => applyTemplate(e.target.value)}
                defaultValue=""
              >
@@ -577,9 +587,9 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tax (Summary)</label>
+            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tax (Summary)</label>
             <select 
-              className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+              className="mt-1 w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
               value={po.terms.tax || ''}
               onChange={e => setPo({...po, terms: { ...po.terms, tax: e.target.value }})}
             >
@@ -591,10 +601,10 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             </select>
           </div>
           <div>
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Packing</label>
+            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Packing</label>
             <div className="flex gap-2">
               <select 
-                className="mt-1 w-1/3 border border-slate-200 rounded-xl px-2 py-2 bg-white text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                className="mt-1 w-1/3 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-2 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
                 onChange={e => {
                   if (e.target.value !== 'CUSTOM') {
                     setPo({...po, terms: { ...po.terms, packing: e.target.value }});
@@ -609,7 +619,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               </select>
               <input 
                 type="text"
-                className="mt-1 flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                className="mt-1 flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                 value={po.terms.packing || ''}
                 onChange={e => setPo({...po, terms: { ...po.terms, packing: e.target.value }})}
                 placeholder="e.g. Nil, Extra"
@@ -617,10 +627,10 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             </div>
           </div>
           <div>
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Forwarding</label>
+            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Forwarding</label>
             <div className="flex gap-2">
               <select 
-                className="mt-1 w-1/3 border border-slate-200 rounded-xl px-2 py-2 bg-white text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                className="mt-1 w-1/3 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-2 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
                 onChange={e => {
                   if (e.target.value !== 'CUSTOM') {
                     setPo({...po, terms: { ...po.terms, notes: e.target.value || '' }});
@@ -636,7 +646,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               </select>
               <input 
                 type="text"
-                className="mt-1 flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                className="mt-1 flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                 value={po.terms.notes || ''}
                 onChange={e => setPo({...po, terms: { ...po.terms, notes: e.target.value }})}
                 placeholder="e.g. Free Upto Kolkata"
@@ -645,7 +655,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
           </div>
           <div className="col-span-2">
             <div className="flex justify-between items-center mb-2">
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Payment Terms</label>
+              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Payment Terms</label>
               <button 
                 onClick={() => setPo(prev => ({ 
                   ...prev, 
@@ -676,7 +686,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                     <div className="relative w-24 shrink-0">
                       <input 
                         type="number"
-                        className="w-full border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
+                        className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
                         value={m.percentage || ''}
                         onChange={e => {
                           const newMilestones = [...(po.terms.payment_milestones || [])];
@@ -688,7 +698,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                       <span className="absolute right-3 top-2 text-xs font-bold text-slate-400">%</span>
                     </div>
                     <select 
-                      className="w-1/3 border border-slate-200 rounded-xl px-2 py-1.5 bg-white text-xs text-slate-700 font-semibold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                      className="w-1/3 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1.5 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
                       value={isCustom ? "CUSTOM" : (m.description || "")}
                       onChange={e => {
                         const newMilestones = [...(po.terms.payment_milestones || [])];
@@ -706,7 +716,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                     </select>
                     <input 
                       type="text"
-                      className="flex-1 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      className="flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                       value={m.description || ''}
                       onChange={e => {
                         const newMilestones = [...(po.terms.payment_milestones || [])];
@@ -720,7 +730,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                         const newMilestones = (po.terms.payment_milestones || []).filter((_, i) => i !== idx);
                         setPo({ ...po, terms: { ...po.terms, payment_milestones: newMilestones } });
                       }}
-                      className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-xl border border-transparent hover:border-rose-100 transition-colors cursor-pointer"
+                      className="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl border border-transparent hover:border-rose-100 dark:hover:border-rose-800 transition-colors cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -732,8 +742,8 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                 <div className="flex justify-end pr-10">
                   <div className={`text-[10px] font-bold px-2.5 py-1 rounded-xl shadow-inner ${
                     (po.terms.payment_milestones.reduce((sum, m) => sum + m.percentage, 0)) === 100 
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-100/50' 
-                    : 'bg-rose-50 text-rose-700 border border-rose-100/50'
+                    ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-100/50 dark:border-emerald-800/50' 
+                    : 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 border border-rose-100/50 dark:border-rose-800/50'
                   }`}>
                     TOTAL: {po.terms.payment_milestones.reduce((sum, m) => sum + m.percentage, 0)}%
                   </div>
@@ -743,7 +753,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               {(!po.terms.payment_milestones || po.terms.payment_milestones.length === 0) && (
                 <div className="flex gap-2">
                   <select 
-                    className="w-1/2 border border-slate-200 rounded-xl px-2 py-2 bg-white text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                    className="w-1/2 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-2 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
                     onChange={e => {
                       if (e.target.value !== 'CUSTOM') {
                         setPo({...po, terms: { ...po.terms, payment: e.target.value }});
@@ -758,7 +768,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                   </select>
                   <input 
                     type="text"
-                    className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                    className="flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                     value={po.terms.payment || ''}
                     onChange={e => setPo({...po, terms: { ...po.terms, payment: e.target.value }})}
                     placeholder="Simple payment term or use milestones"
@@ -768,10 +778,10 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             </div>
           </div>
           <div className="col-span-2">
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Freight</label>
+            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Freight</label>
             <div className="flex gap-2">
               <select 
-                className="mt-1 w-1/4 border border-slate-200 rounded-xl px-2 py-2 bg-white text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                className="mt-1 w-1/4 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-2 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
                 value={po.terms.freight || ''}
                 onChange={e => setPo({...po, terms: { ...po.terms, freight: e.target.value }})}
               >
@@ -781,7 +791,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                 <option value="Nil">Nil</option>
               </select>
               <select 
-                className="mt-1 w-1/4 border border-slate-200 rounded-xl px-2 py-2 bg-white text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                className="mt-1 w-1/4 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-2 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
                 value={po.terms.freight_tax || 'GST @18%'}
                 onChange={e => updateFreightTax(e.target.value)}
               >
@@ -791,7 +801,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               </select>
               <input 
                 type="number"
-                className="mt-1 flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                className="mt-1 flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                 value={po.terms.freight_amount || 0}
                 onChange={e => updateFreightAmount(Number(e.target.value))}
                 placeholder="Amount"
@@ -799,29 +809,29 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             </div>
           </div>
           <div>
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Warranty</label>
+            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Warranty</label>
             <div className="relative">
               <input 
                 type="number"
-                className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white pr-12 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                className="mt-1 w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 pr-12 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                 value={po.terms.warranty || ''}
                 onChange={e => setPo({...po, terms: { ...po.terms, warranty: e.target.value }})}
                 placeholder="0"
               />
-              <span className="absolute right-3 top-3 text-[10px] font-bold text-slate-400 uppercase">Year(s)</span>
+              <span className="absolute right-3 top-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Year(s)</span>
             </div>
           </div>
           <div className="col-span-2">
-            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-5 rounded-2xl flex justify-between items-center border border-indigo-950/60 shadow-lg">
-               <span className="font-semibold uppercase text-xs tracking-wider text-indigo-200/90">Grand Total Amount</span>
+            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-5 rounded-2xl flex justify-between items-center border border-indigo-950/60 shadow-lg dark:shadow-none">
+               <span className="font-bold uppercase text-[10px] tracking-widest text-indigo-200/90">Grand Total Amount</span>
                <span className="text-2xl font-black font-sans tracking-tight text-white">₹{grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
             </div>
           </div>
           <div className="col-span-2">
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Delivery Period</label>
+            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Delivery Period</label>
             <div className="flex gap-2">
               <select 
-                className="mt-1 w-1/3 border border-slate-200 rounded-xl px-3 py-2 bg-white text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                className="mt-1 w-1/3 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
                 onChange={e => {
                   if (e.target.value !== 'CUSTOM') {
                     setPo({...po, terms: { ...po.terms, delivery: e.target.value }});
@@ -835,7 +845,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               </select>
               <input 
                 type="text"
-                className="mt-1 flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                className="mt-1 flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                 value={po.terms.delivery || ''}
                 onChange={e => setPo({...po, terms: { ...po.terms, delivery: e.target.value }})}
                 placeholder="Immediate or enter custom period"
@@ -843,10 +853,10 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             </div>
           </div>
           <div className="col-span-2">
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Contact No</label>
+            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Contact No</label>
             <div className="flex gap-2">
               <select 
-                className="mt-1 w-1/3 border border-slate-200 rounded-xl px-3 py-2 bg-white text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                className="mt-1 w-1/3 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
                 onChange={e => {
                   if (e.target.value !== 'CUSTOM') {
                     const numberOnly = e.target.value.split(' - ')[0];
@@ -861,7 +871,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               </select>
               <input 
                 type="text"
-                className="mt-1 flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                className="mt-1 flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                 value={po.terms.contact_no || ''}
                 onChange={e => setPo({...po, terms: { ...po.terms, contact_no: e.target.value }})}
                 placeholder="e.g. +91 98765 43210"
@@ -869,8 +879,8 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             </div>
           </div>
           <div className="col-span-2">
-            <div className="flex justify-between items-center mb-3 border-t border-slate-100 pt-4">
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Additional Notes</label>
+            <div className="flex justify-between items-center mb-3 border-t border-slate-100 dark:border-slate-800 pt-4">
+              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Additional Notes</label>
               <button 
                 onClick={() => setPo(prev => ({ ...prev, terms: { ...prev.terms, manual_notes: [...(prev.terms.manual_notes || []), ''] } }))}
                 className="text-[10px] font-semibold bg-indigo-600 text-white px-2.5 py-1.5 rounded-xl hover:bg-indigo-700 transition flex items-center gap-1 hover:-translate-y-0.5 shadow-sm transform cursor-pointer"
@@ -881,9 +891,9 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             <div className="space-y-3">
               {(po.terms.manual_notes || []).map((note, idx) => (
                 <div key={idx} className="flex gap-2 group">
-                  <div className="w-16 shrink-0 pt-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Note {idx + 3} ::</div>
+                  <div className="w-16 shrink-0 pt-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Note {idx + 3} ::</div>
                   <textarea 
-                    className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 text-xs min-h-[60px] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white placeholder-slate-400"
+                    className="flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 text-xs min-h-[60px] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 placeholder-slate-400"
                     value={note}
                     onChange={e => {
                       const newNotes = [...(po.terms.manual_notes || [])];
@@ -897,14 +907,14 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                       const newNotes = (po.terms.manual_notes || []).filter((_, i) => i !== idx);
                       setPo({ ...po, terms: { ...po.terms, manual_notes: newNotes } });
                     }}
-                    className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl shrink-0 h-fit transition-colors cursor-pointer"
+                    className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl shrink-0 h-fit transition-colors border border-transparent hover:border-rose-100 dark:hover:border-rose-800 cursor-pointer"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               ))}
               {(!po.terms.manual_notes || po.terms.manual_notes.length === 0) && (
-                <div className="text-[10px] text-slate-400 italic text-center py-4 border-2 border-dashed border-slate-100 rounded-xl bg-slate-50/20">
+                <div className="text-[10px] text-slate-400 dark:text-slate-500 italic text-center py-4 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-xl bg-slate-50/20 dark:bg-slate-950/20">
                   No additional notes added yet.
                 </div>
               )}

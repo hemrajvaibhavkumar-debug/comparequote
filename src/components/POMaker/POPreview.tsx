@@ -476,6 +476,10 @@ const POPreview = React.memo<POPreviewProps>(({ po, setPo, settings, actions, is
           background: #e5e7eb;
         }
 
+        .dark .pdf-paged-view {
+          background: #0f172a;
+        }
+
         .pdf-page {
           width: 210mm;
           height: 297mm;

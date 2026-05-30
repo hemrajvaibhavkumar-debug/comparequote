@@ -157,11 +157,11 @@ export default function PurchaseHeadDashboard() {
     const s = status || 'PENDING';
     switch (s) {
       case 'APPROVED':
-        return <span className="px-2 py-1 bg-slate-900 text-white rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Approved</span>;
+        return <span className="px-2 py-1 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Approved</span>;
       case 'REJECTED':
-        return <span className="px-2 py-1 bg-white border border-slate-900 text-slate-900 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1"><XCircle className="w-3 h-3" /> Rejected</span>;
+        return <span className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-900 dark:border-slate-100 text-slate-900 dark:text-slate-100 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1"><XCircle className="w-3 h-3" /> Rejected</span>;
       default:
-        return <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1 border border-slate-200"><Clock className="w-3 h-3" /> Pending</span>;
+        return <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1 border border-slate-200 dark:border-slate-700"><Clock className="w-3 h-3" /> Pending</span>;
     }
   };
 
@@ -171,33 +171,33 @@ export default function PurchaseHeadDashboard() {
   const combinedValue = pos.reduce((sum, p) => sum + (Number(p.total_amount) || 0), 0);
 
   return (
-    <div className="min-h-screen bg-slate-50/50 p-4 sm:p-8 relative">
+    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 transition-colors duration-300 p-4 sm:p-8 relative">
       {/* Background ambient glows */}
-      <div className="ambient-glow bg-slate-200/50 -top-20 -left-20" style={{ width: '400px', height: '400px' }}></div>
-      <div className="ambient-glow bg-slate-100/50 bottom-10 right-10" style={{ width: '400px', height: '400px' }}></div>
+      <div className="ambient-glow bg-slate-200/50 dark:bg-slate-800/20 -top-20 -left-20" style={{ width: '400px', height: '400px' }}></div>
+      <div className="ambient-glow bg-slate-100/50 dark:bg-slate-800/10 bottom-10 right-10" style={{ width: '400px', height: '400px' }}></div>
 
       <div className="max-w-7xl mx-auto space-y-8 relative z-10">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-xs border border-slate-100">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-6 rounded-2xl shadow-xs border border-slate-100 dark:border-slate-800">
           <div>
-            <h1 className="text-2xl font-black text-slate-900 flex items-center gap-2.5 uppercase tracking-tight">
-              <ShieldCheck className="text-slate-900 w-7 h-7" /> Purchase Approval Hub
+            <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2.5 uppercase tracking-tight">
+              <ShieldCheck className="text-slate-900 dark:text-slate-100 w-7 h-7" /> Purchase Approval Hub
             </h1>
-            <p className="text-slate-400 font-semibold text-sm mt-0.5">Welcome back, <span className="text-slate-900 font-black">@{user?.username}</span>. Review, sign, and authorize pending POs.</p>
+            <p className="text-slate-400 dark:text-slate-500 font-semibold text-sm mt-0.5">Welcome back, <span className="text-slate-900 dark:text-slate-100 font-black">@{user?.username}</span>. Review, sign, and authorize pending POs.</p>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-4 items-center shrink-0">
             <div className="relative group w-full sm:w-auto">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 group-focus-within:text-slate-900 dark:group-focus-within:text-slate-100 transition-colors" />
               <input 
                 type="text" 
                 placeholder="Search POs..." 
-                className="pl-10 pr-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 w-full sm:w-64 transition-all text-sm font-medium text-slate-800"
+                className="pl-10 pr-4 py-2.5 bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-slate-100/10 focus:border-slate-900 dark:focus:border-slate-100 w-full sm:w-64 transition-all text-sm font-medium text-slate-800 dark:text-slate-100"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
             </div>
 
-            <div className="flex items-center bg-slate-100 border border-slate-200 rounded-xl p-1 shrink-0">
+            <div className="flex items-center bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-1 shrink-0">
               {[
                 { id: 'PENDING', label: 'Pending' },
                 { id: 'APPROVED', label: 'Approved' },
@@ -209,8 +209,8 @@ export default function PurchaseHeadDashboard() {
                   onClick={() => setStatusFilter(f.id)}
                   className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
                     statusFilter === f.id 
-                      ? 'bg-white text-slate-900 shadow-xs border border-slate-100' 
-                      : 'text-slate-400 hover:text-slate-600'
+                      ? 'bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 shadow-xs border border-slate-100 dark:border-slate-700' 
+                      : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
                   }`}
                 >
                   {f.label}
@@ -222,55 +222,55 @@ export default function PurchaseHeadDashboard() {
 
         {/* Dashboard Analytics Banner Row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs flex items-center gap-4">
-            <div className="p-3.5 bg-slate-50 rounded-2xl text-slate-900">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-xs flex items-center gap-4">
+            <div className="p-3.5 bg-slate-50 dark:bg-slate-800 rounded-2xl text-slate-900 dark:text-slate-100">
               <FileText className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Total Actions</span>
-              <h3 className="text-xl font-extrabold text-slate-800 mt-0.5">{totalCount} POs</h3>
+              <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 tracking-wider">Total Actions</span>
+              <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100 mt-0.5">{totalCount} POs</h3>
             </div>
           </div>
-          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs flex items-center gap-4 border-l-4 border-l-slate-400">
-            <div className="p-3.5 bg-slate-50 rounded-2xl text-slate-600">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-xs flex items-center gap-4 border-l-4 border-l-slate-400">
+            <div className="p-3.5 bg-slate-50 dark:bg-slate-800 rounded-2xl text-slate-600 dark:text-slate-400">
               <Clock className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Awaiting Sign</span>
-              <h3 className="text-xl font-extrabold text-slate-800 mt-0.5">{pendingCount} POs</h3>
+              <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 tracking-wider">Awaiting Sign</span>
+              <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100 mt-0.5">{pendingCount} POs</h3>
             </div>
           </div>
-          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs flex items-center gap-4 border-l-4 border-l-slate-900">
-            <div className="p-3.5 bg-slate-50 rounded-2xl text-slate-900">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-xs flex items-center gap-4 border-l-4 border-l-slate-900 dark:border-l-slate-200">
+            <div className="p-3.5 bg-slate-50 dark:bg-slate-800 rounded-2xl text-slate-900 dark:text-slate-100">
               <CheckCircle className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Approved Value</span>
-              <h3 className="text-xl font-extrabold text-slate-800 mt-0.5">{approvedCount} POs</h3>
+              <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 tracking-wider">Approved Value</span>
+              <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100 mt-0.5">{approvedCount} POs</h3>
             </div>
           </div>
-          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs flex items-center gap-4 border-l-4 border-l-black">
-            <div className="p-3.5 bg-slate-900 rounded-2xl text-white">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-xs flex items-center gap-4 border-l-4 border-l-black dark:border-l-white">
+            <div className="p-3.5 bg-slate-900 dark:bg-slate-100 rounded-2xl text-white dark:text-slate-900">
               <span className="text-sm font-extrabold">₹</span>
             </div>
             <div>
-              <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Combined Value</span>
-              <h3 className="text-md font-black text-slate-900 mt-0.5">₹{combinedValue.toLocaleString('en-IN')}</h3>
+              <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 tracking-wider">Combined Value</span>
+              <h3 className="text-md font-black text-slate-900 dark:text-slate-100 mt-0.5">₹{combinedValue.toLocaleString('en-IN')}</h3>
             </div>
           </div>
         </div>
 
         {loading ? (
           <div className="flex justify-center py-24">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-slate-900"></div>
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-slate-900 dark:border-slate-100"></div>
           </div>
         ) : filteredPOs.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-xs p-16 text-center border border-slate-100 max-w-2xl mx-auto space-y-4">
-            <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
-              <FileText className="text-slate-350 w-6 h-6" />
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xs p-16 text-center border border-slate-100 dark:border-slate-800 max-w-2xl mx-auto space-y-4">
+            <div className="bg-slate-50 dark:bg-slate-800 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
+              <FileText className="text-slate-350 dark:text-slate-600 w-6 h-6" />
             </div>
-            <h3 className="text-lg font-bold text-slate-800 uppercase tracking-tight">No purchase orders found</h3>
-            <p className="text-slate-400 text-sm font-medium">There are currently no POs matching your chosen status filter.</p>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight">No purchase orders found</h3>
+            <p className="text-slate-400 dark:text-slate-500 text-sm font-medium">There are currently no POs matching your chosen status filter.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -281,51 +281,51 @@ export default function PurchaseHeadDashboard() {
               return (
                 <div 
                   key={po.id} 
-                  className="bg-white rounded-2xl shadow-xs border border-slate-100 hover:shadow-md hover:border-slate-300 transition-all duration-300 group overflow-hidden relative flex flex-col"
+                  className="bg-white dark:bg-slate-900 rounded-2xl shadow-xs border border-slate-100 dark:border-slate-800 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300 group overflow-hidden relative flex flex-col"
                 >
                   <Link to={`/approve-po/${po.id}`} className="p-6 flex-1 cursor-pointer">
                       <div className="flex justify-between items-start mb-4">
-                      <div className="p-2.5 bg-slate-100 text-slate-900 rounded-xl group-hover:bg-slate-900 group-hover:text-white transition-all shadow-xs duration-300">
+                      <div className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl group-hover:bg-slate-900 group-hover:text-white dark:group-hover:bg-slate-100 dark:group-hover:text-slate-900 transition-all shadow-xs duration-300">
                         <FileText className="w-5 h-5" />
                       </div>
                       <div className="flex flex-col items-end gap-2">
                         {getStatusBadge(poStatus)}
                         <button 
                           onClick={(e) => openComments(e, po)}
-                          className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all cursor-pointer relative"
+                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-all cursor-pointer relative"
                           title="Internal Comments"
                         >
                           <StickyNote className="w-4 h-4" />
                           {po.internal_comments && po.internal_comments.length > 0 && (
-                            <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-indigo-600 rounded-full border border-white"></span>
+                            <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-indigo-600 dark:bg-indigo-400 rounded-full border border-white dark:border-slate-900"></span>
                           )}
                         </button>
                       </div>
                     </div>
                     
-                    <h3 className="text-lg font-extrabold text-slate-850 group-hover:text-slate-900 transition-colors uppercase tracking-tight">
+                    <h3 className="text-lg font-extrabold text-slate-850 dark:text-slate-100 group-hover:text-slate-900 dark:group-hover:text-white transition-colors uppercase tracking-tight">
                       PO #{po.po_no}
                     </h3>
-                    <p className="text-sm text-slate-500 mb-2 line-clamp-1 font-semibold uppercase tracking-tight">{po.vendor_name}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-2 line-clamp-1 font-semibold uppercase tracking-tight">{po.vendor_name}</p>
                     {po.created_by_name && (
-                      <p className="text-[10px] font-black text-slate-400 uppercase mb-4 flex items-center gap-1">
+                      <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase mb-4 flex items-center gap-1">
                         <User className="w-3 h-3" /> By: {po.created_by_name}
                       </p>
                     )}
                     
-                    <div className="space-y-2 pt-4 border-t border-slate-100">
-                      <div className="flex items-center gap-2 text-xs text-slate-400 font-semibold uppercase">
-                        <Calendar className="w-4 h-4 text-slate-350" />
+                    <div className="space-y-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                      <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 font-semibold uppercase">
+                        <Calendar className="w-4 h-4 text-slate-350 dark:text-slate-600" />
                         {new Date(po.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-slate-850 font-black">
-                        <span className="text-slate-400 font-semibold text-xs uppercase tracking-wider">Amount:</span>
+                      <div className="flex items-center gap-2 text-sm text-slate-850 dark:text-slate-100 font-black">
+                        <span className="text-slate-400 dark:text-slate-500 font-semibold text-xs uppercase tracking-wider">Amount:</span>
                         ₹{po.total_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </div>
                       {poStatus === 'REJECTED' && po.rejection_remarks && (
-                        <div className="mt-2 p-2 bg-slate-50 border border-slate-200 rounded-lg">
-                          <p className="text-[9px] font-bold text-slate-900 uppercase tracking-tighter mb-0.5">Rejection Reason:</p>
-                          <p className="text-[10px] text-slate-600 font-medium leading-tight italic line-clamp-2">
+                        <div className="mt-2 p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg">
+                          <p className="text-[9px] font-bold text-slate-900 dark:text-slate-100 uppercase tracking-tighter mb-0.5">Rejection Reason:</p>
+                          <p className="text-[10px] text-slate-600 dark:text-slate-400 font-medium leading-tight italic line-clamp-2">
                             "{po.rejection_remarks}"
                           </p>
                         </div>
@@ -333,20 +333,20 @@ export default function PurchaseHeadDashboard() {
                     </div>
                   </Link>
                   
-                  <div className="px-6 py-3.5 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between shrink-0">
+                  <div className="px-6 py-3.5 bg-slate-50/50 dark:bg-slate-950/50 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
                     {poStatus === 'PENDING' && canApprove ? (
                       <div className="flex items-center gap-3.5 w-full">
                         <button 
                           onClick={(e) => handleQuickStatusUpdate(po.id, 'REJECTED', e)}
                           disabled={isActioning}
-                          className="flex-1 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                          className="flex-1 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
                         >
                           <XCircle className="w-3.5 h-3.5" /> Reject
                         </button>
                         <button 
                           onClick={(e) => handleQuickStatusUpdate(po.id, 'APPROVED', e)}
                           disabled={isActioning}
-                          className="flex-1 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black disabled:opacity-50 transition-all shadow-md shadow-slate-200 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                          className="flex-1 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black dark:hover:bg-white disabled:opacity-50 transition-all shadow-md shadow-slate-200 dark:shadow-none flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                         >
                           <CheckCircle className="w-3.5 h-3.5" /> Approve
                         </button>
@@ -354,7 +354,7 @@ export default function PurchaseHeadDashboard() {
                     ) : (
                       <Link 
                         to={`/approve-po/${po.id}`}
-                        className="w-full text-center text-xs font-black text-slate-900 hover:underline flex items-center justify-center gap-2 uppercase tracking-widest"
+                        className="w-full text-center text-xs font-black text-slate-900 dark:text-slate-100 hover:underline flex items-center justify-center gap-2 uppercase tracking-widest"
                       >
                         {poStatus === 'APPROVED' ? 'View Final Document' : poStatus === 'REJECTED' ? 'View Rejection Details' : 'Review Details'}
                         <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -363,8 +363,8 @@ export default function PurchaseHeadDashboard() {
                   </div>
 
                   {isActioning && (
-                    <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-10">
-                      <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-slate-900"></div>
+                    <div className="absolute inset-0 bg-white/60 dark:bg-slate-900/60 backdrop-blur-[1px] flex items-center justify-center z-10">
+                      <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-slate-900 dark:border-slate-100"></div>
                     </div>
                   )}
                 </div>

@@ -409,12 +409,12 @@ const Builder: React.FC = () => {
   };
 
   return (
-    <div {...getRootProps()} className={`min-h-screen bg-slate-50/50 p-4 md:p-8 font-sans transition-colors relative ${isDragActive ? 'bg-slate-100/60' : ''}`}>
+    <div {...getRootProps()} className={`min-h-screen bg-slate-50/50 dark:bg-slate-950 p-4 md:p-8 font-sans transition-colors relative ${isDragActive ? 'bg-slate-100/60 dark:bg-slate-900/40' : ''}`}>
       {isDragActive && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 backdrop-blur-xs pointer-events-none border-4 border-black border-dashed m-4 rounded-3xl animate-pulse-slow">
-          <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 border border-black/10">
-            <Upload className="w-16 h-16 text-black animate-bounce" />
-            <p className="text-xl font-bold text-slate-800">Drop files anywhere to upload</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 dark:bg-white/5 backdrop-blur-xs pointer-events-none border-4 border-black dark:border-white border-dashed m-4 rounded-3xl animate-pulse-slow">
+          <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 border border-black/10 dark:border-white/10">
+            <Upload className="w-16 h-16 text-black dark:text-white animate-bounce" />
+            <p className="text-xl font-bold text-slate-800 dark:text-slate-100">Drop files anywhere to upload</p>
             <p className="text-xs text-slate-400 font-medium">QuoteCompare AI will extract quotations automatically</p>
           </div>
         </div>
@@ -424,47 +424,47 @@ const Builder: React.FC = () => {
         <div className="ambient-glow ambient-slate -top-40 -left-40 animate-pulse-slow print-hidden" style={{ width: '350px', height: '350px' }}></div>
         <div className="ambient-glow ambient-slate top-60 right-0 animate-pulse-slow print-hidden" style={{ animationDelay: '3s', width: '350px', height: '350px' }}></div>
 
-        <header className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-sm border border-slate-200 print-hidden transition-all">
+        <header className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 print-hidden transition-all">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center shadow-lg shadow-slate-200 animate-float">
-              <TableIcon className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 bg-black dark:bg-slate-100 rounded-xl flex items-center justify-center shadow-lg shadow-slate-200 dark:shadow-none animate-float">
+              <TableIcon className="w-6 h-6 text-white dark:text-slate-900" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">Compare Workspace</h1>
-              <p className="text-slate-500 text-xs font-semibold mt-0.5">Analyze, refine, and merge multiple quotations</p>
+              <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Compare Workspace</h1>
+              <p className="text-slate-500 dark:text-slate-400 text-xs font-semibold mt-0.5">Analyze, refine, and merge multiple quotations</p>
             </div>
           </div>
           
           <div className="flex flex-wrap items-center gap-3">
-             <button onClick={saveToNeon} disabled={isSaving || !data.items.length} className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-semibold hover:bg-black disabled:opacity-50 transition-all shadow-md shadow-slate-100 active:scale-95 cursor-pointer">
+             <button onClick={saveToNeon} disabled={isSaving || !data.items.length} className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-sm font-semibold hover:bg-black dark:hover:bg-white disabled:opacity-50 transition-all shadow-md shadow-slate-100 dark:shadow-none active:scale-95 cursor-pointer">
                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />} Save to DB
              </button>
-             <button onClick={handlePrint} disabled={!data.items.length} className="flex items-center gap-2 px-5 py-2.5 bg-black text-white rounded-xl text-sm font-semibold hover:bg-slate-800 disabled:opacity-50 transition-all shadow-md shadow-slate-200 active:scale-95 cursor-pointer">
+             <button onClick={handlePrint} disabled={!data.items.length} className="flex items-center gap-2 px-5 py-2.5 bg-black dark:bg-white text-white dark:text-slate-900 rounded-xl text-sm font-semibold hover:bg-slate-800 dark:hover:bg-slate-100 disabled:opacity-50 transition-all shadow-md shadow-slate-200 dark:shadow-none active:scale-95 cursor-pointer">
                <FileText className="w-4 h-4" /> Export/Print PDF
              </button>
-             <button onClick={clearDraft} className="flex items-center gap-2 px-5 py-2.5 bg-white text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-50 hover:text-black hover:border-black transition-all border border-slate-200 shadow-xs active:scale-95 cursor-pointer">
+             <button onClick={clearDraft} className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-black dark:hover:text-white hover:border-black dark:hover:border-slate-600 transition-all border border-slate-200 dark:border-slate-700 shadow-xs active:scale-95 cursor-pointer">
                <RotateCcw className="w-4 h-4" /> RESET ALL
              </button>
-             <button onClick={() => setShowSettings(!showSettings)} className="flex items-center gap-2 px-4 py-2.5 bg-white text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-50 transition-all border border-slate-200 shadow-xs cursor-pointer">
+             <button onClick={() => setShowSettings(!showSettings)} className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all border border-slate-200 dark:border-slate-700 shadow-xs cursor-pointer">
                <SettingsIcon className="w-4 h-4" /> Options
              </button>
           </div>
         </header>
 
         {showSettings && (
-          <div className="bg-white/95 backdrop-blur-md p-6 rounded-2xl shadow-md border border-slate-200 space-y-6 animate-in slide-in-from-top-4 duration-300 print-hidden">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h2 className="text-md font-bold text-slate-800 flex items-center gap-2">
-                <SettingsIcon className="w-5 h-5 text-black" /> Predefined Master Options
+          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-6 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800 space-y-6 animate-in slide-in-from-top-4 duration-300 print-hidden">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h2 className="text-md font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <SettingsIcon className="w-5 h-5 text-black dark:text-white" /> Predefined Master Options
               </h2>
-              <button onClick={() => setShowSettings(false)} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer">
-                <X className="w-4 h-4 text-slate-500" />
+              <button onClick={() => setShowSettings(false)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer text-slate-500">
+                <X className="w-4 h-4" />
               </button>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-4">
-                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Prepared By Options</h3>
+                <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Prepared By Options</h3>
                 {canManageSettings ? (
                   <div className="space-y-2">
                     <input 
@@ -472,32 +472,32 @@ const Builder: React.FC = () => {
                       value={newPreparedBy} 
                       onChange={e => setNewPreparedBy(e.target.value)} 
                       placeholder="Name..." 
-                      className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-black rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 text-slate-800 transition-all font-medium"
+                      className="w-full px-4 py-2.5 bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-black dark:focus:border-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 text-slate-800 dark:text-slate-100 transition-all font-medium"
                     />
                     <input 
                       type="text" 
                       value={newPreparedByDesignation} 
                       onChange={e => setNewPreparedByDesignation(e.target.value)} 
                       placeholder="Designation..." 
-                      className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-black rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 text-slate-800 transition-all font-medium"
+                      className="w-full px-4 py-2.5 bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-black dark:focus:border-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 text-slate-800 dark:text-slate-100 transition-all font-medium"
                     />
-                    <button onClick={addExecutive} className="w-full py-2.5 bg-black hover:bg-slate-800 text-white rounded-xl text-sm font-semibold transition-all shadow-md shadow-slate-100 cursor-pointer active:scale-[0.98]">Add Executive</button>
+                    <button onClick={addExecutive} className="w-full py-2.5 bg-black dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 rounded-xl text-sm font-semibold transition-all shadow-md shadow-slate-100 dark:shadow-none cursor-pointer active:scale-[0.98]">Add Executive</button>
                   </div>
                 ) : (
                   <p className="text-[10px] text-slate-400 italic font-semibold">Only administrators can add/remove master options.</p>
                 )}
                 <div className="flex flex-wrap gap-2 pt-2">
                   {dbExecutives.map(opt => (
-                    <span key={opt.id} className="px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-xs transition-colors group">
+                    <span key={opt.id} className="px-3.5 py-1.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-xs transition-colors group">
                       {opt.name} {opt.designation && <span className="opacity-60 text-[10px]">({opt.designation})</span>} 
-                      {canManageSettings && <X className="w-3.5 h-3.5 cursor-pointer opacity-40 hover:opacity-100 hover:text-black transition-all" onClick={() => removeExecutive(opt.id)} />}
+                      {canManageSettings && <X className="w-3.5 h-3.5 cursor-pointer opacity-40 hover:opacity-100 hover:text-black dark:hover:text-white transition-all" onClick={() => removeExecutive(opt.id)} />}
                     </span>
                   ))}
                 </div>
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Plant Name Options</h3>
+                <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Plant Name Options</h3>
                 {canManageSettings ? (
                   <div className="space-y-2">
                     <input 
@@ -505,25 +505,25 @@ const Builder: React.FC = () => {
                       value={newPlantName} 
                       onChange={e => setNewPlantName(e.target.value)} 
                       placeholder="Plant Name..." 
-                      className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-black rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 text-slate-800 transition-all font-medium"
+                      className="w-full px-4 py-2.5 bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-black dark:focus:border-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 text-slate-800 dark:text-slate-100 transition-all font-medium"
                     />
                     <input 
                       type="text" 
                       value={newPlantLocation} 
                       onChange={e => setNewPlantLocation(e.target.value)} 
                       placeholder="Location..." 
-                      className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-black rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 text-slate-800 transition-all font-medium"
+                      className="w-full px-4 py-2.5 bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-black dark:focus:border-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 text-slate-800 dark:text-slate-100 transition-all font-medium"
                     />
-                    <button onClick={addPlant} className="w-full py-2.5 bg-black hover:bg-slate-800 text-white rounded-xl text-sm font-semibold transition-all shadow-md shadow-slate-100 cursor-pointer active:scale-[0.98]">Add Plant</button>
+                    <button onClick={addPlant} className="w-full py-2.5 bg-black dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 rounded-xl text-sm font-semibold transition-all shadow-md shadow-slate-100 dark:shadow-none cursor-pointer active:scale-[0.98]">Add Plant</button>
                   </div>
                 ) : (
                   <p className="text-[10px] text-slate-400 italic font-semibold">Only administrators can add/remove master options.</p>
                 )}
                 <div className="flex flex-wrap gap-2 pt-2">
                   {dbPlants.map(opt => (
-                    <span key={opt.id} className="px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-xs transition-colors group">
+                    <span key={opt.id} className="px-3.5 py-1.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-xs transition-colors group">
                       {opt.name} {opt.location && <span className="opacity-60 text-[10px]">({opt.location})</span>} 
-                      {canManageSettings && <X className="w-3.5 h-3.5 cursor-pointer opacity-40 hover:opacity-100 hover:text-black transition-all" onClick={() => removePlant(opt.id)} />}
+                      {canManageSettings && <X className="w-3.5 h-3.5 cursor-pointer opacity-40 hover:opacity-100 hover:text-black dark:hover:text-white transition-all" onClick={() => removePlant(opt.id)} />}
                     </span>
                   ))}
                 </div>
@@ -533,24 +533,24 @@ const Builder: React.FC = () => {
         )}
 
         <div className="grid grid-cols-12 gap-8 print-hidden">
-          <div className="col-span-12 lg:col-span-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5 relative">
+          <div className="col-span-12 lg:col-span-4 bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-5 relative">
             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Document Metadata</h2>
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
                 <div className="flex justify-between items-end">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Doc No.</label>
+                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Doc No.</label>
                   <button 
                     onClick={() => generateDocNo(true)}
-                    className="text-[10px] font-bold text-slate-400 hover:text-black flex items-center gap-1 mb-0.5 transition-colors cursor-pointer"
+                    className="text-[10px] font-bold text-slate-400 hover:text-black dark:hover:text-white flex items-center gap-1 mb-0.5 transition-colors cursor-pointer"
                     title="Reset to latest chronological number"
                   >
                     <RotateCcw className="w-2.5 h-2.5" /> RESET
                   </button>
                 </div>
-                <input type="text" value={header.docNo} onChange={e => setHeader({...header, docNo: e.target.value})} className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-black rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 text-slate-800 font-bold transition-all" placeholder="C0124-1" />
+                <input type="text" value={header.docNo} onChange={e => setHeader({...header, docNo: e.target.value})} className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-black dark:focus:border-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 text-slate-800 dark:text-slate-100 font-bold transition-all" placeholder="C0124-1" />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Prepared By</label>
+                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Prepared By</label>
                 <select 
                   value={selectedExecutiveId || ''} 
                   onChange={e => {
@@ -559,14 +559,14 @@ const Builder: React.FC = () => {
                     const exec = dbExecutives.find(x => x.id === id);
                     if (exec) setHeader({...header, preparedBy: exec.name});
                   }} 
-                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-black rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 text-slate-800 transition-all font-medium cursor-pointer"
+                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-black dark:focus:border-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 text-slate-800 dark:text-slate-100 transition-all font-medium cursor-pointer"
                 >
                   <option value="">Select Executive</option>
                   {dbExecutives.map(opt => <option key={opt.id} value={opt.id}>{opt.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Plant</label>
+                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Plant</label>
                 <select 
                   value={selectedPlantId || ''} 
                   onChange={e => {
@@ -575,94 +575,94 @@ const Builder: React.FC = () => {
                     const plant = dbPlants.find(x => x.id === id);
                     if (plant) setHeader({...header, plantName: plant.name});
                   }} 
-                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-black rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 text-slate-800 transition-all font-medium cursor-pointer"
+                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-black dark:focus:border-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 text-slate-800 dark:text-slate-100 transition-all font-medium cursor-pointer"
                 >
                   <option value="">Select Plant</option>
                   {dbPlants.map(opt => <option key={opt.id} value={opt.id}>{opt.name}</option>)}
                 </select>
               </div>
               <div className="col-span-2">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Indent Date</label>
+                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Indent Date</label>
                 <input 
                   type="date" 
                   value={header.indentDate} 
                   onChange={e => setHeader({...header, indentDate: e.target.value})} 
-                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-black rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 text-slate-800 transition-all font-medium" 
+                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-black dark:focus:border-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 text-slate-800 dark:text-slate-100 transition-all font-medium" 
                 />
               </div>
 
               <div className="col-span-2">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Special Extraction Instructions (Optional)</label>
+                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Special Extraction Instructions (Optional)</label>
                 <textarea 
                   value={extractionPrompt} 
                   onChange={e => setExtractionPrompt(e.target.value)} 
-                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 border border-slate-200 focus:border-black rounded-xl text-sm min-h-[90px] focus:outline-none focus:ring-2 focus:ring-black/5 text-slate-800 transition-all font-medium" 
+                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-black dark:focus:border-white rounded-xl text-sm min-h-[90px] focus:outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 text-slate-800 dark:text-slate-100 transition-all font-medium" 
                   placeholder="e.g. 'The data is in one line', 'Ignore vendor X', 'Focus on specific columns'"
                 />
               </div>
             </div>
           </div>
 
-          <div className="col-span-12 lg:col-span-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
+          <div className="col-span-12 lg:col-span-8 bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-5">
             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Extraction Source</h2>
             {canExtract ? (
               <>
                 <div 
                   onClick={() => (document.querySelector('input[type="file"]') as HTMLInputElement)?.click()}
-                  className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer ${isDragActive ? 'border-black bg-slate-50' : 'border-slate-200 hover:border-black hover:bg-slate-50/50 bg-slate-50/30'}`}
+                  className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer ${isDragActive ? 'border-black dark:border-white bg-slate-50 dark:bg-slate-800' : 'border-slate-200 dark:border-slate-700 hover:border-black dark:hover:border-white hover:bg-slate-50/50 dark:hover:bg-slate-800/50 bg-slate-50/30 dark:bg-slate-800/30'}`}
                 >
                   <input {...getInputProps()} />
-                  <Upload className={`w-10 h-10 mx-auto mb-3 transition-transform duration-300 ${isDragActive ? 'text-black scale-110' : 'text-slate-400 hover:scale-105'}`} />
-                  <p className="text-sm text-slate-600 font-semibold">Drop PDF/Images anywhere or <span className="text-black underline">browse files</span></p>
+                  <Upload className={`w-10 h-10 mx-auto mb-3 transition-transform duration-300 ${isDragActive ? 'text-black dark:text-white scale-110' : 'text-slate-400 dark:text-slate-500 hover:scale-105'}`} />
+                  <p className="text-sm text-slate-600 dark:text-slate-300 font-semibold">Drop PDF/Images anywhere or <span className="text-black dark:text-white underline">browse files</span></p>
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Supports PDF, JPEG, JPG, PNG files</p>
                 </div>
                 
                 {files.length > 0 && (
                   <div className="flex flex-wrap gap-2 pt-1">
                     {files.map((f, i) => (
-                      <span key={i} className="px-3 py-1.5 bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-[10px] font-bold flex items-center gap-2 shadow-xs transition-colors hover:bg-slate-200">
-                        {f.name} <Trash2 className="w-3 h-3 text-slate-400 hover:text-black cursor-pointer transition-colors" onClick={() => setFiles(files.filter((_, idx) => idx !== i))} />
+                      <span key={i} className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-[10px] font-bold flex items-center gap-2 shadow-xs transition-colors hover:bg-slate-200 dark:hover:bg-slate-700">
+                        {f.name} <Trash2 className="w-3 h-3 text-slate-400 hover:text-black dark:hover:text-white cursor-pointer transition-colors" onClick={() => setFiles(files.filter((_, idx) => idx !== i))} />
                       </span>
                     ))}
                   </div>
                 )}
 
-                <textarea value={inputText} onChange={e => setInputText(e.target.value)} placeholder="Or paste quotation text content here..." className="w-full h-32 px-4 py-3 bg-slate-50/50 border border-slate-200 focus:border-black rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-black/5 text-slate-800 font-medium transition-all" />
+                <textarea value={inputText} onChange={e => setInputText(e.target.value)} placeholder="Or paste quotation text content here..." className="w-full h-32 px-4 py-3 bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-black dark:focus:border-white rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 text-slate-800 dark:text-slate-100 font-medium transition-all" />
 
                 <div className="flex gap-3">
                   <div className="flex flex-col gap-2 flex-1">
-                    <button onClick={handleExtract} disabled={isExtracting || (!inputText && !files.length)} className="w-full py-3.5 bg-black hover:bg-slate-800 text-white rounded-xl font-bold text-xs uppercase tracking-widest disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-md shadow-slate-100 hover:shadow-slate-200 cursor-pointer active:scale-[0.98]">
+                    <button onClick={handleExtract} disabled={isExtracting || (!inputText && !files.length)} className="w-full py-3.5 bg-black dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 rounded-xl font-bold text-xs uppercase tracking-widest disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-md shadow-slate-100 dark:shadow-none hover:shadow-slate-200 cursor-pointer active:scale-[0.98]">
                       {isExtracting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />} Extract Quotation Data
                     </button>
                   </div>
                 </div>
               </>
             ) : (
-              <div className="p-12 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-                <ShieldCheck className="w-12 h-12 text-slate-350 mx-auto mb-4" />
-                <h3 className="text-md font-bold text-slate-800 uppercase tracking-tight">Access Restricted</h3>
-                <p className="text-xs text-slate-500 mt-2">You do not have permission to use the AI Extraction tool.</p>
+              <div className="p-12 text-center bg-slate-50/50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+                <ShieldCheck className="w-12 h-12 text-slate-350 dark:text-slate-500 mx-auto mb-4" />
+                <h3 className="text-md font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight">Access Restricted</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">You do not have permission to use the AI Extraction tool.</p>
               </div>
             )}
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-slate-100 bg-slate-50/30 flex justify-between items-center print-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+          <div className="p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30 flex justify-between items-center print-hidden">
             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Comparison Summary Grid</h2>
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3 pr-4 border-r border-slate-200">
-                <label className="text-[10px] font-bold uppercase text-slate-600 cursor-pointer select-none" htmlFor="multiplyByWeight">Multiply by Weight (WT)</label>
+              <div className="flex items-center gap-3 pr-4 border-r border-slate-200 dark:border-slate-700">
+                <label className="text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400 cursor-pointer select-none" htmlFor="multiplyByWeight">Multiply by Weight (WT)</label>
                 <input 
                   id="multiplyByWeight"
                   type="checkbox" 
                   checked={data.multiplyByWeight || false} 
                   onChange={e => setData(prev => ({ ...prev, multiplyByWeight: e.target.checked }))} 
-                  className="w-4.5 h-4.5 accent-black rounded-lg border-slate-300 cursor-pointer"
+                  className="w-4.5 h-4.5 accent-black dark:accent-white rounded-lg border-slate-300 dark:border-slate-600 cursor-pointer"
                 />
               </div>
               <div className="flex items-center gap-2.5">
-                <span className="text-[10px] font-bold uppercase text-slate-600">Font Size: {fontSize}px</span>
+                <span className="text-[10px] font-bold uppercase text-slate-600 dark:text-slate-400">Font Size: {fontSize}px</span>
                 <input 
                   type="range" 
                   min="8" 
@@ -670,18 +670,18 @@ const Builder: React.FC = () => {
                   step="0.5"
                   value={fontSize} 
                   onChange={e => setFontSize(parseFloat(e.target.value))} 
-                  className="w-32 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-black"
+                  className="w-32 h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-black dark:accent-white"
                 />
               </div>
-              {isExtracting && <span className="flex items-center gap-2 text-black animate-pulse text-xs font-bold"><Loader2 className="w-3 h-3 animate-spin" /> AI Analyzing...</span>}
+              {isExtracting && <span className="flex items-center gap-2 text-black dark:text-white animate-pulse text-xs font-bold"><Loader2 className="w-3 h-3 animate-spin" /> AI Analyzing...</span>}
             </div>
           </div>
           <div className="p-5">
             {isExtracting ? (
               <div className="space-y-4 animate-pulse">
-                <div className="h-10 bg-slate-100 rounded-lg w-full"></div>
-                <div className="h-20 bg-slate-100 rounded-lg w-full"></div>
-                <div className="h-20 bg-slate-100 rounded-lg w-full"></div>
+                <div className="h-10 bg-slate-100 dark:bg-slate-800 rounded-lg w-full"></div>
+                <div className="h-20 bg-slate-100 dark:bg-slate-800 rounded-lg w-full"></div>
+                <div className="h-20 bg-slate-100 dark:bg-slate-800 rounded-lg w-full"></div>
               </div>
             ) : (
               <ComparisonTable data={data} setData={setData} header={header} setHeader={setHeader} tableRef={tableRef} fontSize={fontSize} />

@@ -21,6 +21,12 @@
   --color-background: #ffffff;
   --color-foreground: #0f172a;
   --color-border: #e2e8f0;
+
+  /* Dark Mode Overrides */
+  --color-dark-bg: #0f172a;
+  --color-dark-fg: #f8fafc;
+  --color-dark-border: #1e293b;
+  --color-dark-card: #1e293b;
   
   /* Modern HSL colors for Shadcn style */
   --color-zinc-50: #fafafa;
@@ -46,13 +52,29 @@
 }
 
 @layer base {
+  :root {
+    --bg-main: var(--color-background);
+    --fg-main: var(--color-foreground);
+    --border-main: var(--color-border);
+    --card-bg: rgba(255, 255, 255, 0.8);
+    --nav-bg: rgba(255, 255, 255, 0.85);
+  }
+
+  .dark {
+    --bg-main: var(--color-dark-bg);
+    --fg-main: var(--color-dark-fg);
+    --border-main: var(--color-dark-border);
+    --card-bg: rgba(30, 41, 59, 0.8);
+    --nav-bg: rgba(15, 23, 42, 0.85);
+  }
+
   * {
-    border-color: var(--color-border);
+    border-color: var(--border-main);
   }
 
   body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
+    background-color: var(--bg-main);
+    color: var(--fg-main);
     font-feature-settings: "rlig" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -88,18 +110,18 @@
 
 /* Glassmorphism utilities */
 .glass-navbar {
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--nav-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(226, 232, 240, 1);
+  border-bottom: 1px solid var(--border-main);
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--card-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  border: 1px solid var(--border-main);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
 }
 

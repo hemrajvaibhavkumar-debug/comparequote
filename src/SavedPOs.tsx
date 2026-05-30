@@ -109,21 +109,21 @@ const SavedPOs: React.FC = () => {
     switch (s) {
       case 'APPROVED':
         return (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-900 text-white rounded-full border border-slate-900 shadow-sm">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-full border border-slate-900 dark:border-slate-100 shadow-sm">
             <CheckCircle className="w-3.5 h-3.5" />
             <span className="text-[10px] font-black uppercase tracking-wider">Approved</span>
           </div>
         );
       case 'REJECTED':
         return (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white text-slate-900 rounded-full border border-slate-900 shadow-sm">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-full border border-slate-900 dark:border-slate-100 shadow-sm">
             <XCircle className="w-3.5 h-3.5" />
             <span className="text-[10px] font-black uppercase tracking-wider">Rejected</span>
           </div>
         );
       default:
         return (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 text-slate-500 rounded-full border border-slate-200 shadow-xs">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-full border border-slate-200 dark:border-slate-700 shadow-xs">
             <Clock className="w-3.5 h-3.5" />
             <span className="text-[10px] font-black uppercase tracking-wider">Pending</span>
           </div>
@@ -133,11 +133,11 @@ const SavedPOs: React.FC = () => {
 
   if (!canView) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center bg-white m-8 rounded-2xl border border-slate-200 shadow-sm">
-        <ShieldCheck className="w-16 h-16 text-slate-400 mb-4" />
-        <h2 className="text-2xl font-bold text-slate-900 uppercase tracking-tight">Access Restricted</h2>
-        <p className="text-slate-500 mt-2 max-w-md font-medium">You do not have the 'VIEW_SAVED_POS' permission required to view the Purchase Order database.</p>
-        <Link to="/" className="mt-8 px-6 py-2 bg-slate-900 text-white rounded-lg font-bold text-xs uppercase tracking-widest shadow-md shadow-slate-200 hover:bg-black transition-all active:scale-95">Back to Dashboard</Link>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center bg-white dark:bg-slate-900 m-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <ShieldCheck className="w-16 h-16 text-slate-400 dark:text-slate-600 mb-4" />
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 uppercase tracking-tight">Access Restricted</h2>
+        <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-md font-medium">You do not have the 'VIEW_SAVED_POS' permission required to view the Purchase Order database.</p>
+        <Link to="/" className="mt-8 px-6 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg font-bold text-xs uppercase tracking-widest shadow-md shadow-slate-200 dark:shadow-none hover:bg-black dark:hover:bg-white transition-all active:scale-95">Back to Dashboard</Link>
       </div>
     );
   }
@@ -150,47 +150,47 @@ const SavedPOs: React.FC = () => {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50/50 relative pb-24">
+    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 transition-colors duration-300 relative pb-24">
       {/* Background ambient blobs */}
-      <div className="ambient-glow bg-slate-200/50 -top-20 -left-20"></div>
+      <div className="ambient-glow bg-slate-200/50 dark:bg-slate-800/20 -top-20 -left-20"></div>
 
       {/* Dynamic Full-Width Header */}
-      <div className="bg-white/90 backdrop-blur-md border-b border-slate-150/80 sticky top-16 z-10">
+      <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-150/80 dark:border-slate-800 sticky top-16 z-10">
         <div className="px-6 py-5 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => navigate('/')}
-              className="p-2.5 hover:bg-slate-100 rounded-xl transition-all border border-slate-200 shadow-xs cursor-pointer"
+              className="p-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all border border-slate-200 dark:border-slate-800 shadow-xs cursor-pointer"
             >
-              <ArrowLeft className="w-5 h-5 text-slate-600" />
+              <ArrowLeft className="w-5 h-5 text-slate-600 dark:text-slate-400" />
             </button>
             <div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight uppercase">PO Database</h1>
-              <p className="text-sm text-slate-400 font-semibold mt-0.5">Manage and track all finalized purchase orders</p>
+              <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight uppercase">PO Database</h1>
+              <p className="text-sm text-slate-400 dark:text-slate-500 font-semibold mt-0.5">Manage and track all finalized purchase orders</p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative group">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-slate-900 dark:group-focus-within:text-slate-100 transition-colors" />
               <input 
                 type="text"
                 placeholder="Search POs..."
-                className="pl-10 pr-4 py-2.5 bg-slate-50/60 border border-slate-200 focus:border-slate-900 rounded-xl w-full md:w-72 focus:outline-none focus:ring-2 focus:ring-slate-900/10 text-slate-800 transition-all text-sm font-medium"
+                className="pl-10 pr-4 py-2.5 bg-slate-50/60 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 focus:border-slate-900 dark:focus:border-slate-100 rounded-xl w-full md:w-72 focus:outline-none focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-slate-100/10 text-slate-800 dark:text-slate-100 transition-all text-sm font-medium"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
             </div>
             
-            <div className="flex items-center bg-slate-100 border border-slate-200 rounded-xl p-1">
+            <div className="flex items-center bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-1">
               {['ALL', 'PENDING', 'APPROVED', 'REJECTED'].map(f => (
                 <button
                   key={f}
                   onClick={() => setStatusFilter(f)}
                   className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
                     statusFilter === f 
-                      ? 'bg-white text-slate-900 shadow-xs border border-slate-100' 
-                      : 'text-slate-400 hover:text-slate-600'
+                      ? 'bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 shadow-xs border border-slate-100 dark:border-slate-700' 
+                      : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
                   }`}
                 >
                   {f}
@@ -205,33 +205,33 @@ const SavedPOs: React.FC = () => {
       <div className="p-6">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-32 gap-4">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-slate-900"></div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Loading Records...</p>
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-slate-900 dark:border-slate-100"></div>
+            <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Loading Records...</p>
           </div>
         ) : filteredPOs.length > 0 ? (
-          <div className="bg-white rounded-2xl shadow-xs border border-slate-150/80 overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xs border border-slate-150/80 dark:border-slate-800 overflow-hidden transition-colors">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[1000px]">
                 <thead>
-                  <tr className="bg-slate-50/50 border-b border-slate-200">
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">PO Details</th>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Vendor Information</th>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Grand Total</th>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">Workflow Status</th>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Actions</th>
+                  <tr className="bg-slate-50/50 dark:bg-slate-950/50 border-b border-slate-200 dark:border-slate-800">
+                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">PO Details</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Vendor Information</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 text-right">Grand Total</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 text-center">Workflow Status</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {filteredPOs.map((po) => (
-                    <tr key={po.id} className="hover:bg-slate-50/50 transition-colors group">
+                    <tr key={po.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-950/50 transition-colors group">
                       <td className="px-6 py-5 cursor-pointer" onClick={() => navigate(`/approve-po/${po.id}`)}>
                         <div className="flex flex-col">
-                          <span className="font-extrabold text-slate-800 group-hover:text-slate-900 transition-colors uppercase tracking-tight">#{po.po_no}</span>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase mt-1 flex items-center gap-1.5">
+                          <span className="font-extrabold text-slate-800 dark:text-slate-100 group-hover:text-slate-900 dark:group-hover:text-white transition-colors uppercase tracking-tight">#{po.po_no}</span>
+                          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mt-1 flex items-center gap-1.5">
                             <Clock className="w-3.5 h-3.5" /> {new Date(po.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                           </span>
                           {po.created_by_name && (
-                            <span className="text-[9px] font-black text-slate-500 uppercase mt-1 bg-slate-100 px-1.5 py-0.5 rounded-md w-fit border border-slate-200 shadow-xs">
+                            <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase mt-1 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-md w-fit border border-slate-200 dark:border-slate-700 shadow-xs">
                               Created By: {po.created_by_name}
                             </span>
                           )}
@@ -239,17 +239,17 @@ const SavedPOs: React.FC = () => {
                       </td>
                       <td className="px-6 py-5 cursor-pointer" onClick={() => navigate(`/approve-po/${po.id}`)}>
                         <div className="flex flex-col">
-                          <span className="font-extrabold text-slate-850 uppercase text-xs tracking-tight truncate max-w-xs">{po.vendor_name}</span>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase mt-1">GST: {po.vendor_details.gstin || 'N/A'}</span>
+                          <span className="font-extrabold text-slate-850 dark:text-slate-200 uppercase text-xs tracking-tight truncate max-w-xs">{po.vendor_name}</span>
+                          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mt-1">GST: {po.vendor_details.gstin || 'N/A'}</span>
                         </div>
                       </td>
                       <td className="px-6 py-5 text-right cursor-pointer" onClick={() => navigate(`/approve-po/${po.id}`)}>
                         <div className="flex flex-col items-end">
-                          <div className="flex items-center gap-0.5 text-sm font-black text-slate-850">
+                          <div className="flex items-center gap-0.5 text-sm font-black text-slate-850 dark:text-slate-100">
                             <IndianRupee className="w-3.5 h-3.5" />
                             {Number(po.total_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                           </div>
-                          <span className="text-[9px] font-bold text-slate-400 uppercase mt-1">Total Payable</span>
+                          <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase mt-1">Total Payable</span>
                         </div>
                       </td>
                       <td className="px-6 py-5 cursor-pointer" onClick={() => navigate(`/approve-po/${po.id}`)}>
@@ -257,8 +257,8 @@ const SavedPOs: React.FC = () => {
                           {getStatusBadge(po.status || 'PENDING')}
                           {po.status === 'REJECTED' && po.rejection_remarks && (
                             <div className="max-w-[150px] text-center">
-                              <p className="text-[9px] font-bold text-slate-900 uppercase tracking-tighter mb-0.5 underline decoration-slate-300">Reason:</p>
-                              <p className="text-[10px] text-slate-500 font-medium leading-tight italic line-clamp-2" title={po.rejection_remarks}>
+                              <p className="text-[9px] font-bold text-slate-900 dark:text-slate-100 uppercase tracking-tighter mb-0.5 underline decoration-slate-300 dark:decoration-slate-700">Reason:</p>
+                              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-tight italic line-clamp-2" title={po.rejection_remarks}>
                                 "{po.rejection_remarks}"
                               </p>
                             </div>
@@ -269,24 +269,24 @@ const SavedPOs: React.FC = () => {
                         <div className="flex justify-end items-center gap-2">
                           <button 
                             onClick={() => openComments(po)}
-                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 border border-transparent hover:border-indigo-100 rounded-xl transition-all shadow-none hover:shadow-xs cursor-pointer relative"
+                            className="p-2 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 border border-transparent hover:border-indigo-100 dark:hover:border-indigo-800 rounded-xl transition-all shadow-none hover:shadow-xs cursor-pointer relative"
                             title="Internal Comments"
                           >
                             <StickyNote className="w-4.5 h-4.5" />
                             {po.internal_comments && po.internal_comments.length > 0 && (
-                              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-600 rounded-full border-2 border-white"></span>
+                              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-600 dark:bg-indigo-400 rounded-full border-2 border-white dark:border-slate-900"></span>
                             )}
                           </button>
                           <button 
                             onClick={() => navigate(`/po-maker?edit=${po.id}`)}
-                            className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 border border-transparent hover:border-slate-200 rounded-xl transition-all shadow-none hover:shadow-xs cursor-pointer"
+                            className="p-2 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl transition-all shadow-none hover:shadow-xs cursor-pointer"
                             title="Edit Revision"
                           >
                             <Edit className="w-4.5 h-4.5" />
                           </button>
                           <Link 
                             to={`/approve-po/${po.id}`}
-                            className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 border border-transparent hover:border-slate-200 rounded-xl transition-all shadow-none hover:shadow-xs"
+                            className="p-2 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl transition-all shadow-none hover:shadow-xs"
                             title="View Document"
                           >
                             <Eye className="w-4.5 h-4.5" />
@@ -294,14 +294,14 @@ const SavedPOs: React.FC = () => {
                           {po.status !== 'APPROVED' && (
                             <button 
                               onClick={() => handleDelete(po.id!)}
-                              className="p-2 text-slate-400 hover:text-black hover:bg-slate-100 border border-transparent hover:border-slate-200 rounded-xl transition-all shadow-none hover:shadow-xs cursor-pointer"
+                              className="p-2 text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl transition-all shadow-none hover:shadow-xs cursor-pointer"
                               title="Delete PO"
                             >
                               <Trash2 className="w-4.5 h-4.5" />
                             </button>
                           )}
-                          <div className="w-6 flex justify-center text-slate-300 ml-2">
-                            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform group-hover:text-slate-850" />
+                          <div className="w-6 flex justify-center text-slate-300 dark:text-slate-600 ml-2">
+                            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform group-hover:text-slate-850 dark:group-hover:text-slate-100" />
                           </div>
                         </div>
                       </td>
@@ -312,13 +312,13 @@ const SavedPOs: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="text-center py-32 bg-white rounded-2xl border border-dashed border-slate-200 shadow-sm max-w-2xl mx-auto">
-            <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <FileText className="w-10 h-10 text-slate-350" />
+          <div className="text-center py-32 bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 shadow-sm max-w-2xl mx-auto transition-colors">
+            <div className="bg-slate-50 dark:bg-slate-800 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <FileText className="w-10 h-10 text-slate-350 dark:text-slate-600" />
             </div>
-            <h3 className="text-xl font-bold text-slate-800 uppercase tracking-tight">No Records Found</h3>
-            <p className="text-slate-400 mt-2 font-semibold text-sm">Try adjusting your filters or search terms.</p>
-            <Link to="/po-maker" className="mt-8 inline-flex items-center gap-2 px-6 py-3 bg-slate-900 hover:bg-black text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg shadow-slate-200 cursor-pointer active:scale-95">
+            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight">No Records Found</h3>
+            <p className="text-slate-400 dark:text-slate-500 mt-2 font-semibold text-sm">Try adjusting your filters or search terms.</p>
+            <Link to="/po-maker" className="mt-8 inline-flex items-center gap-2 px-6 py-3 bg-slate-900 dark:bg-slate-100 hover:bg-black dark:hover:bg-white text-white dark:text-slate-900 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg shadow-slate-200 dark:shadow-none cursor-pointer active:scale-95">
               Create New PO
             </Link>
           </div>
@@ -327,14 +327,14 @@ const SavedPOs: React.FC = () => {
 
       {/* Footer Stats */}
       {!loading && filteredPOs.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 bg-slate-900/95 text-white rounded-full shadow-2xl flex items-center gap-6 border border-white/10 backdrop-blur-md z-40">
-          <div className="flex items-center gap-2 border-r border-white/10 pr-6">
-            <span className="text-[10px] font-black uppercase text-slate-400 tracking-tighter">Total POs</span>
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 bg-slate-900/95 dark:bg-slate-100/95 text-white dark:text-slate-900 rounded-full shadow-2xl flex items-center gap-6 border border-white/10 dark:border-black/10 backdrop-blur-md z-40 transition-colors">
+          <div className="flex items-center gap-2 border-r border-white/10 dark:border-black/10 pr-6">
+            <span className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-tighter">Total POs</span>
             <span className="text-sm font-black">{filteredPOs.length}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black uppercase text-slate-400 tracking-tighter">Combined Value</span>
-            <div className="flex items-center text-sm font-black text-white">
+            <span className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-tighter">Combined Value</span>
+            <div className="flex items-center text-sm font-black text-white dark:text-slate-900">
                <IndianRupee className="w-3.5 h-3.5" />
                {filteredPOs.reduce((acc, po) => acc + (Number(po.total_amount) || 0), 0).toLocaleString('en-IN')}
             </div>

@@ -300,17 +300,17 @@ const POMaker: React.FC = () => {
 
   if (!canAccess) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[80vh] p-8 text-center bg-white m-8 rounded-2xl border border-black shadow-sm">
-        <ShieldCheck className="w-16 h-16 text-gray-400 mb-4" />
-        <h2 className="text-2xl font-bold text-black uppercase tracking-tight">Access Restricted</h2>
-        <p className="text-gray-500 mt-2 max-w-md">You do not have the 'ACCESS_PO_MAKER' permission required to create purchase orders.</p>
-        <Link to="/" className="mt-8 px-6 py-2 bg-black text-white rounded-lg font-bold text-xs uppercase tracking-widest">Back to Dashboard</Link>
+      <div className="flex flex-col items-center justify-center min-h-[80vh] p-8 text-center bg-white dark:bg-slate-900 m-8 rounded-2xl border border-black dark:border-slate-800 shadow-sm">
+        <ShieldCheck className="w-16 h-16 text-gray-400 dark:text-slate-600 mb-4" />
+        <h2 className="text-2xl font-bold text-black dark:text-slate-100 uppercase tracking-tight">Access Restricted</h2>
+        <p className="text-gray-500 dark:text-slate-400 mt-2 max-w-md">You do not have the 'ACCESS_PO_MAKER' permission required to create purchase orders.</p>
+        <Link to="/" className="mt-8 px-6 py-2 bg-black dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg font-bold text-xs uppercase tracking-widest">Back to Dashboard</Link>
       </div>
     );
   }
 
   return (
-    <div className="h-[calc(100vh-64px)] flex flex-col bg-slate-50 relative overflow-hidden">
+    <div className="h-[calc(100vh-64px)] flex flex-col bg-slate-50 dark:bg-slate-950 relative overflow-hidden transition-colors duration-300">
       {/* Ambient background glows */}
       <div className="ambient-glow ambient-indigo -top-40 -right-40" />
       <div className="ambient-glow ambient-blue -bottom-40 -left-40" />
@@ -319,23 +319,23 @@ const POMaker: React.FC = () => {
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate(-1)} 
-            className="p-2 text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 rounded-xl transition border border-slate-200/60 shadow-sm"
+            className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition border border-slate-200/60 dark:border-slate-800 shadow-sm cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
-          <h1 className="text-lg font-bold text-slate-900 font-sans tracking-tight">Purchase Order Maker</h1>
+          <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100 font-sans tracking-tight">Purchase Order Maker</h1>
         </div>
         <div className="flex items-center gap-3">
           <button 
             onClick={handleClearDraft}
-            className="text-xs font-bold text-slate-500 hover:text-rose-600 px-3 py-2 rounded-xl hover:bg-slate-100 transition-all"
+            className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
           >
             RESET DRAFT
           </button>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Created By:</span>
             <select 
-              className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
               value={po.created_by_name || ''}
               onChange={e => setPo({...po, created_by_name: e.target.value})}
               disabled={po.status === 'APPROVED'}
@@ -349,7 +349,7 @@ const POMaker: React.FC = () => {
             </select>
           </div>
           <select 
-            className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
             value={po.version}
             onChange={e => setPo({...po, version: e.target.value as any})}
             disabled={po.status === 'APPROVED'}
@@ -369,7 +369,7 @@ const POMaker: React.FC = () => {
               {isGenerating ? 'Saving...' : 'Save to Database'}
             </button>
           ) : (
-            <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-xl border border-emerald-200/60 font-bold text-[10px] uppercase tracking-widest">
+            <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 px-4 py-2 rounded-xl border border-emerald-200/60 dark:border-emerald-800/60 font-bold text-[10px] uppercase tracking-widest">
               <ShieldCheck className="w-3.5 h-3.5" /> Locked (Approved)
             </div>
           )}
@@ -378,7 +378,7 @@ const POMaker: React.FC = () => {
 
       <div className="flex-1 flex overflow-hidden relative z-10">
         {/* Left Pane - Form */}
-        <div className="w-1/2 overflow-y-auto p-6 bg-slate-50 border-r border-slate-200/80 custom-scrollbar">
+        <div className="w-1/2 overflow-y-auto p-6 bg-slate-50 dark:bg-slate-950 border-r border-slate-200/80 dark:border-slate-800 custom-scrollbar">
           <POForm 
             po={po} 
             setPo={setPo} 
@@ -390,9 +390,9 @@ const POMaker: React.FC = () => {
         </div>
 
         {/* Right Pane - Preview */}
-        <div className="w-1/2 overflow-auto p-8 bg-slate-100/40 custom-scrollbar" ref={previewRef}>
+        <div className="w-1/2 overflow-auto p-8 bg-slate-100/40 dark:bg-slate-900/20 custom-scrollbar" ref={previewRef}>
           <div className={`mx-auto w-full max-w-3xl transition-all duration-300 ${
-            isExporting ? '' : 'bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden p-6'
+            isExporting ? '' : 'bg-white rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl dark:shadow-none overflow-hidden p-6'
           }`}>
             <POPreview po={po} setPo={setPo} settings={settings} isPDF={isExporting} />
           </div>

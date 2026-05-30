@@ -404,7 +404,7 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
 
   if (!items.length) {
     return (
-      <div className="p-8 text-center text-[#000000] bg-[#ffffff] rounded-lg border-2 border-dashed">
+      <div className="p-8 text-center text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-900 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-800">
         No data extracted yet.
       </div>
     );
@@ -424,10 +424,10 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
   const printScale = getPrintScale();
 
   return (
-    <div className="w-full overflow-x-auto bg-[#ffffff] border border-slate-200 rounded-xl shadow-sm">
+    <div className="w-full overflow-x-auto bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
       <div 
         ref={tableRef} 
-        className="bg-[#ffffff] p-1 comp-table-container"
+        className="bg-white dark:bg-slate-950 p-1 comp-table-container"
         style={{ 
           minWidth: '100%',
           width: 'max-content'
@@ -442,6 +442,10 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
             border-collapse: collapse;
             width: 100%;
             table-layout: auto;
+          }
+
+          .dark .comp-table {
+            color: #f8fafc !important;
           }
           
           .vertical-text {
@@ -473,6 +477,10 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
             background-color: #f8fafc;
           }
 
+          .dark .comp-table input:focus, .dark .comp-table textarea:focus {
+            background-color: #1e293b;
+          }
+
           .comp-table th {
             position: relative;
           }
@@ -492,6 +500,10 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
             background-color: #000000;
           }
 
+          .dark .resizer:hover {
+            background-color: #ffffff;
+          }
+
           .resizer-h {
             position: absolute;
             left: 0;
@@ -507,6 +519,10 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
             background-color: #000000;
           }
 
+          .dark .resizer-h:hover {
+            background-color: #ffffff;
+          }
+
           @media print {
             .print-hidden { display: none !important; }
             body { 
@@ -515,6 +531,10 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
               padding: 0 !important;
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
+            }
+
+            .dark .comp-table {
+              color: #000000 !important;
             }
             
             .overflow-x-auto { 
@@ -527,6 +547,7 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
               transform-origin: top left;
               width: ${100 / printScale}% !important;
               padding: 0 !important;
+              background: white !important;
             }
 
             table { 
@@ -538,6 +559,8 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
               border: 0.4pt solid #000000 !important; 
               padding: 1px !important;
               font-size: ${fontSize - 1}px !important;
+              background-color: white !important;
+              color: black !important;
             }
             @page { 
               margin: 4mm; 
@@ -545,42 +568,42 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
             }
           }
         `}</style>
-        <table className="comp-table text-black border-2 border-black" style={{ fontSize: `${fontSize}px` }}>
+        <table className="comp-table text-black dark:text-slate-100 border-2 border-black dark:border-slate-700" style={{ fontSize: `${fontSize}px` }}>
           <thead>
-          <tr className="bg-white">
-            <th colSpan={totalCols} className="text-left px-2 py-1 border border-black font-bold uppercase whitespace-nowrap">
+          <tr className="bg-white dark:bg-slate-900">
+            <th colSpan={totalCols} className="text-left px-2 py-1 border border-black dark:border-slate-700 font-bold uppercase whitespace-nowrap">
               <div className="flex items-center">
                 <span className="flex-shrink-0 opacity-60">DOC NO. :</span>
                 <input type="text" value={header.docNo} onChange={e => updateHeader('docNo', e.target.value)} className="font-bold uppercase ml-2" readOnly={readOnly} />
               </div>
             </th>
           </tr>
-          <tr className="bg-white">
-            <th colSpan={totalCols} className="text-left px-2 py-1 border border-black font-bold uppercase whitespace-nowrap">
+          <tr className="bg-white dark:bg-slate-900">
+            <th colSpan={totalCols} className="text-left px-2 py-1 border border-black dark:border-slate-700 font-bold uppercase whitespace-nowrap">
               <div className="flex items-center">
                 <span className="flex-shrink-0 opacity-60">PREPARED BY :</span>
                 <input type="text" value={header.preparedBy} onChange={e => updateHeader('preparedBy', e.target.value)} className="font-bold uppercase ml-2" readOnly={readOnly} />
               </div>
             </th>
           </tr>
-          <tr className="bg-white">
-            <th colSpan={totalCols} className="text-left px-2 py-1 border border-black font-bold uppercase whitespace-nowrap">
+          <tr className="bg-white dark:bg-slate-900">
+            <th colSpan={totalCols} className="text-left px-2 py-1 border border-black dark:border-slate-700 font-bold uppercase whitespace-nowrap">
               <div className="flex items-center">
                 <span className="flex-shrink-0 opacity-60">DATE :</span>
                 <input type="text" value={header.date} onChange={e => updateHeader('date', e.target.value)} className="font-bold uppercase ml-2" readOnly={readOnly} />
               </div>
             </th>
           </tr>
-          <tr className="bg-white">
-            <th colSpan={totalCols} className="text-left px-2 py-1 border border-black font-bold uppercase whitespace-nowrap">
+          <tr className="bg-white dark:bg-slate-900">
+            <th colSpan={totalCols} className="text-left px-2 py-1 border border-black dark:border-slate-700 font-bold uppercase whitespace-nowrap">
               <div className="flex items-center">
                 <span className="flex-shrink-0 opacity-60">INDENT DATE :</span>
                 <input type="text" value={header.indentDate} onChange={e => updateHeader('indentDate', e.target.value)} className="font-bold uppercase ml-2" readOnly={readOnly} />
               </div>
             </th>
           </tr>
-          <tr className="bg-white">
-            <th colSpan={hasWeight ? 9 : 8} className="text-left px-2 py-1 border border-black font-bold uppercase whitespace-nowrap">
+          <tr className="bg-white dark:bg-slate-900">
+            <th colSpan={hasWeight ? 9 : 8} className="text-left px-2 py-1 border border-black dark:border-slate-700 font-bold uppercase whitespace-nowrap">
               <div className="flex items-center">
                 <span className="flex-shrink-0 opacity-60">PLANT NAME :</span>
                 <input type="text" value={header.plantName} onChange={e => updateHeader('plantName', e.target.value)} className="font-bold uppercase ml-2" readOnly={readOnly} />
@@ -590,7 +613,7 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
                const quoteDate = firstQuote?.quoteDate || new Date().toLocaleDateString('en-GB');
                return (
-                <th key={i} colSpan={vendorCols} className="text-center p-0 border border-black bg-white font-bold uppercase">
+                <th key={i} colSpan={vendorCols} className="text-center p-0 border border-black dark:border-slate-700 bg-white dark:bg-slate-900 font-bold uppercase">
                   <div className="flex items-center justify-center py-1">
                      <span className="opacity-50">BY</span>
                      <input 

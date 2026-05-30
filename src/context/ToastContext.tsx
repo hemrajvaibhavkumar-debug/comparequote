@@ -43,30 +43,30 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`p-4 rounded-xl border bg-white shadow-lg flex items-start gap-3 pointer-events-auto animate-slide-in select-none ${
+            className={`p-4 rounded-xl border bg-white dark:bg-slate-900 shadow-xl flex items-start gap-3 pointer-events-auto animate-slide-in select-none transition-colors ${
               toast.type === 'success'
-                ? 'border-emerald-250 bg-emerald-50/10 text-emerald-800'
+                ? 'border-emerald-100 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300'
                 : toast.type === 'error'
-                ? 'border-rose-250 bg-rose-50/10 text-rose-800'
-                : 'border-slate-200 bg-slate-50/30 text-slate-700'
+                ? 'border-rose-100 dark:border-rose-800 text-rose-800 dark:text-rose-300'
+                : 'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
             }`}
           >
             {/* Icon */}
             <div className="shrink-0 mt-0.5">
-              {toast.type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
-              {toast.type === 'error' && <AlertCircle className="w-4 h-4 text-rose-600" />}
-              {toast.type === 'info' && <Info className="w-4 h-4 text-slate-500" />}
+              {toast.type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
+              {toast.type === 'error' && <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />}
+              {toast.type === 'info' && <Info className="w-4 h-4 text-slate-500 dark:text-slate-400" />}
             </div>
 
             {/* Message text */}
-            <div className="flex-1 text-xs font-semibold leading-relaxed tracking-tight">
+            <div className="flex-1 text-xs font-black leading-relaxed tracking-tight uppercase">
               {toast.message}
             </div>
 
             {/* Dismiss Button */}
             <button
               onClick={() => dismissToast(toast.id)}
-              className="shrink-0 p-0.5 rounded-full hover:bg-slate-100/80 transition-colors text-slate-400 hover:text-slate-600 cursor-pointer"
+              className="shrink-0 p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>

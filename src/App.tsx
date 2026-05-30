@@ -1,9 +1,10 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
-import { Settings as SettingsIcon, FileText, Database, ShieldCheck, ClipboardList, Loader2 } from 'lucide-react';
+import { Settings as SettingsIcon, FileText, Database, ShieldCheck, ClipboardList, Loader2, Sun, Moon } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ApiCacheProvider } from './context/ApiCacheContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useTheme } from './context/ThemeContext';
 import Login from './Login'; // Non-lazy for critical path
 
 const queryClient = new QueryClient({
@@ -62,6 +63,7 @@ const ProtectedRoute = ({ children, permission }: { children: React.ReactNode, p
 
 function AppContent() {
   const { isAuthenticated, logout, user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
 
   const isActive = (path: string) => {
@@ -75,23 +77,23 @@ function AppContent() {
     const active = customActive !== undefined ? customActive : isActive(path);
     return `px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-1.5 border ${
       active
-        ? `bg-slate-100/80 text-slate-900 border-slate-200 shadow-sm`
-        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent'
+        ? `bg-slate-100/80 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 border-slate-200 dark:border-slate-700 shadow-sm`
+        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800 border-transparent'
     }`;
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 font-sans text-slate-900 antialiased transition-colors duration-300">
+    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 antialiased transition-colors duration-300">
       {isAuthenticated && (
         <nav className="glass-navbar sticky top-0 z-50 transition-standard">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
               <div className="flex items-center gap-6">
-                <Link to="/" className="flex items-center gap-2.5 font-bold text-xl tracking-tight text-slate-900 hover:opacity-90 transition-opacity">
-                  <span className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-md shadow-slate-200">
+                <Link to="/" className="flex items-center gap-2.5 font-bold text-xl tracking-tight text-slate-900 dark:text-slate-100 hover:opacity-90 transition-opacity">
+                  <span className="w-9 h-9 rounded-xl bg-slate-900 dark:bg-slate-100 flex items-center justify-center text-white dark:text-slate-900 shadow-md shadow-slate-200 dark:shadow-none">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2.5"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>
                   </span>
-                  <span className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent font-black tracking-tight">QuoteCompare</span>
+                  <span className="bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent font-black tracking-tight">QuoteCompare</span>
                 </Link>
                 
                 <div className="hidden sm:flex space-x-1.5 ml-4 items-center">
@@ -104,7 +106,7 @@ function AppContent() {
                   <Link to="/" className={navLinkStyle('/')}>Compare</Link>
                   <Link to="/saved" className={navLinkStyle('/saved', 'slate', isActive('/saved') && !isActive('/saved-pos'))}>Saved Tables</Link>
                   
-                  <div className="h-5 w-px bg-slate-200 mx-2"></div>
+                  <div className="h-5 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
                   
                   <Link to="/po-maker" className={navLinkStyle('/po-maker')}>
                     <FileText className="w-4 h-4" /> PO Maker
@@ -121,10 +123,17 @@ function AppContent() {
                   </Link>
                 </div>
               </div>
-              <div className="flex items-center">
+              <div className="flex items-center gap-3">
+                 <button
+                   onClick={toggleTheme}
+                   className="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer"
+                   title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+                 >
+                   {theme === 'light' ? <Moon className="w-4.5 h-4.5" /> : <Sun className="w-4.5 h-4.5" />}
+                 </button>
                  <button 
                    onClick={logout}
-                   className="px-4 py-1.5 rounded-xl text-[10px] font-black text-slate-600 hover:text-white hover:bg-slate-900 border border-slate-200 hover:border-slate-900 transition-all duration-200 uppercase tracking-wider cursor-pointer shadow-xs hover:shadow-sm"
+                   className="px-4 py-1.5 rounded-xl text-[10px] font-black text-slate-600 dark:text-slate-400 hover:text-white hover:bg-slate-900 dark:hover:bg-slate-100 dark:hover:text-slate-900 border border-slate-200 dark:border-slate-700 hover:border-slate-900 dark:hover:border-slate-100 transition-all duration-200 uppercase tracking-wider cursor-pointer shadow-xs hover:shadow-sm"
                  >
                    Logout
                  </button>
