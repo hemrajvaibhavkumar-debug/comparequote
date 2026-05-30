@@ -2,8 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ComparisonTable } from './components/ComparisonTable';
 import { Download, Eye, MessageSquare, StickyNote, ChevronRight } from 'lucide-react';
-import { jsPDF } from 'jspdf';
-import * as htmlToImage from 'html-to-image';
 import { useAuth } from './context/AuthContext';
 import CommentsModal from './components/CommentsModal';
 import { useToast } from './context/ToastContext';

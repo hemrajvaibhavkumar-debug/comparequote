@@ -6,8 +6,6 @@ import { Save, ArrowLeft, ShieldCheck, Loader2 } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useApiCache } from '../../context/ApiCacheContext';
-import * as htmlToImage from 'html-to-image';
-import jsPDF from 'jspdf';
 
 const POMaker: React.FC = () => {
   const navigate = useNavigate();
@@ -190,6 +188,10 @@ const POMaker: React.FC = () => {
       return null;
     }
     try {
+      // Lazy load heavy libraries
+      const htmlToImage = await import('html-to-image');
+      const { default: jsPDF } = await import('jspdf');
+
       // 1. Switch to Paged Mode for capture
       setIsExporting(true);
       // Wait for React to render the paged view

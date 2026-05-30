@@ -28,6 +28,11 @@ const TermsAndNotes = ({ po }: { po: PurchaseOrder }) => (
           )}
         </div>
         <span className="uppercase text-[9px]">Freight ::</span> <span className="uppercase">{po.terms.freight} {po.terms.freight_amount ? `- ₹${Number(po.terms.freight_amount).toLocaleString()}` : ''}</span>
+        {po.terms.warranty && (
+          <>
+            <span className="uppercase text-[9px]">Warranty ::</span> <span className="uppercase">{po.terms.warranty} YEAR(S)</span>
+          </>
+        )}
         <span className="uppercase text-[9px]">Delivery Period ::</span> <span className="uppercase">{po.terms.delivery}</span>
         {po.terms.contact_no && (
           <>
@@ -48,7 +53,7 @@ const TermsAndNotes = ({ po }: { po: PurchaseOrder }) => (
   </div>
 );
 
-const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions, isPDF }) => {
+const POPreview = React.memo<POPreviewProps>(({ po, setPo, settings, actions, isPDF }) => {
   const printRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
 
@@ -590,6 +595,6 @@ const POPreview: React.FC<POPreviewProps> = ({ po, setPo, settings, actions, isP
       </div>
     </div>
   );
-};
+});
 
 export default POPreview;

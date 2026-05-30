@@ -56,6 +56,33 @@
     font-feature-settings: "rlig" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-weight: 500;
+  }
+
+  input, select, textarea, button {
+    font-weight: 700 !important;
+  }
+
+  label {
+    font-weight: 800 !important;
+    letter-spacing: -0.01em;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 900 !important;
+  }
+
+  /* Ensure PO document preview remains clean and ignores global bolding where necessary */
+  .pdf-page, .pdf-page * {
+    font-weight: inherit;
+  }
+  
+  .pdf-page b, .pdf-page strong, .pdf-page .font-bold {
+    font-weight: 700 !important;
+  }
+  
+  .pdf-page .font-black {
+    font-weight: 900 !important;
   }
 }
 

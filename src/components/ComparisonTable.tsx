@@ -49,7 +49,7 @@ const AutoExpandingTextarea: React.FC<{
   );
 };
 
-export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData, header, setHeader, tableRef, readOnly = false, fontSize = 11 }) => {
+export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData, header, setHeader, tableRef, readOnly = false, fontSize = 11 }) => {
   const vendors = data?.vendors || [];
   const items = data?.items || [];
   const vendorCols = 5; // MAKE, MRP, DIS, NET RATE, TOTAL AMOUNT
@@ -976,4 +976,4 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ data, setData,
       </div>
     </div>
   );
-};
+});

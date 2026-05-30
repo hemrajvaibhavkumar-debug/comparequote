@@ -1,17 +1,39 @@
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
-import Builder from './Builder';
-import SavedTables from './SavedTables';
-import ViewTable from './ViewTable';
-import Login from './Login';
-import POMaker from './components/POMaker/POMaker';
-import POSettings from './components/Settings/POSettings';
-import SavedPOs from './SavedPOs';
-import PurchaseHeadDashboard from './PurchaseHeadDashboard';
-import POApprovalView from './POApprovalView';
-import IndentDashboard from './components/Indent/IndentDashboard';
-import { Settings as SettingsIcon, FileText, Database, ShieldCheck, ClipboardList } from 'lucide-react';
+import { Settings as SettingsIcon, FileText, Database, ShieldCheck, ClipboardList, Loader2 } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ApiCacheProvider } from './context/ApiCacheContext';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import Login from './Login'; // Non-lazy for critical path
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+// Lazy load route components with explicit default handling for safety
+const Builder = lazy(() => import('./Builder').then(m => ({ default: m.default })));
+const SavedTables = lazy(() => import('./SavedTables').then(m => ({ default: m.default })));
+const ViewTable = lazy(() => import('./ViewTable').then(m => ({ default: m.default })));
+const POMaker = lazy(() => import('./components/POMaker/POMaker').then(m => ({ default: m.default })));
+const POSettings = lazy(() => import('./components/Settings/POSettings').then(m => ({ default: m.default })));
+const SavedPOs = lazy(() => import('./SavedPOs').then(m => ({ default: m.default })));
+const PurchaseHeadDashboard = lazy(() => import('./PurchaseHeadDashboard').then(m => ({ default: m.default })));
+const POApprovalView = lazy(() => import('./POApprovalView').then(m => ({ default: m.default })));
+const IndentDashboard = lazy(() => import('./components/Indent/IndentDashboard').then(m => ({ default: m.default })));
+
+const LoadingFallback = () => (
+  <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+    <Loader2 className="w-8 h-8 text-slate-400 animate-spin" />
+    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Loading Module...</p>
+  </div>
+);
 
 const ProtectedRoute = ({ children, permission }: { children: React.ReactNode, permission?: string }) => {
   const { isAuthenticated, user } = useAuth();
@@ -113,19 +135,21 @@ function AppContent() {
       )}
 
       <main className="relative z-10">
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/" element={<ProtectedRoute><Builder /></ProtectedRoute>} />
-          <Route path="/saved" element={<ProtectedRoute><SavedTables /></ProtectedRoute>} />
-          <Route path="/saved/:id" element={<ProtectedRoute><ViewTable /></ProtectedRoute>} />
-          <Route path="/po-maker" element={<ProtectedRoute><POMaker /></ProtectedRoute>} />
-          <Route path="/saved-pos" element={<ProtectedRoute><SavedPOs /></ProtectedRoute>} />
-          <Route path="/indents" element={<ProtectedRoute><IndentDashboard /></ProtectedRoute>} />
-          <Route path="/settings" element={<ProtectedRoute><POSettings /></ProtectedRoute>} />
-          <Route path="/purchase-head" element={<ProtectedRoute permission="VIEW_APPROVAL_HUB"><PurchaseHeadDashboard /></ProtectedRoute>} />
-          <Route path="/approve-po/:id" element={<ProtectedRoute permission="VIEW_APPROVAL_HUB"><POApprovalView /></ProtectedRoute>} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <Suspense fallback={<LoadingFallback />}>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<ProtectedRoute><Builder /></ProtectedRoute>} />
+            <Route path="/saved" element={<ProtectedRoute><SavedTables /></ProtectedRoute>} />
+            <Route path="/saved/:id" element={<ProtectedRoute><ViewTable /></ProtectedRoute>} />
+            <Route path="/po-maker" element={<ProtectedRoute><POMaker /></ProtectedRoute>} />
+            <Route path="/saved-pos" element={<ProtectedRoute><SavedPOs /></ProtectedRoute>} />
+            <Route path="/indents" element={<ProtectedRoute><IndentDashboard /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><POSettings /></ProtectedRoute>} />
+            <Route path="/purchase-head" element={<ProtectedRoute permission="VIEW_APPROVAL_HUB"><PurchaseHeadDashboard /></ProtectedRoute>} />
+            <Route path="/approve-po/:id" element={<ProtectedRoute permission="VIEW_APPROVAL_HUB"><POApprovalView /></ProtectedRoute>} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </main>
     </div>
   );
@@ -133,12 +157,14 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <ApiCacheProvider>
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <AppContent />
-        </BrowserRouter>
-      </ApiCacheProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <ApiCacheProvider>
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <AppContent />
+          </BrowserRouter>
+        </ApiCacheProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }

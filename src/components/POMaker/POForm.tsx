@@ -798,6 +798,19 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               />
             </div>
           </div>
+          <div>
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Warranty</label>
+            <div className="relative">
+              <input 
+                type="number"
+                className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white pr-12 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                value={po.terms.warranty || ''}
+                onChange={e => setPo({...po, terms: { ...po.terms, warranty: e.target.value }})}
+                placeholder="0"
+              />
+              <span className="absolute right-3 top-3 text-[10px] font-bold text-slate-400 uppercase">Year(s)</span>
+            </div>
+          </div>
           <div className="col-span-2">
             <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-5 rounded-2xl flex justify-between items-center border border-indigo-950/60 shadow-lg">
                <span className="font-semibold uppercase text-xs tracking-wider text-indigo-200/90">Grand Total Amount</span>

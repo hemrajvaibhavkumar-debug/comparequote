@@ -167,6 +167,7 @@ export interface PurchaseOrder {
     freight: string;
     freight_amount?: number;
     freight_tax?: string; // e.g. "GST @18%", "GST @5%", "Nil"
+    warranty?: string | number;
     delivery: string;
     contact_no?: string;
     notes?: string;

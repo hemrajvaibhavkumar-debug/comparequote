@@ -3,41 +3,25 @@ import { useNavigate, Link } from 'react-router-dom';
 import { PurchaseOrder, InternalComment } from './types';
 import { FileText, Eye, Edit, Trash2, Search, ArrowLeft, ShieldCheck, CheckCircle, XCircle, Clock, Filter, ChevronRight, IndianRupee, StickyNote } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
-import { useApiCache } from './context/ApiCacheContext';
+import { useApiCache, usePOs } from './context/ApiCacheContext';
 import CommentsModal from './components/CommentsModal';
+import { useQueryClient } from '@tanstack/react-query';
 
 const SavedPOs: React.FC = () => {
-  const [pos, setPos] = useState<PurchaseOrder[]>([]);
+  const { data: posData, isLoading: loading } = usePOs();
+  const pos = posData || [];
   const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('ALL');
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   
   // Comments State
   const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
 
   const { token, user, logout } = useAuth();
-  const { fetchPOs: fetchPOsFromCache, invalidatePOs } = useApiCache();
+  const { invalidatePOs } = useApiCache();
   const canView = user?.role === 'SUPERADMIN' || user?.permissions.includes('VIEW_SAVED_POS');
-
-  useEffect(() => {
-    if (canView) {
-      fetchPOs(false);
-    }
-  }, [canView]);
-
-  const fetchPOs = async (forceRefresh = false) => {
-    try {
-      setLoading(true);
-      const data = await fetchPOsFromCache(forceRefresh);
-      setPos(data);
-    } catch (err) {
-      console.error('Failed to fetch POs', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleAddComment = async (text: string) => {
     if (!selectedPO) return;
@@ -52,7 +36,8 @@ const SavedPOs: React.FC = () => {
       });
       if (res.ok) {
         const updatedPO = await res.json();
-        setPos(prev => prev.map(p => p.id === updatedPO.id ? updatedPO : p));
+        // Invalidate queries instead of local setPos
+        queryClient.invalidateQueries({ queryKey: ['pos'] });
         setSelectedPO(updatedPO);
       }
     } catch (e) {
@@ -73,7 +58,7 @@ const SavedPOs: React.FC = () => {
       });
       if (res.ok) {
         const updatedPO = await res.json();
-        setPos(prev => prev.map(p => p.id === updatedPO.id ? updatedPO : p));
+        queryClient.invalidateQueries({ queryKey: ['pos'] });
         setSelectedPO(updatedPO);
       }
     } catch (e) {
@@ -90,7 +75,7 @@ const SavedPOs: React.FC = () => {
       });
       if (res.ok) {
         const updatedPO = await res.json();
-        setPos(prev => prev.map(p => p.id === updatedPO.id ? updatedPO : p));
+        queryClient.invalidateQueries({ queryKey: ['pos'] });
         setSelectedPO(updatedPO);
       }
     } catch (e) {
@@ -113,7 +98,6 @@ const SavedPOs: React.FC = () => {
       });
       if (res.ok) {
         invalidatePOs();
-        setPos(pos.filter(po => po.id !== id));
       }
     } catch (err) {
       console.error('Failed to delete PO', err);
