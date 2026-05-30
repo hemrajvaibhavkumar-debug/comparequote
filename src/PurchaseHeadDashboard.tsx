@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Filter, Calendar, User, Factory, ChevronRight, FileText, CheckCircle, XCircle, Clock, ShieldCheck, StickyNote } from 'lucide-react';
+import { Search, Filter, Calendar, User, Factory, ChevronRight, FileText, CheckCircle, XCircle, Clock, ShieldCheck, StickyNote, IndianRupee } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import CommentsModal from './components/CommentsModal';
 
@@ -9,6 +9,18 @@ export default function PurchaseHeadDashboard() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('PENDING');
+  
+  // Advanced Filters State
+  const [companyFilter, setCompanyFilter] = useState('ALL');
+  const [dateFilter, setDateFilter] = useState('ALL'); // ALL, TODAY, THIS_WEEK, THIS_MONTH, CUSTOM
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+  const [creatorFilter, setCreatorFilter] = useState('ALL');
+  const [minAmount, setMinAmount] = useState('');
+  const [maxAmount, setMaxAmount] = useState('');
+  const [classificationFilter, setClassificationFilter] = useState('ALL'); // ALL, Capital, Consumables
+  const [showFilters, setShowFilters] = useState(false);
+
   const [actioningId, setActioningId] = useState<number | null>(null);
   const { token, logout, user } = useAuth();
   
@@ -20,7 +32,7 @@ export default function PurchaseHeadDashboard() {
 
   useEffect(() => {
     fetchPOs();
-  }, [statusFilter]);
+  }, []);
 
   const fetchPOs = async () => {
     try {
@@ -132,7 +144,6 @@ export default function PurchaseHeadDashboard() {
       });
       
       if (res.ok) {
-        // Refresh local state
         setPos(prev => prev.map(p => p.id === id ? { ...p, status: newStatus } : p));
       } else {
         alert("Failed to update status");
@@ -146,12 +157,64 @@ export default function PurchaseHeadDashboard() {
   };
 
   const filteredPOs = pos.filter(po => {
+    // 1. Search Term
     const matchesSearch = po.po_no.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          po.vendor_name.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // 2. Status
     const poStatus = po.status || 'PENDING';
     const matchesStatus = statusFilter === 'ALL' || poStatus === statusFilter;
-    return matchesSearch && matchesStatus;
+
+    // 3. Company (Version)
+    const matchesCompany = companyFilter === 'ALL' || po.version === companyFilter;
+
+    // 4. Creator
+    const matchesCreator = creatorFilter === 'ALL' || po.created_by_name === creatorFilter;
+
+    // 5. Amount Range
+    const amount = Number(po.total_amount) || 0;
+    const matchesMinAmount = !minAmount || amount >= Number(minAmount);
+    const matchesMaxAmount = !maxAmount || amount <= Number(maxAmount);
+
+    // 6. Date Filter
+    let matchesDate = true;
+    if (dateFilter !== 'ALL') {
+      const poDate = new Date(po.date);
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+
+      if (dateFilter === 'TODAY') {
+        matchesDate = poDate >= now;
+      } else if (dateFilter === 'THIS_WEEK') {
+        const weekAgo = new Date(now);
+        weekAgo.setDate(now.getDate() - 7);
+        matchesDate = poDate >= weekAgo;
+      } else if (dateFilter === 'THIS_MONTH') {
+        const monthAgo = new Date(now);
+        monthAgo.setMonth(now.getMonth() - 1);
+        matchesDate = poDate >= monthAgo;
+      } else if (dateFilter === 'CUSTOM') {
+        const start = customStartDate ? new Date(customStartDate) : null;
+        const end = customEndDate ? new Date(customEndDate) : null;
+        if (start) {
+          start.setHours(0, 0, 0, 0);
+          matchesDate = matchesDate && poDate >= start;
+        }
+        if (end) {
+          end.setHours(23, 59, 59, 999);
+          matchesDate = matchesDate && poDate <= end;
+        }
+      }
+    }
+
+    // 7. Classification
+    const poType = po.terms?.po_type || 'Consumables';
+    const matchesClassification = classificationFilter === 'ALL' || poType === classificationFilter;
+
+    return matchesSearch && matchesStatus && matchesCompany && matchesCreator && matchesMinAmount && matchesMaxAmount && matchesDate && matchesClassification;
   });
+
+  const uniqueCreators = Array.from(new Set(pos.map(p => p.created_by_name).filter(Boolean)));
 
   const getStatusBadge = (status: string) => {
     const s = status || 'PENDING';
@@ -165,10 +228,10 @@ export default function PurchaseHeadDashboard() {
     }
   };
 
-  const totalCount = pos.length;
-  const pendingCount = pos.filter(p => (p.status || 'PENDING') === 'PENDING').length;
-  const approvedCount = pos.filter(p => p.status === 'APPROVED').length;
-  const combinedValue = pos.reduce((sum, p) => sum + (Number(p.total_amount) || 0), 0);
+  const totalCount = filteredPOs.length;
+  const pendingCount = filteredPOs.filter(p => (p.status || 'PENDING') === 'PENDING').length;
+  const approvedCount = filteredPOs.filter(p => p.status === 'APPROVED').length;
+  const combinedValue = filteredPOs.reduce((sum, p) => sum + (Number(p.total_amount) || 0), 0);
 
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 transition-colors duration-300 p-4 sm:p-8 relative">
@@ -177,47 +240,150 @@ export default function PurchaseHeadDashboard() {
       <div className="ambient-glow bg-slate-100/50 dark:bg-slate-800/10 bottom-10 right-10" style={{ width: '400px', height: '400px' }}></div>
 
       <div className="max-w-7xl mx-auto space-y-8 relative z-10">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-6 rounded-2xl shadow-xs border border-slate-100 dark:border-slate-800">
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2.5 uppercase tracking-tight">
-              <ShieldCheck className="text-slate-900 dark:text-slate-100 w-7 h-7" /> Purchase Approval Hub
-            </h1>
-            <p className="text-slate-400 dark:text-slate-500 font-semibold text-sm mt-0.5">Welcome back, <span className="text-slate-900 dark:text-slate-100 font-black">@{user?.username}</span>. Review, sign, and authorize pending POs.</p>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-4 items-center shrink-0">
-            <div className="relative group w-full sm:w-auto">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 group-focus-within:text-slate-900 dark:group-focus-within:text-slate-100 transition-colors" />
-              <input 
-                type="text" 
-                placeholder="Search POs..." 
-                className="pl-10 pr-4 py-2.5 bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-slate-100/10 focus:border-slate-900 dark:focus:border-slate-100 w-full sm:w-64 transition-all text-sm font-medium text-slate-800 dark:text-slate-100"
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-              />
+        <div className="flex flex-col gap-6 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+              <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2.5 uppercase tracking-tight">
+                <ShieldCheck className="text-slate-900 dark:text-slate-100 w-7 h-7" /> Purchase Approval Hub
+              </h1>
+              <p className="text-slate-400 dark:text-slate-500 font-semibold text-sm mt-0.5">Welcome back, <span className="text-slate-900 dark:text-slate-100 font-black">@{user?.username}</span>. Review, sign, and authorize pending POs.</p>
             </div>
+            
+            <div className="flex flex-col sm:flex-row gap-3 items-center shrink-0">
+              <div className="relative group w-full sm:w-auto">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 group-focus-within:text-slate-900 dark:group-focus-within:text-slate-100 transition-colors" />
+                <input 
+                  type="text" 
+                  placeholder="Search POs..." 
+                  className="pl-10 pr-4 py-2.5 bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-slate-100/10 focus:border-slate-900 dark:focus:border-slate-100 w-full sm:w-64 transition-all text-sm font-medium text-slate-800 dark:text-slate-100"
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                />
+              </div>
 
-            <div className="flex items-center bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-1 shrink-0">
-              {[
-                { id: 'PENDING', label: 'Pending' },
-                { id: 'APPROVED', label: 'Approved' },
-                { id: 'REJECTED', label: 'Rejected' },
-                { id: 'ALL', label: 'All POs' }
-              ].map(f => (
-                <button
-                  key={f.id}
-                  onClick={() => setStatusFilter(f.id)}
-                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
-                    statusFilter === f.id 
-                      ? 'bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 shadow-xs border border-slate-100 dark:border-slate-700' 
-                      : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
+              <button 
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest border transition-all cursor-pointer ${
+                  showFilters 
+                    ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-slate-900 dark:border-slate-100' 
+                    : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+              >
+                <Filter className="w-4 h-4" /> {showFilters ? 'Hide Filters' : 'Advanced Filters'}
+              </button>
             </div>
           </div>
+
+          {/* Expanded Filter Panel */}
+          {showFilters && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-6 border-t border-slate-100 dark:border-slate-800 animate-in slide-in-from-top-2 duration-200">
+              {/* Status Filter */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">Workflow Status</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {['PENDING', 'APPROVED', 'REJECTED', 'ALL'].map(f => (
+                    <button
+                      key={f}
+                      onClick={() => setStatusFilter(f)}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                        statusFilter === f 
+                          ? 'bg-indigo-600 text-white shadow-sm' 
+                          : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
+                      }`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Company Filter */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">Company / Unit</label>
+                <select 
+                  value={companyFilter}
+                  onChange={e => setCompanyFilter(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
+                >
+                  <option value="ALL">All Units</option>
+                  <option value="hemraj_rice">Hemraj Rice Mill</option>
+                  <option value="hemraj_ind">Hemraj Industries</option>
+                  <option value="radhashyam">Radhashyam Industries</option>
+                </select>
+              </div>
+
+              {/* Timeframe Filter */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">Time Period</label>
+                <select 
+                  value={dateFilter}
+                  onChange={e => setDateFilter(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
+                >
+                  <option value="ALL">All Time</option>
+                  <option value="TODAY">Today</option>
+                  <option value="THIS_WEEK">Past 7 Days</option>
+                  <option value="THIS_MONTH">Past 30 Days</option>
+                  <option value="CUSTOM">Custom Range...</option>
+                </select>
+                {dateFilter === 'CUSTOM' && (
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <input type="date" value={customStartDate} onChange={e => setCustomStartDate(e.target.value)} className="w-full px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] font-bold" />
+                    <input type="date" value={customEndDate} onChange={e => setCustomEndDate(e.target.value)} className="w-full px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] font-bold" />
+                  </div>
+                )}
+              </div>
+
+              {/* Classification Filter */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">PO Classification</label>
+                <select 
+                  value={classificationFilter}
+                  onChange={e => setClassificationFilter(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
+                >
+                  <option value="ALL">All Types</option>
+                  <option value="Consumables">Consumables</option>
+                  <option value="Capital">Capital</option>
+                </select>
+              </div>
+
+              {/* Other Filters (Creator & Amount) */}
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">Created By</label>
+                  <select 
+                    value={creatorFilter}
+                    onChange={e => setCreatorFilter(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
+                  >
+                    <option value="ALL">All Creators</option>
+                    {uniqueCreators.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">Amount Range (₹)</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input type="number" placeholder="Min" value={minAmount} onChange={e => setMinAmount(e.target.value)} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-bold" />
+                    <input type="number" placeholder="Max" value={maxAmount} onChange={e => setMaxAmount(e.target.value)} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-bold" />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="col-span-full flex justify-end gap-3 mt-2">
+                <button 
+                  onClick={() => {
+                    setSearchTerm(''); setStatusFilter('PENDING'); setCompanyFilter('ALL'); setDateFilter('ALL');
+                    setCreatorFilter('ALL'); setMinAmount(''); setMaxAmount(''); setCustomStartDate(''); setCustomEndDate('');
+                    setClassificationFilter('ALL');
+                  }}
+                  className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+                >
+                  Reset Filters
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Dashboard Analytics Banner Row */}
@@ -245,7 +411,7 @@ export default function PurchaseHeadDashboard() {
               <CheckCircle className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 tracking-wider">Approved Value</span>
+              <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 tracking-wider">Approved Count</span>
               <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100 mt-0.5">{approvedCount} POs</h3>
             </div>
           </div>
@@ -270,7 +436,7 @@ export default function PurchaseHeadDashboard() {
               <FileText className="text-slate-350 dark:text-slate-600 w-6 h-6" />
             </div>
             <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight">No purchase orders found</h3>
-            <p className="text-slate-400 dark:text-slate-500 text-sm font-medium">There are currently no POs matching your chosen status filter.</p>
+            <p className="text-slate-400 dark:text-slate-500 text-sm font-medium">There are currently no POs matching your current criteria.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -303,6 +469,23 @@ export default function PurchaseHeadDashboard() {
                       </div>
                     </div>
                     
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded border ${
+                        po.version === 'hemraj_rice' ? 'bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800' :
+                        po.version === 'hemraj_ind' ? 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800' :
+                        'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                      }`}>
+                        {po.version === 'hemraj_rice' ? 'Rice Mill' : po.version === 'hemraj_ind' ? 'Industries' : 'Radhashyam'}
+                      </span>
+                      <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded border ${
+                        (po.terms?.po_type || 'Consumables') === 'Capital'
+                          ? 'bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800'
+                          : 'bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-800'
+                      }`}>
+                        {po.terms?.po_type || 'Consumables'}
+                      </span>
+                    </div>
+
                     <h3 className="text-lg font-extrabold text-slate-850 dark:text-slate-100 group-hover:text-slate-900 dark:group-hover:text-white transition-colors uppercase tracking-tight">
                       PO #{po.po_no}
                     </h3>

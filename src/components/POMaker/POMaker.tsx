@@ -22,7 +22,8 @@ const POMaker: React.FC = () => {
     fetchTermsTemplates: getTermsTemplatesFromCache,
     fetchVendors: getVendorsFromCache,
     fetchComparisons: getComparisonsFromCache,
-    invalidatePOs
+    invalidatePOs,
+    invalidateVendors
   } = useApiCache();
   const canAccess = user?.role === 'SUPERADMIN' || user?.permissions.includes('ACCESS_PO_MAKER');
 
@@ -44,7 +45,7 @@ const POMaker: React.FC = () => {
       version: 'hemraj_rice',
       vendor_details: { address: '', gstin: '', mail: '', ph: '', state: '', cc: '' },
       items: [{ sn: 1, make: '', itemName: '', qty: 0, uom: 'NOS', rate: 0, discount: 0, tax: 'GST @18%', amount: 0 }],
-      terms: { tax: '', packing: '', payment: '', payment_milestones: [], freight: '', freight_amount: 0, freight_tax: 'GST @18%', delivery: '', contact_no: '', notes: '', manual_notes: [] },
+      terms: { tax: '', packing: '', payment: '', payment_milestones: [], freight: '', freight_amount: 0, freight_tax: 'GST @18%', warranty_description: '', delivery: '', contact_no: '', notes: '', manual_notes: [], po_type: 'Consumables' },
       total_amount: 0
     };
   });
@@ -246,10 +247,34 @@ const POMaker: React.FC = () => {
 
     try {
       setIsGenerating(true);
+      
+      let targetId = editId;
+      let isOverwrite = false;
+
+      // Pre-save check for duplicate PO number if we're creating a new one 
+      // or if we're editing but changed the number to something that might belong to another record
+      const checkRes = await fetch(`/api/po/check/${encodeURIComponent(po.po_no)}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const checkData = await checkRes.json();
+      
+      if (checkData.exists && checkData.po.id !== Number(editId)) {
+        const existingPo = checkData.po;
+        const msg = `PO Number "${po.po_no}" is already saved in the database${existingPo.created_by_name ? ` by ${existingPo.created_by_name}` : ''}.\n\nDo you want to OVERWRITE that existing entry? Click 'Cancel' to stop and change the number.`;
+        
+        if (window.confirm(msg)) {
+          targetId = existingPo.id;
+          isOverwrite = true;
+        } else {
+          setIsGenerating(false);
+          return;
+        }
+      }
+
       const pdf_base64 = await generatePDFBase64();
       
-      const method = editId ? 'PUT' : 'POST';
-      const url = editId ? `/api/po/${editId}` : '/api/po';
+      const method = targetId ? 'PUT' : 'POST';
+      const url = targetId ? `/api/po/${targetId}` : '/api/po';
 
       const res = await fetch(url, {
         method,
@@ -267,9 +292,40 @@ const POMaker: React.FC = () => {
 
       if (res.ok) {
         invalidatePOs();
-        alert(`PO ${editId ? 'updated' : 'saved'} successfully with generated PDF snapshot!`);
+
+        // Auto-register vendor if new/custom
+        const vendorExists = vendors.some(v => v.name.trim().toLowerCase() === po.vendor_name.trim().toLowerCase());
+        if (!vendorExists && po.vendor_name.trim()) {
+          try {
+            const newVendorRes = await fetch('/api/settings/vendors', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                name: po.vendor_name.trim(),
+                address: po.vendor_details.address || '',
+                state: po.vendor_details.state || '',
+                gstin: po.vendor_details.gstin || '',
+                mobile_no: po.vendor_details.ph || '',
+                email: po.vendor_details.mail || ''
+              })
+            });
+            if (newVendorRes.ok) {
+              console.log("Successfully auto-registered new vendor in Master list:", po.vendor_name);
+              invalidateVendors();
+            }
+          } catch (err) {
+            console.error("Failed to auto-register custom vendor in Master list", err);
+          }
+        }
+
+        alert(`PO ${targetId ? (isOverwrite ? 'overwritten' : 'updated') : 'saved'} successfully with generated PDF snapshot!`);
         if (!editId) {
           localStorage.removeItem('po_maker_draft');
+          // If we overwrote, maybe navigate to the list or clear the form?
+          // For now just stay or let user decide.
         }
       }
       else {
@@ -281,7 +337,7 @@ const POMaker: React.FC = () => {
             return;
           }
         }
-        alert(`Failed to ${editId ? 'update' : 'save'} PO: ${errData.error || 'Unknown error'}`);
+        alert(`Failed to ${targetId ? 'update' : 'save'} PO: ${errData.error || 'Unknown error'}`);
       }
     } catch (err) {
       console.error("Save error", err);

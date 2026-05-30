@@ -86,6 +86,10 @@ export interface TermsTemplate {
   delivery?: string;
   contact_no?: string;
   notes?: string;
+  warranty?: string | number;
+  warranty_description?: string;
+  manual_notes?: string[];
+  payment_milestones?: { percentage: number; description: string }[];
 }
 
 export interface VendorMaster {
@@ -168,10 +172,14 @@ export interface PurchaseOrder {
     freight_amount?: number;
     freight_tax?: string; // e.g. "GST @18%", "GST @5%", "Nil"
     warranty?: string | number;
+    warranty_description?: string;
+    warranties?: { years: string | number; description: string }[];
+    igst?: string;
     delivery: string;
     contact_no?: string;
     notes?: string;
     manual_notes?: string[];
+    po_type?: 'Capital' | 'Consumables' | string;
   };
   total_amount: number;
   created_by_name?: string;

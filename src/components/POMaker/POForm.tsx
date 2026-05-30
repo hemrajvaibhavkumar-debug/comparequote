@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PurchaseOrder, TermsTemplate, POItem, VendorMaster } from '../../types';
 import { Plus, Trash2, ClipboardPaste, Loader2, RotateCcw } from 'lucide-react';
 
@@ -24,6 +24,13 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
   const [bulkText, setBulkText] = useState('');
   const [isExtracting, setIsExtracting] = useState(false);
   const [showBulkPaste, setShowBulkPaste] = useState(false);
+  const [showIgst, setShowIgst] = useState(!!po.terms?.igst);
+
+  useEffect(() => {
+    if (po.terms?.igst) {
+      setShowIgst(true);
+    }
+  }, [po.terms?.igst]);
 
   const apiFetch = async (url: string, options: RequestInit = {}) => {
     const res = await fetch(url, {
@@ -276,7 +283,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             </button>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="space-y-1.5">
             <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Purchase Order No.</label>
             <input 
@@ -292,8 +299,8 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             <input 
               type="date"
               className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
-              value={po.po_date || ''}
-              onChange={e => setPo({...po, po_date: e.target.value})}
+              value={po.date || ''}
+              onChange={e => setPo({...po, date: e.target.value})}
             />
           </div>
           <div className="space-y-1.5">
@@ -301,10 +308,27 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             <input 
               type="text"
               className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
-              value={po.quot_ref || ''}
-              onChange={e => setPo({...po, quot_ref: e.target.value})}
+              value={po.quote_doc_no || ''}
+              onChange={e => setPo({...po, quote_doc_no: e.target.value})}
               placeholder="e.g. Q/24/123 dtd 01.01.24"
             />
+          </div>
+          <div className="space-y-1.5">
+            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">PO Classification</label>
+            <select
+              className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 cursor-pointer"
+              value={po.terms?.po_type || 'Consumables'}
+              onChange={e => setPo({
+                ...po,
+                terms: {
+                  ...po.terms,
+                  po_type: e.target.value as 'Capital' | 'Consumables'
+                }
+              })}
+            >
+              <option value="Consumables">Consumables</option>
+              <option value="Capital">Capital</option>
+            </select>
           </div>
         </div>
       </section>
@@ -587,7 +611,18 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tax (Summary)</label>
+            <div className="flex items-center justify-between">
+              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tax (Summary)</label>
+              {!showIgst && (
+                <button
+                  type="button"
+                  onClick={() => setShowIgst(true)}
+                  className="flex items-center gap-1 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors uppercase tracking-wider cursor-pointer"
+                >
+                  <Plus className="w-3 h-3" /> Add IGST
+                </button>
+              )}
+            </div>
             <select 
               className="mt-1 w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
               value={po.terms.tax || ''}
@@ -600,6 +635,45 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               <option value="Inclusive">Inclusive</option>
             </select>
           </div>
+          {showIgst && (
+            <div>
+              <div className="flex items-center justify-between">
+                <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">IGST</label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowIgst(false);
+                    setPo(prev => ({
+                      ...prev,
+                      terms: {
+                        ...prev.terms,
+                        igst: undefined
+                      }
+                    }));
+                  }}
+                  className="flex items-center gap-1 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-colors uppercase tracking-wider cursor-pointer"
+                >
+                  <Trash2 className="w-3 h-3" /> Remove
+                </button>
+              </div>
+              <select
+                className="mt-1 w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                value={po.terms.igst || ''}
+                onChange={e => setPo({
+                  ...po,
+                  terms: {
+                    ...po.terms,
+                    igst: e.target.value
+                  }
+                })}
+              >
+                <option value="">Select IGST</option>
+                <option value="5%">5%</option>
+                <option value="18%">18%</option>
+                <option value="LUT">LUT</option>
+              </select>
+            </div>
+          )}
           <div>
             <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Packing</label>
             <div className="flex gap-2">
@@ -808,18 +882,89 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               />
             </div>
           </div>
-          <div>
-            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Warranty</label>
-            <div className="relative">
-              <input 
-                type="number"
-                className="mt-1 w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 pr-12 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                value={po.terms.warranty || ''}
-                onChange={e => setPo({...po, terms: { ...po.terms, warranty: e.target.value }})}
-                placeholder="0"
-              />
-              <span className="absolute right-3 top-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Year(s)</span>
+          <div className="col-span-2 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Warranty</label>
+              <button
+                type="button"
+                onClick={() => {
+                  const currentWarranties = po.terms.warranties || [];
+                  setPo({
+                    ...po,
+                    terms: {
+                      ...po.terms,
+                      warranties: [...currentWarranties, { years: '', description: '' }]
+                    }
+                  });
+                }}
+                className="flex items-center gap-1 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors uppercase tracking-wider cursor-pointer"
+              >
+                <Plus className="w-3 h-3" /> Add Item Warranty
+              </button>
             </div>
+            
+            {/* Primary/Default Warranty */}
+            <div className="flex gap-2 items-center">
+              <div className="relative w-32 shrink-0">
+                <input 
+                  type="number"
+                  className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 pr-12 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-bold"
+                  value={po.terms.warranty || ''}
+                  onChange={e => setPo({...po, terms: { ...po.terms, warranty: e.target.value }})}
+                  placeholder="0"
+                />
+                <span className="absolute right-3 top-2.5 text-[9px] font-bold text-slate-400 uppercase tracking-widest">Year(s)</span>
+              </div>
+              <input 
+                type="text"
+                className="flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
+                value={po.terms.warranty_description || ''}
+                onChange={e => setPo({...po, terms: { ...po.terms, warranty_description: e.target.value }})}
+                placeholder="e.g. for Compressor / on all items (manual text)"
+              />
+            </div>
+
+            {/* Additional Warranties */}
+            {po.terms.warranties && po.terms.warranties.map((w, idx) => (
+              <div key={idx} className="flex gap-2 items-center">
+                <div className="relative w-32 shrink-0">
+                  <input 
+                    type="number"
+                    className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 pr-12 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-bold"
+                    value={w.years || ''}
+                    onChange={e => {
+                      const updated = [...(po.terms.warranties || [])];
+                      updated[idx] = { ...updated[idx], years: e.target.value };
+                      setPo({ ...po, terms: { ...po.terms, warranties: updated } });
+                    }}
+                    placeholder="0"
+                  />
+                  <span className="absolute right-3 top-2.5 text-[9px] font-bold text-slate-400 uppercase tracking-widest">Year(s)</span>
+                </div>
+                <input 
+                  type="text"
+                  className="flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
+                  value={w.description || ''}
+                  onChange={e => {
+                    const updated = [...(po.terms.warranties || [])];
+                    updated[idx] = { ...updated[idx], description: e.target.value };
+                    setPo({ ...po, terms: { ...po.terms, warranties: updated } });
+                  }}
+                  placeholder="e.g. for Compressor / on all items (manual text)"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const updated = (po.terms.warranties || []).filter((_, i) => i !== idx);
+                    setPo({ ...po, terms: { ...po.terms, warranties: updated } });
+                  }}
+                  className="p-2 text-rose-500 hover:text-rose-700 transition-colors cursor-pointer"
+                  title="Remove warranty"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
           </div>
           <div className="col-span-2">
             <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-5 rounded-2xl flex justify-between items-center border border-indigo-950/60 shadow-lg dark:shadow-none">

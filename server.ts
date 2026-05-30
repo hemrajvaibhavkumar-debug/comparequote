@@ -661,6 +661,19 @@ async function startServer() {
   });
 
   // Purchase Orders
+  app.get("/api/po/check/:poNo", authenticateToken, async (req, res) => {
+    try {
+      const { poNo } = req.params;
+      const po = await prisma.purchaseOrder.findUnique({
+        where: { po_no: poNo },
+        select: { id: true, po_no: true, created_by_name: true }
+      });
+      res.json({ exists: !!po, po });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to check PO number" });
+    }
+  });
+
   app.get("/api/po/latest", authenticateToken, async (req, res) => {
     try {
       const { version } = req.query;

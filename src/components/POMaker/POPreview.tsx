@@ -15,6 +15,11 @@ const TermsAndNotes = ({ po }: { po: PurchaseOrder }) => (
       <p className="font-black text-[11px] underline mb-1 uppercase tracking-wide">Commercial Terms::</p>
       <div className="grid grid-cols-[140px_1fr] gap-y-1">
         <span className="uppercase text-[9px]">Tax ::</span> <span className="uppercase">{po.terms.tax}</span>
+        {po.terms.igst && (
+          <>
+            <span className="uppercase text-[9px]">IGST ::</span> <span className="uppercase">{po.terms.igst}</span>
+          </>
+        )}
         <span className="uppercase text-[9px]">Packing ::</span> <span className="uppercase">{po.terms.packing}</span>
         <span className="uppercase text-[9px]">Forwarding ::</span> <span className="uppercase">{po.terms.notes}</span>
         <span className="uppercase text-[9px]">Payment Terms ::</span>
@@ -30,9 +35,14 @@ const TermsAndNotes = ({ po }: { po: PurchaseOrder }) => (
         <span className="uppercase text-[9px]">Freight ::</span> <span className="uppercase">{po.terms.freight} {po.terms.freight_amount ? `- ₹${Number(po.terms.freight_amount).toLocaleString()}` : ''}</span>
         {po.terms.warranty && (
           <>
-            <span className="uppercase text-[9px]">Warranty ::</span> <span className="uppercase">{po.terms.warranty} YEAR(S)</span>
+            <span className="uppercase text-[9px]">Warranty ::</span> <span className="uppercase">{po.terms.warranty} YEAR(S) {po.terms.warranty_description && ` ${po.terms.warranty_description}`}</span>
           </>
         )}
+        {po.terms.warranties && po.terms.warranties.map((w, idx) => (
+          <React.Fragment key={idx}>
+            <span className="uppercase text-[9px]">Warranty ::</span> <span className="uppercase">{w.years} YEAR(S) {w.description && ` ${w.description}`}</span>
+          </React.Fragment>
+        ))}
         <span className="uppercase text-[9px]">Delivery Period ::</span> <span className="uppercase">{po.terms.delivery}</span>
         {po.terms.contact_no && (
           <>
