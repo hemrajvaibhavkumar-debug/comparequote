@@ -280,7 +280,7 @@ export default function SavedTables() {
                           title="Internal Comments"
                         >
                           <StickyNote className="w-4 h-4" />
-                          {t.internal_comments && t.internal_comments.length > 0 && (
+                          {t.internal_comments && Array.isArray(t.internal_comments) && t.internal_comments.length > 0 && (
                             <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-indigo-600 dark:bg-indigo-400 rounded-full border border-white dark:border-slate-900"></span>
                           )}
                         </button>

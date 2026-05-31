@@ -115,20 +115,22 @@ model VendorMaster {
 }
 
 model Indent {
-  id              Int       @id @default(autoincrement())
-  indent_no       String    @unique
-  date            DateTime  @default(now())
-  department      String?
-  items           Json      // Array of objects: { itemName, qty, uom, applicationArea, orderPlacedBy, orderPassedBy }
-  total_items     Int       @default(0)
-  status          String    @default("PENDING") // PENDING, APPROVED, REJECTED
-  created_by_name String?
+  id                Int       @id @default(autoincrement())
+  indent_no         String    @unique
+  date              DateTime  @default(now())
+  department        String?
+  order_placed_by   String?
+  order_passed_by   String?
+  items             Json      // Array of objects: { itemName, qty, uom, applicationArea, orderPlacedBy, orderPassedBy }
+  total_items       Int       @default(0)
+  status            String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  created_by_name   String?
   rejection_remarks String?
-  approved_by     String?
-  approved_at     DateTime?
+  approved_by       String?
+  approved_at       DateTime?
   internal_comments Json?     // Array of objects: { text, date, author }
-  created_at      DateTime  @default(now())
-  updated_at      DateTime  @updatedAt
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
 
-  @@index([status, created_at(sort: Desc)])
+  @@index([status, updated_at(sort: Desc)])
 }

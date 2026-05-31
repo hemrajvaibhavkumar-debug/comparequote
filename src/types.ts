@@ -136,6 +136,8 @@ export interface Indent {
   total_items: number;
   status?: 'PENDING' | 'APPROVED' | 'REJECTED' | string;
   created_by_name?: string;
+  order_placed_by?: string;
+  order_passed_by?: string;
   rejection_remarks?: string;
   approved_by?: string;
   approved_at?: string;
