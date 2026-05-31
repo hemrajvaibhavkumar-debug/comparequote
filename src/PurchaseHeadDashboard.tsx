@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Filter, Calendar, User, Factory, ChevronRight, FileText, CheckCircle, XCircle, Clock, ShieldCheck, StickyNote, IndianRupee } from 'lucide-react';
+import { Search, Filter, Calendar, User, Factory, ChevronRight, FileText, CheckCircle, XCircle, Clock, ShieldCheck, StickyNote, IndianRupee, Plus } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import CommentsModal from './components/CommentsModal';
 
@@ -8,7 +8,7 @@ export default function PurchaseHeadDashboard() {
   const [pos, setPos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('PENDING');
+  const [statusFilter, setStatusFilter] = useState('ALL');
   
   // Advanced Filters State
   const [companyFilter, setCompanyFilter] = useState('ALL');
@@ -261,6 +261,21 @@ export default function PurchaseHeadDashboard() {
                 />
               </div>
 
+              <div className="relative group w-full sm:w-auto">
+                <Filter className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
+                <select 
+                  value={statusFilter}
+                  onChange={e => setStatusFilter(e.target.value)}
+                  className="pl-10 pr-10 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-slate-100/10 transition-all appearance-none cursor-pointer w-full sm:w-auto"
+                >
+                  <option value="ALL">Show All POs</option>
+                  <option value="PENDING">Pending Only</option>
+                  <option value="APPROVED">Approved Only</option>
+                  <option value="REJECTED">Rejected Only</option>
+                </select>
+                <ChevronRight className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 rotate-90 pointer-events-none" />
+              </div>
+
               <button 
                 onClick={() => setShowFilters(!showFilters)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest border transition-all cursor-pointer ${
@@ -269,7 +284,7 @@ export default function PurchaseHeadDashboard() {
                     : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
                 }`}
               >
-                <Filter className="w-4 h-4" /> {showFilters ? 'Hide Filters' : 'Advanced Filters'}
+                <Plus className={`w-4 h-4 transition-transform duration-300 ${showFilters ? 'rotate-45' : ''}`} /> Filters
               </button>
             </div>
           </div>
@@ -277,33 +292,13 @@ export default function PurchaseHeadDashboard() {
           {/* Expanded Filter Panel */}
           {showFilters && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-6 border-t border-slate-100 dark:border-slate-800 animate-in slide-in-from-top-2 duration-200">
-              {/* Status Filter */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">Workflow Status</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {['PENDING', 'APPROVED', 'REJECTED', 'ALL'].map(f => (
-                    <button
-                      key={f}
-                      onClick={() => setStatusFilter(f)}
-                      className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
-                        statusFilter === f 
-                          ? 'bg-indigo-600 text-white shadow-sm' 
-                          : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
-                      }`}
-                    >
-                      {f}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {/* Company Filter */}
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">Company / Unit</label>
                 <select 
                   value={companyFilter}
                   onChange={e => setCompanyFilter(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
+                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
                 >
                   <option value="ALL">All Units</option>
                   <option value="hemraj_rice">Hemraj Rice Mill</option>
@@ -318,7 +313,7 @@ export default function PurchaseHeadDashboard() {
                 <select 
                   value={dateFilter}
                   onChange={e => setDateFilter(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
+                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
                 >
                   <option value="ALL">All Time</option>
                   <option value="TODAY">Today</option>
@@ -340,7 +335,7 @@ export default function PurchaseHeadDashboard() {
                 <select 
                   value={classificationFilter}
                   onChange={e => setClassificationFilter(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
+                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
                 >
                   <option value="ALL">All Types</option>
                   <option value="Consumables">Consumables</option>
@@ -355,31 +350,33 @@ export default function PurchaseHeadDashboard() {
                   <select 
                     value={creatorFilter}
                     onChange={e => setCreatorFilter(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
                   >
                     <option value="ALL">All Creators</option>
                     {uniqueCreators.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">Amount Range (₹)</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <input type="number" placeholder="Min" value={minAmount} onChange={e => setMinAmount(e.target.value)} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-bold" />
-                    <input type="number" placeholder="Max" value={maxAmount} onChange={e => setMaxAmount(e.target.value)} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-bold" />
-                  </div>
-                </div>
               </div>
               
-              <div className="col-span-full flex justify-end gap-3 mt-2">
+              <div className="col-span-full flex flex-col sm:flex-row items-end justify-between gap-4 mt-2">
+                <div className="w-full sm:w-auto">
+                  <label className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest mb-1.5 block">Amount Range (₹)</label>
+                  <div className="flex gap-2 items-center">
+                    <input type="number" placeholder="Min" value={minAmount} onChange={e => setMinAmount(e.target.value)} className="w-32 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold" />
+                    <span className="text-slate-300">to</span>
+                    <input type="number" placeholder="Max" value={maxAmount} onChange={e => setMaxAmount(e.target.value)} className="w-32 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold" />
+                  </div>
+                </div>
+                
                 <button 
                   onClick={() => {
-                    setSearchTerm(''); setStatusFilter('PENDING'); setCompanyFilter('ALL'); setDateFilter('ALL');
+                    setSearchTerm(''); setStatusFilter('ALL'); setCompanyFilter('ALL'); setDateFilter('ALL');
                     setCreatorFilter('ALL'); setMinAmount(''); setMaxAmount(''); setCustomStartDate(''); setCustomEndDate('');
                     setClassificationFilter('ALL');
                   }}
-                  className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+                  className="px-6 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-500 hover:text-rose-600 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all flex items-center gap-2 cursor-pointer border border-slate-200 dark:border-slate-700 hover:border-rose-200 dark:hover:border-rose-900/50"
                 >
-                  Reset Filters
+                  <XCircle className="w-4 h-4" /> Reset All Filters
                 </button>
               </div>
             </div>
