@@ -724,7 +724,7 @@ async function startServer() {
       if (cached) return res.json(cached);
 
       const pos = await prisma.purchaseOrder.findMany({
-        orderBy: { created_at: "desc" },
+        orderBy: { updated_at: "desc" },
         take: 500
       });
       dbCache.set(cacheKey, pos);
@@ -778,15 +778,15 @@ async function startServer() {
       const { id, created_at, status, approved_by, approved_at, rejection_remarks, ...data } = req.body;
       if (data.date) data.date = new Date(data.date);
       
-      // Update PO while preserving status if provided, otherwise default to PENDING
+      // Force status back to PENDING when edited, and clear previous approval/rejection details
       const po = await prisma.purchaseOrder.update({
         where: { id: Number(req.params.id) },
         data: {
           ...data,
-          status: status || 'PENDING',
-          approved_by: approved_by !== undefined ? approved_by : null,
-          approved_at: approved_at !== undefined ? approved_at : null,
-          rejection_remarks: rejection_remarks !== undefined ? rejection_remarks : null
+          status: 'PENDING',
+          approved_by: null,
+          approved_at: null,
+          rejection_remarks: null
         }
       });
       dbCache.clearPattern("po:");

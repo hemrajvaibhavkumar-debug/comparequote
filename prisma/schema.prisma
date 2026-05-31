@@ -98,8 +98,9 @@ model PurchaseOrder {
   pdf_base64        String?
   internal_comments Json?      // Array of objects: { text, date, author }
   created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
 
-  @@index([status, created_at(sort: Desc)])
+  @@index([status, updated_at(sort: Desc)])
 }
 
 model VendorMaster {
