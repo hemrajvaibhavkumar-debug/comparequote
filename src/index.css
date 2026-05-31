@@ -22,11 +22,11 @@
   --color-foreground: #0f172a;
   --color-border: #e2e8f0;
 
-  /* Dark Mode Overrides */
-  --color-dark-bg: #0f172a;
-  --color-dark-fg: #f8fafc;
-  --color-dark-border: #1e293b;
-  --color-dark-card: #1e293b;
+  /* Refined Dark Mode Palette - Deep & Consistent */
+  --color-dark-bg: #020617; /* Slate 950 */
+  --color-dark-fg: #f8fafc; /* Slate 50 */
+  --color-dark-border: #1e293b; /* Slate 800 */
+  --color-dark-card: #0f172a; /* Slate 900 */
   
   /* Modern HSL colors for Shadcn style */
   --color-zinc-50: #fafafa;
@@ -56,16 +56,16 @@
     --bg-main: var(--color-background);
     --fg-main: var(--color-foreground);
     --border-main: var(--color-border);
-    --card-bg: rgba(255, 255, 255, 0.8);
-    --nav-bg: rgba(255, 255, 255, 0.85);
+    --card-bg: rgba(255, 255, 255, 0.7);
+    --nav-bg: rgba(255, 255, 255, 0.8);
   }
 
   .dark {
     --bg-main: var(--color-dark-bg);
     --fg-main: var(--color-dark-fg);
     --border-main: var(--color-dark-border);
-    --card-bg: rgba(30, 41, 59, 0.8);
-    --nav-bg: rgba(15, 23, 42, 0.85);
+    --card-bg: rgba(15, 23, 42, 0.6);
+    --nav-bg: rgba(2, 6, 23, 0.8);
   }
 
   * {
@@ -81,17 +81,21 @@
     font-weight: 500;
   }
 
-  input, select, textarea, button {
+  input, select, textarea {
+    font-weight: 600 !important;
+  }
+
+  button {
     font-weight: 700 !important;
   }
 
   label {
-    font-weight: 800 !important;
+    font-weight: 700 !important;
     letter-spacing: -0.01em;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-weight: 900 !important;
+    font-weight: 800 !important;
   }
 
   /* Ensure PO document preview remains clean and ignores global bolding where necessary */
@@ -111,18 +115,18 @@
 /* Glassmorphism utilities */
 .glass-navbar {
   background: var(--nav-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border-main);
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
 }
 
 .glass-card {
   background: var(--card-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-main);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
 }
 
 /* Premium ambient backdrop elements */
@@ -135,6 +139,10 @@
   opacity: 0.15;
   pointer-events: none;
   z-index: 0;
+}
+
+.dark .ambient-glow {
+  opacity: 0.05;
 }
 
 .ambient-indigo {

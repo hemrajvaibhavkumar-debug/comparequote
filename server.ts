@@ -579,26 +579,33 @@ async function startServer() {
       dbCache.set(cacheKey, vendors);
       res.json(vendors);
     } catch (error) {
+      console.error("[Backend] Vendor fetch error:", error);
       res.status(500).json({ error: "Failed to fetch vendors" });
     }
   });
 
   app.post("/api/settings/vendors", authenticateToken, async (req, res) => {
     try {
-      const vendor = await prisma.vendorMaster.create({ data: req.body });
+      const vendor = await prisma.vendorMaster.upsert({
+        where: { name: req.body.name },
+        update: req.body,
+        create: req.body,
+      });
       dbCache.delete("settings:vendors");
       res.json(vendor);
     } catch (error) {
+      console.error("[Backend] Vendor save error:", error);
       res.status(500).json({ error: "Failed to create vendor" });
     }
   });
 
-  app.delete("/api/settings/vendors/:id", authenticateToken, async (req, res) => {
+  app.delete("/api/settings/vendors/:name", authenticateToken, async (req, res) => {
     try {
-      await prisma.vendorMaster.delete({ where: { id: Number(req.params.id) } });
+      await prisma.vendorMaster.delete({ where: { name: req.params.name } });
       dbCache.delete("settings:vendors");
       res.json({ success: true });
     } catch (error) {
+      console.error("[Backend] Vendor delete error:", error);
       res.status(500).json({ error: "Failed to delete vendor" });
     }
   });
@@ -718,7 +725,7 @@ async function startServer() {
 
       const pos = await prisma.purchaseOrder.findMany({
         orderBy: { created_at: "desc" },
-        take: 50
+        take: 500
       });
       dbCache.set(cacheKey, pos);
       res.json(pos);
@@ -1281,9 +1288,10 @@ async function startServer() {
   });
 
   app.get("/api/comparisons", authenticateToken, async (req, res) => {
-    try {
-      const limit = parseInt(req.query.limit as string) || 25;
-      const cacheKey = `comparisons:list:limit_${limit}`;
+   try {
+     const limit = parseInt(req.query.limit as string) || 500;
+     const cacheKey = `comparisons:list:limit_${limit}`;
+
       const cached = dbCache.get<any[]>(cacheKey);
       if (cached) return res.json(cached);
 

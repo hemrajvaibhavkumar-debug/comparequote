@@ -93,7 +93,6 @@ export interface TermsTemplate {
 }
 
 export interface VendorMaster {
-  id: number;
   name: string;
   address?: string;
   state?: string;

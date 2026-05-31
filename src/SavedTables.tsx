@@ -249,30 +249,30 @@ export default function SavedTables() {
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {filteredTables.map(t => (
                   <tr key={t.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-950/50 transition-colors">
-                    <td className="px-6 py-4.5">
+                    <td className="px-6 py-3.5">
                       <Link to={`/saved/${t.id}`} className="font-extrabold text-slate-900 dark:text-slate-100 group-hover:text-slate-900 dark:group-hover:text-white transition-colors flex items-center gap-2">
                         {t.doc_no}
                         <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
                       </Link>
                     </td>
-                    <td className="px-6 py-4.5">
+                    <td className="px-6 py-3.5">
                       <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold">
                         {t.data?.header?.plantName || 'N/A'}
                       </span>
                     </td>
-                    <td className="px-6 py-4.5">
+                    <td className="px-6 py-3.5">
                       <div className="flex items-center gap-2 text-sm text-slate-650 dark:text-slate-300 font-medium">
                         <User className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                         {t.data?.header?.preparedBy || 'N/A'}
                       </div>
                     </td>
-                    <td className="px-6 py-4.5">
+                    <td className="px-6 py-3.5">
                       <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 font-medium">
                         <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                         {new Date(t.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </div>
                     </td>
-                    <td className="px-6 py-4.5 text-right">
+                    <td className="px-6 py-3.5 text-right">
                       <div className="flex justify-end gap-2.5">
                         <button 
                           onClick={(e) => openComments(e, t)}

@@ -25,6 +25,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
   const [isExtracting, setIsExtracting] = useState(false);
   const [showBulkPaste, setShowBulkPaste] = useState(false);
   const [showIgst, setShowIgst] = useState(!!po.terms?.igst);
+  const [importModal, setImportModal] = useState<{ isOpen: boolean; vendors: string[]; compData: any } | null>(null);
 
   useEffect(() => {
     if (po.terms?.igst) {
@@ -207,60 +208,64 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
     }
   };
 
+  const processComparisonImport = (data: any, vendorName: string) => {
+    if (!data?.items) return;
+
+    const compItems = data.items;
+    const newPOItems: POItem[] = compItems.map((ci: any, idx: number) => {
+      const quote = ci.vendorQuotes?.find((q: any) => q.vendorName === vendorName);
+      const qty = parseFloat(ci.qty) || 0;
+      const rate = parseFloat(quote?.mrp) || 0;
+      const discount = parseFloat(quote?.discount) || 0;
+      const netRate = parseFloat(quote?.netRate) || 0;
+      
+      return {
+        sn: idx + 1,
+        itemName: ci.description || '',
+        make: quote?.make || '',
+        qty,
+        uom: ci.uom || 'NOS',
+        rate,
+        discount,
+        tax: 'GST @18%',
+        amount: parseFloat((qty * netRate).toFixed(2))
+      };
+    });
+
+    // Also update vendor details if found in master
+    const matchedVendor = vendors.find((v: any) => v.name === vendorName);
+    if (matchedVendor) {
+      handleVendorSelect(vendorName);
+    } else {
+      setPo(prev => ({ ...prev, vendor_name: vendorName }));
+    }
+
+    setPo(prev => ({
+      ...prev,
+      items: newPOItems,
+      total_amount: newPOItems.reduce((sum, it) => sum + (it.amount || 0), 0)
+    }));
+  };
+
   const loadFromComparison = async (comp: any) => {
     if (!comp?.id) return;
     try {
       const res = await apiFetch(`/api/comparisons/${comp.id}`);
       const data = await res.json();
-      if (data?.data?.data?.items) {
-        // Find selected vendor if possible or prompt? 
-        // For now just take the first vendor or let user pick.
-        const vendors = data.data.data.vendors || [];
-        if (vendors.length === 0) return;
+      const compData = data?.data?.data;
+      if (compData?.items) {
+        const compVendors = compData.vendors || [];
+        if (compVendors.length === 0) return;
         
-        let vendorName = vendors[0];
-        if (vendors.length > 1) {
-          const choice = window.prompt(`Select Vendor to load items from:\n${vendors.join(', ')}`, vendors[0]);
-          if (choice && vendors.includes(choice)) vendorName = choice;
-        }
-
-        const compItems = data.data.data.items;
-        const newPOItems: POItem[] = compItems.map((ci: any, idx: number) => {
-          const quote = ci.vendorQuotes?.find((q: any) => q.vendorName === vendorName);
-          const qty = parseFloat(ci.qty) || 0;
-          const rate = parseFloat(quote?.mrp) || 0;
-          const discount = parseFloat(quote?.discount) || 0;
-          const netRate = parseFloat(quote?.netRate) || 0;
-          
-          return {
-            sn: idx + 1,
-            itemName: ci.description || '',
-            make: quote?.make || '',
-            qty,
-            uom: ci.uom || 'NOS',
-            rate,
-            discount,
-            tax: 'GST @18%',
-            amount: parseFloat((qty * netRate).toFixed(2))
-          };
-        });
-
-        // Also update vendor details if found in master
-        const vMaster = vendors.find((v: any) => v.name === vendorName);
-        if (vMaster) {
-           handleVendorSelect(vendorName);
+        if (compVendors.length > 1) {
+          setImportModal({ isOpen: true, vendors: compVendors, compData });
         } else {
-           setPo(prev => ({ ...prev, vendor_name: vendorName }));
+          processComparisonImport(compData, compVendors[0]);
         }
-
-        setPo(prev => ({
-          ...prev,
-          items: newPOItems,
-          total_amount: newPOItems.reduce((sum, it) => sum + (it.amount || 0), 0)
-        }));
       }
     } catch (e) {
       console.error(e);
+      alert("Failed to load comparison data.");
     }
   };
 
@@ -364,21 +369,21 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
 
       {/* Vendor Details */}
       <section className="glass-card p-6 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-6">
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 gap-3">
           <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 font-sans tracking-wide uppercase">Vendor Details</h2>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
              <select 
-               className="text-xs bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 outline-none text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer"
+               className="flex-1 sm:flex-none text-xs bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 outline-none text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer"
                onChange={e => handleVendorSelect(e.target.value)}
                defaultValue=""
              >
                <option value="" disabled>Select from Master</option>
                <option value="custom">-- CUSTOM / NEW --</option>
-               {vendors.map(v => <option key={v.id} value={v.name}>{v.name}</option>)}
+               {vendors.map(v => <option key={v.name} value={v.name}>{v.name}</option>)}
              </select>
              
              <select 
-               className="text-xs bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/30 rounded-xl px-3 py-1.5 outline-none text-indigo-700 dark:text-indigo-400 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer"
+               className="flex-1 sm:flex-none text-xs bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/30 rounded-xl px-3 py-2 outline-none text-indigo-700 dark:text-indigo-400 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer"
                onChange={e => {
                  const comp = comparisons.find(c => String(c.id) === e.target.value);
                  if (comp) loadFromComparison(comp);
@@ -397,11 +402,24 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">Vendor Name</label>
               <input 
                 type="text"
+                list="vendor-list"
                 className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-black focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 uppercase"
                 value={po.vendor_name || ''}
-                onChange={e => setPo({...po, vendor_name: e.target.value})}
+                onChange={e => {
+                  const val = e.target.value;
+                  setPo({...po, vendor_name: val});
+                  
+                  // Auto-populate if it matches a master vendor
+                  const matchedVendor = vendors.find(v => v.name.toLowerCase() === val.toLowerCase());
+                  if (matchedVendor) {
+                    handleVendorSelect(matchedVendor.name);
+                  }
+                }}
                 placeholder="Full Company Name"
               />
+              <datalist id="vendor-list">
+                {vendors.map(v => <option key={v.name} value={v.name} />)}
+              </datalist>
             </div>
             <div>
               <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">Address</label>
@@ -1096,6 +1114,41 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
           </div>
         </div>
       </section>
+
+      {/* Comparison Import Modal */}
+      {importModal?.isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-lg font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight">Select Vendor</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">This comparison has multiple quotes. Which vendor's data should be imported?</p>
+            </div>
+            <div className="p-6 space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar">
+              {importModal.vendors.map((vName, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    processComparisonImport(importModal.compData, vName);
+                    setImportModal(null);
+                  }}
+                  className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 rounded-2xl transition-all group cursor-pointer"
+                >
+                  <span className="font-bold text-sm uppercase tracking-wide">{vName}</span>
+                  <Plus className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
+              ))}
+            </div>
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/30 flex justify-end">
+              <button 
+                onClick={() => setImportModal(null)}
+                className="px-6 py-2 text-xs font-black text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 uppercase tracking-widest cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

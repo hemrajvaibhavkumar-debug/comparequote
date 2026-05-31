@@ -162,9 +162,9 @@ const POSettings: React.FC = () => {
     fetchVendors(true);
   };
 
-  const handleDeleteVendor = async (id: number) => {
+  const handleDeleteVendor = async (name: string) => {
     if (!confirm('Are you sure you want to delete this vendor?')) return;
-    const res = await fetch(`/api/settings/vendors/${id}`, {
+    const res = await fetch(`/api/settings/vendors/${encodeURIComponent(name)}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -247,7 +247,7 @@ const POSettings: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300 pb-20 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 transition-colors duration-300 pb-20 relative overflow-hidden">
       {/* Ambient background glows */}
       <div className="ambient-glow ambient-indigo -top-40 -right-40" />
       <div className="ambient-glow ambient-blue -bottom-40 -left-40" />
@@ -266,7 +266,7 @@ const POSettings: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar bg-slate-100 dark:bg-slate-900 p-1 rounded-2xl border border-slate-200/40 dark:border-slate-800">
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar bg-slate-100 dark:bg-slate-900/50 p-1 rounded-2xl border border-slate-200/40 dark:border-slate-800">
               <TabButton id="profile" label="Profile" icon={Building2} />
               <TabButton id="terms" label="Terms" icon={FileText} />
               <TabButton id="vendors" label="Vendors" icon={Users} />
@@ -487,14 +487,23 @@ const POSettings: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">State</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Email</label>
                     <input 
-                      type="text" 
+                      type="email" 
                       className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
-                      value={newVendor.state || ''}
-                      onChange={e => setNewVendor({...newVendor, state: e.target.value})}
+                      value={newVendor.email || ''}
+                      onChange={e => setNewVendor({...newVendor, email: e.target.value})}
                     />
                   </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">State</label>
+                  <input 
+                    type="text" 
+                    className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
+                    value={newVendor.state || ''}
+                    onChange={e => setNewVendor({...newVendor, state: e.target.value})}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Address</label>
@@ -518,9 +527,9 @@ const POSettings: React.FC = () => {
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Vendor Database</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                 {vendors.map(v => (
-                  <div key={v.id} className="p-5 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/60 dark:border-slate-800 group relative hover:shadow-md transition-all duration-200">
+                  <div key={v.name} className="p-5 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/60 dark:border-slate-800 group relative hover:shadow-md transition-all duration-200">
                     <button 
-                      onClick={() => handleDeleteVendor(v.id)}
+                      onClick={() => handleDeleteVendor(v.name)}
                       className="absolute top-4 right-4 text-slate-400 hover:text-rose-600 p-1.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors duration-200 cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -534,6 +543,10 @@ const POSettings: React.FC = () => {
                       <div className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 flex justify-between">
                         <span>Phone</span>
                         <span className="text-slate-700 dark:text-slate-300">{v.mobile_no || 'N/A'}</span>
+                      </div>
+                      <div className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 flex justify-between">
+                        <span>Email</span>
+                        <span className="text-slate-700 dark:text-slate-300 truncate ml-4">{v.email || 'N/A'}</span>
                       </div>
                       <div className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 flex justify-between">
                         <span>State</span>

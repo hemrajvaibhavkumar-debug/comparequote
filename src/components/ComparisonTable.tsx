@@ -452,14 +452,15 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
             writing-mode: vertical-lr;
             transform: rotate(180deg);
             white-space: nowrap;
-            font-size: ${Math.max(fontSize - 1, 8)}px;
-            padding: 2px 0;
-            line-height: 1;
-            font-weight: 700;
+            font-size: ${Math.max(fontSize - 1.5, 7.5)}px;
+            padding: 4px 0;
+            line-height: 1.1;
+            font-weight: 800;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto;
+            letter-spacing: 0.05em;
           }
 
           .comp-table input, .comp-table textarea, .comp-table select {
@@ -469,16 +470,17 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
             background: transparent;
             border: none;
             width: 100%;
-            padding: 2px;
+            padding: 4px 2px;
             outline: none;
+            transition: background-color 0.2s;
           }
 
           .comp-table input:focus, .comp-table textarea:focus {
-            background-color: #f8fafc;
+            background-color: rgba(0,0,0,0.03);
           }
 
           .dark .comp-table input:focus, .dark .comp-table textarea:focus {
-            background-color: #1e293b;
+            background-color: rgba(255,255,255,0.05);
           }
 
           .comp-table th {

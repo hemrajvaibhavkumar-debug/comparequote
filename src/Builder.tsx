@@ -409,13 +409,17 @@ const Builder: React.FC = () => {
   };
 
   return (
-    <div {...getRootProps()} className={`min-h-screen bg-slate-50/50 dark:bg-slate-950 p-4 md:p-8 font-sans transition-colors relative ${isDragActive ? 'bg-slate-100/60 dark:bg-slate-900/40' : ''}`}>
+    <div {...getRootProps()} className={`min-h-screen bg-slate-50/50 dark:bg-slate-950 p-4 md:p-8 font-sans transition-colors relative ${isDragActive ? 'bg-slate-100/40 dark:bg-slate-900/40' : ''}`}>
       {isDragActive && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 dark:bg-white/5 backdrop-blur-xs pointer-events-none border-4 border-black dark:border-white border-dashed m-4 rounded-3xl animate-pulse-slow">
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 border border-black/10 dark:border-white/10">
-            <Upload className="w-16 h-16 text-black dark:text-white animate-bounce" />
-            <p className="text-xl font-bold text-slate-800 dark:text-slate-100">Drop files anywhere to upload</p>
-            <p className="text-xs text-slate-400 font-medium">QuoteCompare AI will extract quotations automatically</p>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/20 dark:bg-slate-100/10 backdrop-blur-[2px] pointer-events-none transition-all duration-300">
+          <div className="bg-white/90 dark:bg-slate-900/90 p-8 rounded-3xl shadow-2xl flex flex-col items-center gap-4 border-2 border-dashed border-slate-900 dark:border-slate-100 m-8 w-full max-w-2xl animate-in zoom-in-95 duration-300">
+            <div className="w-20 h-20 bg-slate-900 dark:bg-slate-100 rounded-2xl flex items-center justify-center text-white dark:text-slate-900 shadow-xl">
+              <Upload className="w-10 h-10 animate-bounce" />
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight">Drop files to compare</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-bold mt-1 uppercase tracking-widest">PDF, JPEG, or PNG formats supported</p>
+            </div>
           </div>
         </div>
       )}

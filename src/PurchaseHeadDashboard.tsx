@@ -236,11 +236,11 @@ export default function PurchaseHeadDashboard() {
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 transition-colors duration-300 p-4 sm:p-8 relative">
       {/* Background ambient glows */}
-      <div className="ambient-glow bg-slate-200/50 dark:bg-slate-800/20 -top-20 -left-20" style={{ width: '400px', height: '400px' }}></div>
-      <div className="ambient-glow bg-slate-100/50 dark:bg-slate-800/10 bottom-10 right-10" style={{ width: '400px', height: '400px' }}></div>
+      <div className="ambient-glow bg-slate-200/50 dark:bg-slate-800/10 -top-20 -left-20" style={{ width: '400px', height: '400px' }}></div>
+      <div className="ambient-glow bg-slate-100/50 dark:bg-slate-800/5 bottom-10 right-10" style={{ width: '400px', height: '400px' }}></div>
 
       <div className="max-w-7xl mx-auto space-y-8 relative z-10">
-        <div className="flex flex-col gap-6 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
+        <div className="flex flex-col gap-6 bg-white/70 dark:bg-slate-900/60 backdrop-blur-md p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
               <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2.5 uppercase tracking-tight">
