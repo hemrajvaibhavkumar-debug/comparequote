@@ -346,13 +346,26 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             </div>
             <div className="space-y-1.5">
               <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Quotation Ref/Doc No.</label>
-              <input 
-                type="text"
-                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
+              <select 
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 cursor-pointer"
                 value={po.quote_doc_no || ''}
-                onChange={e => setPo({...po, quote_doc_no: e.target.value})}
-                placeholder="e.g. Q/24/123"
-              />
+                onChange={e => {
+                  const val = e.target.value;
+                  setPo({...po, quote_doc_no: val});
+                  
+                  // Optional: Auto-load date if found
+                  const comp = comparisons.find(c => c.doc_no === val);
+                  if (comp && comp.created_at) {
+                    const date = new Date(comp.created_at).toISOString().split('T')[0];
+                    setPo(prev => ({ ...prev, quote_doc_no: val, quote_date: date }));
+                  }
+                }}
+              >
+                <option value="">-- Select Doc No --</option>
+                {comparisons.map(c => (
+                  <option key={c.id} value={c.doc_no}>{c.doc_no}</option>
+                ))}
+              </select>
             </div>
             <div className="space-y-1.5">
               <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Quotation Date</label>
