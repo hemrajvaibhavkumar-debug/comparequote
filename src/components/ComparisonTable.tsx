@@ -573,44 +573,83 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
         <table className="comp-table text-black dark:text-slate-100 border-2 border-black dark:border-slate-700" style={{ fontSize: `${fontSize}px` }}>
           <thead>
           <tr className="bg-white dark:bg-slate-900">
-            <th colSpan={totalCols} className="text-left px-2 py-1 border border-black dark:border-slate-700 font-bold uppercase whitespace-nowrap">
+            <th colSpan={Math.floor(totalCols/2)} className="text-left px-2 py-1 border border-black dark:border-slate-700 font-bold uppercase whitespace-nowrap">
               <div className="flex items-center">
                 <span className="flex-shrink-0 opacity-60">DOC NO. :</span>
                 <input type="text" value={header.docNo} onChange={e => updateHeader('docNo', e.target.value)} className="font-bold uppercase ml-2" readOnly={readOnly} />
               </div>
             </th>
+            <th colSpan={totalCols - Math.floor(totalCols/2)} className="text-left px-2 py-1 border border-black dark:border-slate-700 font-bold uppercase whitespace-nowrap">
+              <div className="flex items-center">
+                <span className="flex-shrink-0 opacity-60">APPLICATION AREA :</span>
+                <input type="text" value={header.itemApplicationArea || ''} onChange={e => updateHeader('itemApplicationArea', e.target.value)} className="font-bold uppercase ml-2 flex-1" readOnly={readOnly} />
+              </div>
+            </th>
           </tr>
           <tr className="bg-white dark:bg-slate-900">
-            <th colSpan={totalCols} className="text-left px-2 py-1 border border-black dark:border-slate-700 font-bold uppercase whitespace-nowrap">
+            <th colSpan={Math.floor(totalCols/2)} className="text-left px-2 py-1 border border-black dark:border-slate-700 font-bold uppercase whitespace-nowrap">
               <div className="flex items-center">
                 <span className="flex-shrink-0 opacity-60">PREPARED BY :</span>
                 <input type="text" value={header.preparedBy} onChange={e => updateHeader('preparedBy', e.target.value)} className="font-bold uppercase ml-2" readOnly={readOnly} />
               </div>
             </th>
+            <th colSpan={totalCols - Math.floor(totalCols/2)} className="text-left px-2 py-1 border border-black dark:border-slate-700 font-bold uppercase whitespace-nowrap">
+              <div className="flex items-center">
+                <span className="flex-shrink-0 opacity-60">INSTALL TYPE :</span>
+                <input type="text" value={header.installType || ''} onChange={e => updateHeader('installType', e.target.value)} className="font-bold uppercase ml-2" readOnly={readOnly} />
+                {header.installType === 'Old Install' && (
+                  <div className="flex items-center ml-4">
+                    <span className="flex-shrink-0 opacity-60">REPAIRABLE :</span>
+                    <input type="text" value={header.isRepairable || ''} onChange={e => updateHeader('isRepairable', e.target.value)} className="font-bold uppercase ml-2" readOnly={readOnly} />
+                  </div>
+                )}
+              </div>
+            </th>
           </tr>
           <tr className="bg-white dark:bg-slate-900">
-            <th colSpan={totalCols} className="text-left px-2 py-1 border border-black dark:border-slate-700 font-bold uppercase whitespace-nowrap">
+            <th colSpan={Math.floor(totalCols/2)} className="text-left px-2 py-1 border border-black dark:border-slate-700 font-bold uppercase whitespace-nowrap">
               <div className="flex items-center">
                 <span className="flex-shrink-0 opacity-60">DATE :</span>
                 <input type="text" value={header.date} onChange={e => updateHeader('date', e.target.value)} className="font-bold uppercase ml-2" readOnly={readOnly} />
               </div>
             </th>
+            <th colSpan={totalCols - Math.floor(totalCols/2)} className="text-left px-2 py-1 border border-black dark:border-slate-700 font-bold uppercase whitespace-nowrap">
+              <div className="flex items-center">
+                <span className="flex-shrink-0 opacity-60">TECH APPROVAL :</span>
+                <input type="text" value={header.technicalApproval || ''} onChange={e => updateHeader('technicalApproval', e.target.value)} className="font-bold uppercase ml-2" readOnly={readOnly} />
+              </div>
+            </th>
           </tr>
           <tr className="bg-white dark:bg-slate-900">
-            <th colSpan={totalCols} className="text-left px-2 py-1 border border-black dark:border-slate-700 font-bold uppercase whitespace-nowrap">
+            <th colSpan={Math.floor(totalCols/2)} className="text-left px-2 py-1 border border-black dark:border-slate-700 font-bold uppercase whitespace-nowrap">
               <div className="flex items-center">
                 <span className="flex-shrink-0 opacity-60">INDENT DATE :</span>
                 <input type="text" value={header.indentDate} onChange={e => updateHeader('indentDate', e.target.value)} className="font-bold uppercase ml-2" readOnly={readOnly} />
               </div>
             </th>
+            <th colSpan={totalCols - Math.floor(totalCols/2)} className="text-left px-2 py-1 border border-black dark:border-slate-700 font-bold uppercase whitespace-nowrap">
+              <div className="flex items-center">
+                <span className="flex-shrink-0 opacity-60">INDENT APPROVED BY :</span>
+                <input type="text" value={header.indentApprovedBy || ''} onChange={e => updateHeader('indentApprovedBy', e.target.value)} className="font-bold uppercase ml-2" readOnly={readOnly} />
+              </div>
+            </th>
           </tr>
           <tr className="bg-white dark:bg-slate-900">
-            <th colSpan={hasWeight ? 9 : 8} className="text-left px-2 py-1 border border-black dark:border-slate-700 font-bold uppercase whitespace-nowrap">
+            <th colSpan={Math.floor(totalCols/2)} className="text-left px-2 py-1 border border-black dark:border-slate-700 font-bold uppercase whitespace-nowrap">
               <div className="flex items-center">
                 <span className="flex-shrink-0 opacity-60">PLANT NAME :</span>
                 <input type="text" value={header.plantName} onChange={e => updateHeader('plantName', e.target.value)} className="font-bold uppercase ml-2" readOnly={readOnly} />
               </div>
             </th>
+            <th colSpan={totalCols - Math.floor(totalCols/2)} className="text-left px-2 py-1 border border-black dark:border-slate-700 font-bold uppercase whitespace-nowrap">
+              <div className="flex items-center">
+                <span className="flex-shrink-0 opacity-60">PRIMARY NEGOTIATION :</span>
+                <input type="text" value={header.primaryNegotiation || ''} onChange={e => updateHeader('primaryNegotiation', e.target.value)} className="font-bold uppercase ml-2" readOnly={readOnly} />
+              </div>
+            </th>
+          </tr>
+          <tr className="bg-white dark:bg-slate-900">
+            <th colSpan={hasWeight ? 9 : 8} className="border-none"></th>
             {vendors.map((v, i) => {
                const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
                const quoteDate = firstQuote?.quoteDate || new Date().toLocaleDateString('en-GB');

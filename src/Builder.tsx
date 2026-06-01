@@ -31,7 +31,13 @@ const Builder: React.FC = () => {
       preparedBy: '',
       date: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }),
       indentDate: '',
-      plantName: ''
+      plantName: '',
+      itemApplicationArea: '',
+      installType: '',
+      isRepairable: '',
+      technicalApproval: '',
+      indentApprovedBy: '',
+      primaryNegotiation: ''
     };
   });
 
@@ -203,7 +209,19 @@ const Builder: React.FC = () => {
 
   const clearDraft = () => {
     if (window.confirm("Are you sure you want to clear the current draft?")) {
-      const freshHeader = { docNo: '', preparedBy: '', date: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }), indentDate: '', plantName: '' };
+      const freshHeader = { 
+        docNo: '', 
+        preparedBy: '', 
+        date: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }), 
+        indentDate: '', 
+        plantName: '',
+        itemApplicationArea: '',
+        installType: '',
+        isRepairable: '',
+        technicalApproval: '',
+        indentApprovedBy: '',
+        primaryNegotiation: ''
+      };
       const freshData = { items: [], vendors: [] };
       setHeader(freshHeader);
       setData(freshData);
@@ -537,7 +555,7 @@ const Builder: React.FC = () => {
         )}
 
         <div className="grid grid-cols-12 gap-8 print-hidden">
-          <div className="col-span-12 lg:col-span-4 bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-5 relative">
+          <div className="col-span-12 lg:col-span-6 bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-5 relative">
             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Document Metadata</h2>
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
@@ -596,6 +614,84 @@ const Builder: React.FC = () => {
               </div>
 
               <div className="col-span-2">
+                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Item Application Area</label>
+                <input 
+                  type="text" 
+                  value={header.itemApplicationArea || ''} 
+                  onChange={e => setHeader({...header, itemApplicationArea: e.target.value})} 
+                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-black dark:focus:border-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 text-slate-800 dark:text-slate-100 transition-all font-medium" 
+                  placeholder="e.g. Production Line 1"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Install Type</label>
+                <select 
+                  value={header.installType || ''} 
+                  onChange={e => setHeader({...header, installType: e.target.value})} 
+                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-black dark:focus:border-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 text-slate-800 dark:text-slate-100 transition-all font-medium cursor-pointer"
+                >
+                  <option value="">-- Select --</option>
+                  <option value="New Install">New Install</option>
+                  <option value="Old Install">Old Install</option>
+                </select>
+              </div>
+
+              {header.installType === 'Old Install' ? (
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Is Repairable?</label>
+                  <select 
+                    value={header.isRepairable || ''} 
+                    onChange={e => setHeader({...header, isRepairable: e.target.value})} 
+                    className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-black dark:focus:border-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 text-slate-800 dark:text-slate-100 transition-all font-medium cursor-pointer"
+                  >
+                    <option value="">-- Select --</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                    <option value="N/A">N/A</option>
+                  </select>
+                </div>
+              ) : <div></div>}
+
+              <div>
+                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Technical Approval</label>
+                <select 
+                  value={header.technicalApproval || ''} 
+                  onChange={e => setHeader({...header, technicalApproval: e.target.value})} 
+                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-black dark:focus:border-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 text-slate-800 dark:text-slate-100 transition-all font-medium cursor-pointer"
+                >
+                  <option value="">-- Select --</option>
+                  <option value="Mail">Mail</option>
+                  <option value="WhatsApp">WhatsApp</option>
+                  <option value="Paper Sign">Paper Sign</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Primary Negotiation</label>
+                <select 
+                  value={header.primaryNegotiation || ''} 
+                  onChange={e => setHeader({...header, primaryNegotiation: e.target.value})} 
+                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-black dark:focus:border-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 text-slate-800 dark:text-slate-100 transition-all font-medium cursor-pointer"
+                >
+                  <option value="">-- Select --</option>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
+              </div>
+
+              <div className="col-span-2">
+                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Indent Approved By</label>
+                <input 
+                  type="text" 
+                  value={header.indentApprovedBy || ''} 
+                  onChange={e => setHeader({...header, indentApprovedBy: e.target.value})} 
+                  className="w-full mt-1 px-4 py-2.5 bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:border-black dark:focus:border-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 text-slate-800 dark:text-slate-100 transition-all font-medium" 
+                  placeholder="Person name"
+                />
+              </div>
+
+              <div className="col-span-2">
                 <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Special Extraction Instructions (Optional)</label>
                 <textarea 
                   value={extractionPrompt} 
@@ -607,7 +703,7 @@ const Builder: React.FC = () => {
             </div>
           </div>
 
-          <div className="col-span-12 lg:col-span-8 bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-5">
+          <div className="col-span-12 lg:col-span-6 bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-5">
             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Extraction Source</h2>
             {canExtract ? (
               <>

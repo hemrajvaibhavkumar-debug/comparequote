@@ -4,6 +4,12 @@ export interface HeaderInfo {
   date: string;
   indentDate: string;
   plantName: string;
+  itemApplicationArea?: string;
+  installType?: string;
+  isRepairable?: string;
+  technicalApproval?: string;
+  indentApprovedBy?: string;
+  primaryNegotiation?: string;
 }
 
 export interface InternalComment {
