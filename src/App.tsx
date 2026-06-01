@@ -1,10 +1,9 @@
 import React, { Suspense, lazy, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
-import { Settings as SettingsIcon, FileText, Database, ShieldCheck, ClipboardList, Loader2, Sun, Moon, Menu, X } from 'lucide-react';
+import { Settings as SettingsIcon, FileText, Database, ShieldCheck, ClipboardList, Loader2, Menu, X } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ApiCacheProvider } from './context/ApiCacheContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useTheme } from './context/ThemeContext';
 import Login from './Login'; // Non-lazy for critical path
 
 const queryClient = new QueryClient({
@@ -63,7 +62,6 @@ const ProtectedRoute = ({ children, permission }: { children: React.ReactNode, p
 
 function AppContent() {
   const { isAuthenticated, logout, user } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -131,13 +129,6 @@ function AppContent() {
               
               {/* Desktop Menu Buttons */}
               <div className="hidden sm:flex items-center gap-3">
-                 <button
-                   onClick={toggleTheme}
-                   className="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer"
-                   title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-                 >
-                   {theme === 'light' ? <Moon className="w-4.5 h-4.5" /> : <Sun className="w-4.5 h-4.5" />}
-                 </button>
                  <button 
                    onClick={logout}
                    className="px-4 py-1.5 rounded-xl text-[10px] font-black text-slate-600 dark:text-slate-400 hover:text-white hover:bg-slate-900 dark:hover:bg-slate-100 dark:hover:text-slate-900 border border-slate-200 dark:border-slate-700 hover:border-slate-900 dark:hover:border-slate-100 transition-all duration-200 uppercase tracking-wider cursor-pointer shadow-xs hover:shadow-sm"
@@ -148,13 +139,6 @@ function AppContent() {
 
               {/* Mobile Hamburger Button */}
               <div className="flex sm:hidden items-center gap-2">
-                 <button
-                   onClick={toggleTheme}
-                   className="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer"
-                   title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-                 >
-                   {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-                 </button>
                  <button
                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                    className="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer"

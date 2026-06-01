@@ -999,13 +999,23 @@ async function startServer() {
 
   app.put("/api/indents/:id", authenticateToken, async (req, res) => {
     try {
-      const { id, created_at, updated_at, ...data } = req.body;
+      const { id, created_at, updated_at, status, approved_by, approved_at, rejection_remarks, ...data } = req.body;
+      if (data.date) data.date = new Date(data.date);
+
+      // Force status back to PENDING on edit, clearing old approval/rejection data
       const indent = await prisma.indent.update({
         where: { id: Number(req.params.id) },
-        data
+        data: {
+          ...data,
+          status: 'PENDING',
+          approved_by: null,
+          approved_at: null,
+          rejection_remarks: null
+        }
       });
       res.json(indent);
     } catch (error) {
+      console.error("[Backend] Indent Update Error:", error);
       res.status(500).json({ error: "Failed to update indent" });
     }
   });
@@ -1051,12 +1061,8 @@ async function startServer() {
       if (!imageBase64) return res.status(400).json({ error: "Missing image data" });
 
       const openRouterKey = process.env.OPENROUTER_API_KEY;
-      if (!openRouterKey) {
-        console.warn("[AI] OPENROUTER_API_KEY missing, falling back to native Gemini");
-      }
-
-      console.log(`[AI] Extracting Indent from image using ${openRouterKey ? 'OpenRouter (Gemini 2.5 Flash)' : 'Native Gemini 2.5 Flash'}...`);
-
+      const isPlaceholder = !openRouterKey || openRouterKey.includes("your_openrouter_api_key");
+      
       const prompt = `Extract items from this order slip image into a structured JSON.
       
       JSON FORMAT:
@@ -1084,48 +1090,54 @@ async function startServer() {
       - Return ONLY valid JSON.`;
 
       let items = [];
+      let success = false;
 
-      if (openRouterKey) {
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${openRouterKey}`,
-            "Content-Type": "application/json",
-            "HTTP-Referer": process.env.APP_URL || "http://localhost:3000",
-            "X-Title": "QuoteCompare AI"
-          },
-          body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
-            messages: [
-              {
-                role: "user",
-                content: [
-                  { type: "text", text: prompt },
-                  {
-                    type: "image_url",
-                    image_url: {
-                      url: `data:image/jpeg;base64,${imageBase64}`
-                    }
-                  }
-                ]
-              }
-            ],
-            response_format: { type: "json_object" }
-          })
-        });
+      // 1. Attempt with OpenRouter (if configured)
+      if (!isPlaceholder) {
+        try {
+          console.log("[AI] Attempting Indent extraction via OpenRouter (Gemini 3.1 Flash Lite)...");
+          const orResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${openRouterKey!.trim()}`,
+              "Content-Type": "application/json",
+              "HTTP-Referer": process.env.APP_URL || "http://localhost:3000",
+              "X-Title": "QuoteCompare AI"
+            },
+            body: JSON.stringify({
+              model: "google/gemini-3.1-flash-lite",
+              messages: [
+                {
+                  role: "user",
+                  content: [
+                    { type: "text", text: prompt },
+                    { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}` } }
+                  ]
+                }
+              ],
+              response_format: { type: "json_object" }
+            })
+          });
 
-        const data = await response.json();
-        if (data.choices && data.choices[0]) {
-          const content = data.choices[0].message.content;
-          const parsed = JSON.parse(content);
-          items = parsed.items || [];
-        } else {
-          console.error("[OpenRouter Error]:", data);
-          throw new Error("Failed to get response from OpenRouter");
+          const orData = await orResponse.json();
+          if (orResponse.ok && orData.choices?.[0]?.message?.content) {
+            const parsed = JSON.parse(orData.choices[0].message.content);
+            items = parsed.items || [];
+            success = true;
+            console.log("[AI] OpenRouter (3.1 Lite) successful.");
+          } else {
+            console.error("[AI] OpenRouter (3.1 Lite) not available or failed. Falling back...");
+          }
+        } catch (e: any) {
+          console.error("[AI] OpenRouter 3.1 exception:", e.message);
         }
-      } else {
+      }
+
+      // 2. Fallback to Native Gemini
+      if (!success) {
+        console.log("[AI] Using Native Gemini 3.1 Flash Lite for extraction...");
         const response = await ai.models.generateContent({
-          model: "gemini-2.5-flash",
+          model: "gemini-3.1-flash-lite",
           contents: [{
             role: "user",
             parts: [
@@ -1133,11 +1145,37 @@ async function startServer() {
               { inlineData: { mimeType: "image/jpeg", data: imageBase64 } }
             ]
           }],
-          config: { responseMimeType: "application/json" }
+          config: { 
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "object",
+              properties: {
+                items: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      itemName: { type: "string" },
+                      qty: { type: "string" },
+                      uom: { type: "string" },
+                      applicationArea: { type: "string" },
+                      orderPlacedBy: { type: "string" },
+                      orderPassedBy: { type: "string" }
+                    },
+                    required: ["itemName", "qty", "uom"]
+                  }
+                }
+              },
+              required: ["items"]
+            }
+          }
         });
 
-        const parsed = JSON.parse(response.text || '{"items": []}');
+        const rawText = response.text || '{"items": []}';
+        const cleanedText = rawText.replace(/^\`\`\`json/m, '').replace(/^\`\`\`/m, '').trim();
+        const parsed = JSON.parse(cleanedText);
         items = parsed.items || [];
+        console.log("[AI] Native Gemini 3.1 Lite extraction successful.");
       }
 
       res.json({ items });

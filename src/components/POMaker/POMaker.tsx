@@ -402,7 +402,7 @@ const POMaker: React.FC = () => {
               <option value="Rakesh Pal">Rakesh Pal</option>
               <option value="Souritra Ghoshal">Souritra Ghoshal</option>
               <option value="Rupak Mukherjee">Rupak Mukherjee</option>
-              <option value="Soumen">Soumen</option>
+              <option value="Soumen Karmakar">Soumen Karmakar</option>
             </select>
           </div>
           <select 

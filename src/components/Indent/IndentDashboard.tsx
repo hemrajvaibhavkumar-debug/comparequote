@@ -266,44 +266,51 @@ const IndentDashboard: React.FC = () => {
   };
 
   return (
-    <div className="flex h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-950 transition-colors duration-300 overflow-hidden relative print:bg-white print:h-auto print:overflow-visible">
+    <div className="flex h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-950 transition-colors duration-300 overflow-hidden relative print:bg-white print:h-auto print:overflow-visible print:block">
       <style>{`
         @media print {
           @page {
             size: A4 portrait;
             margin: 10mm;
           }
-          /* Hide EVERYTHING by default during print */
-          body * {
+          /* Reset everything for print */
+          html, body {
+            background-color: white !important;
+            color: black !important;
+            height: auto !important;
+            overflow: visible !important;
+          }
+          /* Hide all UI elements */
+          .no-print, .glass-navbar, .fixed, button, .ambient-glow {
+            display: none !important;
             visibility: hidden !important;
           }
-          /* Only show the specific paper slip and its children */
-          .print-paper, .print-paper * {
-            visibility: visible !important;
-          }
+          /* Show only the paper slip */
           .print-paper {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
+            position: static !important;
+            display: block !important;
+            visibility: visible !important;
             width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
             box-shadow: none !important;
             border: none !important;
-            background: white !important;
-            color: black !important;
+            background-color: white !important;
           }
-          /* Ensure table borders and text colors appear */
-          .print-paper table, .print-paper td, .print-paper th, .print-paper div {
-            border-color: black !important;
+          .print-paper * {
+            visibility: visible !important;
             color: black !important;
+            border-color: black !important;
+            background-color: transparent !important;
+          }
+          /* Special case for table borders */
+          .print-paper table, .print-paper td, .print-paper th {
+            border: 1px solid black !important;
+          }
+          /* Force colors for Chrome/Safari */
+          * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
-          }
-          .glass-navbar, .fixed, button, .no-print {
-            display: none !important;
-            height: 0 !important;
-            overflow: hidden !important;
           }
         }
       `}</style>
@@ -486,27 +493,30 @@ const IndentDashboard: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-3">
-                {(!selectedIndent.status || selectedIndent.status === 'PENDING') && (
-                  <div className="flex items-center gap-2 mr-2 bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800">
-                    <button 
-                      onClick={handleEditIndent}
-                      className="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 px-3"
-                      title="Edit Indent"
-                    >
-                      <Edit className="w-4 h-4" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Edit</span>
-                    </button>
-                    <div className="w-px h-4 bg-slate-200 dark:bg-slate-700" />
-                    <button 
-                      onClick={() => handleDeleteIndent(selectedIndent.id!)}
-                      className="p-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 px-3"
-                      title="Delete Indent"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Delete</span>
-                    </button>
-                  </div>
-                )}
+                <div className="flex items-center gap-2 mr-2 bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800">
+                  <button 
+                    onClick={handleEditIndent}
+                    className="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 px-3"
+                    title="Edit Indent"
+                  >
+                    <Edit className="w-4 h-4" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Edit</span>
+                  </button>
+                  
+                  {(!selectedIndent.status || selectedIndent.status === 'PENDING') && (
+                    <>
+                      <div className="w-px h-4 bg-slate-200 dark:bg-slate-700" />
+                      <button 
+                        onClick={() => handleDeleteIndent(selectedIndent.id!)}
+                        className="p-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 px-3"
+                        title="Delete Indent"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Delete</span>
+                      </button>
+                    </>
+                  )}
+                </div>
 
                 {selectedIndent.status === 'PENDING' && canApprove && (
                   <>
@@ -548,7 +558,7 @@ const IndentDashboard: React.FC = () => {
               <div className="space-y-6">
                 <div className="text-center border-b-2 border-black pb-4">
                   <h1 className="text-2xl font-black tracking-tighter uppercase mb-0.5">Order Book (Urgent)</h1>
-                  <p className="text-[10px] font-bold">DIGITAL RECORD SYNCED: {new Date(selectedIndent.created_at || "").toLocaleString()}</p>
+                  <p className="text-[10px] font-bold print:hidden">DIGITAL RECORD SYNCED: {new Date(selectedIndent.created_at || "").toLocaleString()}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-x-12 gap-y-4 pt-4">
@@ -666,51 +676,51 @@ const IndentDashboard: React.FC = () => {
                 </button>
               </div>
 
-              <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Indent Number</label>
+              <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Indent Number</label>
                   <input 
                     type="text"
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-none rounded-xl text-sm font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border-none rounded-lg text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-indigo-500/30 transition-all"
                     value={newIndent.indent_no}
                     onChange={e => setNewIndent({...newIndent, indent_no: e.target.value})}
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Indent Date</label>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Indent Date</label>
                   <input 
                     type="date"
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-none rounded-xl text-sm font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border-none rounded-lg text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-indigo-500/30 transition-all"
                     value={newIndent.date}
                     onChange={e => setNewIndent({...newIndent, date: e.target.value})}
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Dept / Purpose</label>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Dept / Purpose</label>
                   <input 
                     type="text"
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-none rounded-xl text-sm font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border-none rounded-lg text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-indigo-500/30 transition-all"
                     placeholder="e.g. Electrical Dept"
                     value={newIndent.department}
                     onChange={e => setNewIndent({...newIndent, department: e.target.value})}
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Order Placed By</label>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Order Placed By</label>
                   <input 
                     type="text"
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-none rounded-xl text-sm font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                    placeholder="Name of person placing order"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border-none rounded-lg text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-indigo-500/30 transition-all"
+                    placeholder="Name..."
                     value={newIndent.order_placed_by}
                     onChange={e => setNewIndent({...newIndent, order_placed_by: e.target.value})}
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Order Passed By</label>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Order Passed By</label>
                   <input 
                     type="text"
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-none rounded-xl text-sm font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                    placeholder="Name of person passing order"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border-none rounded-lg text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-indigo-500/30 transition-all"
+                    placeholder="Name..."
                     value={newIndent.order_passed_by}
                     onChange={e => setNewIndent({...newIndent, order_passed_by: e.target.value})}
                   />
@@ -744,71 +754,80 @@ const IndentDashboard: React.FC = () => {
                 </div>
               )}
 
-              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden overflow-x-auto custom-scrollbar">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden overflow-x-auto custom-scrollbar">
                 <table className="w-full border-collapse min-w-[1000px]">
                   <thead>
                     <tr className="bg-slate-50 dark:bg-slate-950/50 border-b border-slate-100 dark:border-slate-800">
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 w-16 text-center">#</th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-left">Description</th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 w-28 text-center">Qty</th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 w-28 text-center">UOM</th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-left">App. Area</th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-left">Req By</th>
-                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 w-16"></th>
+                      <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 w-12 text-center">#</th>
+                      <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 text-left">Description</th>
+                      <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 w-24 text-center">Qty</th>
+                      <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 w-24 text-center">UOM</th>
+                      <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 text-left">App. Area</th>
+                      <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 text-left">Req By</th>
+                      <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 w-12"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                     {newIndent.items.map((item, idx) => (
                       <tr key={idx} className="group hover:bg-slate-50/50 dark:hover:bg-slate-950/50 transition-colors">
-                        <td className="px-6 py-3 text-center text-xs font-black text-slate-400">{idx + 1}</td>
-                        <td className="px-6 py-3">
-                          <input 
-                            type="text" 
-                            className="w-full bg-transparent border-none text-sm font-bold text-slate-900 dark:text-slate-100 uppercase focus:ring-0"
+                        <td className="px-4 py-2 text-center text-[10px] font-black text-slate-400">{idx + 1}</td>
+                        <td className="px-4 py-2">
+                          <textarea 
+                            rows={1}
+                            className="w-full bg-transparent border-none text-[11px] font-bold text-slate-900 dark:text-slate-100 uppercase focus:ring-0 resize-none min-h-[1.5rem] py-1 no-scrollbar overflow-hidden"
                             placeholder="Enter item description..."
                             value={item.itemName}
-                            onChange={e => updateItem(idx, 'itemName', e.target.value)}
+                            onChange={e => {
+                               updateItem(idx, 'itemName', e.target.value);
+                               // Auto-expand height
+                               e.target.style.height = 'inherit';
+                               e.target.style.height = `${e.target.scrollHeight}px`;
+                            }}
+                            onFocus={e => {
+                               e.target.style.height = 'inherit';
+                               e.target.style.height = `${e.target.scrollHeight}px`;
+                            }}
                           />
                         </td>
-                        <td className="px-6 py-3">
+                        <td className="px-4 py-2">
                           <input 
                             type="text" 
-                            className="w-full bg-transparent border-none text-sm font-bold text-center text-slate-900 dark:text-slate-100 focus:ring-0"
+                            className="w-full bg-transparent border-none text-[11px] font-bold text-center text-slate-900 dark:text-slate-100 focus:ring-0"
                             placeholder="0"
                             value={item.qty}
                             onChange={e => updateItem(idx, 'qty', e.target.value)}
                           />
                         </td>
-                        <td className="px-6 py-3">
+                        <td className="px-4 py-2">
                           <input 
                             type="text" 
-                            className="w-full bg-transparent border-none text-sm font-bold text-center text-slate-900 dark:text-slate-100 uppercase focus:ring-0"
+                            className="w-full bg-transparent border-none text-[11px] font-bold text-center text-slate-900 dark:text-slate-100 uppercase focus:ring-0"
                             placeholder="NOS"
                             value={item.uom}
                             onChange={e => updateItem(idx, 'uom', e.target.value)}
                           />
                         </td>
-                        <td className="px-6 py-3">
+                        <td className="px-4 py-2">
                           <input 
                             type="text" 
-                            className="w-full bg-transparent border-none text-sm font-bold text-slate-900 dark:text-slate-100 uppercase focus:ring-0"
+                            className="w-full bg-transparent border-none text-[11px] font-bold text-slate-900 dark:text-slate-100 uppercase focus:ring-0"
                             placeholder="Area..."
                             value={item.applicationArea}
                             onChange={e => updateItem(idx, 'applicationArea', e.target.value)}
                           />
                         </td>
-                        <td className="px-6 py-3">
+                        <td className="px-4 py-2">
                           <input 
                             type="text" 
-                            className="w-full bg-transparent border-none text-sm font-bold text-slate-900 dark:text-slate-100 uppercase focus:ring-0"
+                            className="w-full bg-transparent border-none text-[11px] font-bold text-slate-900 dark:text-slate-100 uppercase focus:ring-0"
                             placeholder="Name..."
                             value={item.orderPlacedBy}
                             onChange={e => updateItem(idx, 'orderPlacedBy', e.target.value)}
                           />
                         </td>
-                        <td className="px-6 py-3 text-center">
-                          <button onClick={() => removeItem(idx)} className="p-2 text-slate-300 hover:text-rose-600 transition-colors cursor-pointer">
-                            <Trash2 className="w-4 h-4" />
+                        <td className="px-4 py-2 text-center">
+                          <button onClick={() => removeItem(idx)} className="p-1 text-slate-300 hover:text-rose-600 transition-colors cursor-pointer">
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </td>
                       </tr>

@@ -12,7 +12,7 @@ interface POFormProps {
 }
 
 const CONTACT_OPTIONS = [
-  "+91 90462 40020 - soumen",
+  "+91 90462 40020 - soumen karmakar",
   "+91 90461 76169 - vivek",
   "+91 90461 76166 - amit",
   "+91 90461 76150 - sayanta da",
