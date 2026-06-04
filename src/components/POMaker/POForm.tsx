@@ -124,7 +124,21 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
       const discount = parseFloat(item.discount as any) || 0;
       
       const discountedRate = rate * (1 - discount / 100);
-      item.amount = parseFloat((qty * discountedRate).toFixed(2));
+      const taxableAmount = qty * discountedRate;
+
+      // Calculate tax
+      let taxPercent = 0;
+      const taxStr = String(item.tax || '');
+      if (taxStr.includes('@')) {
+        const match = taxStr.match(/@(\d+)%/);
+        if (match) taxPercent = parseFloat(match[1]);
+      } else if (taxStr.includes('%')) {
+        const match = taxStr.match(/(\d+)%/);
+        if (match) taxPercent = parseFloat(match[1]);
+      }
+      
+      const taxAmount = taxableAmount * (taxPercent / 100);
+      item.amount = parseFloat((taxableAmount + taxAmount).toFixed(2));
       
       newItems[index] = item;
       const newTotal = newItems.reduce((sum, item) => sum + (item.amount || 0), 0);
@@ -179,17 +193,26 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
       if (data.items && Array.isArray(data.items)) {
         setPo(prev => {
           const currentItems = [...prev.items];
-          const newItems = data.items.map((item: any, idx: number) => ({
-            sn: currentItems.length + idx + 1,
-            itemName: item.itemName,
-            make: item.make || '',
-            qty: parseFloat(item.qty) || 0,
-            uom: item.uom || 'NOS',
-            rate: parseFloat(item.rate) || 0,
-            discount: parseFloat(item.discount) || 0,
-            tax: 'GST @18%',
-            amount: (parseFloat(item.qty) || 0) * (parseFloat(item.rate) || 0) * (1 - (parseFloat(item.discount) || 0) / 100)
-          }));
+          const newItems = data.items.map((item: any, idx: number) => {
+            const qty = parseFloat(item.qty) || 0;
+            const rate = parseFloat(item.rate) || 0;
+            const discount = parseFloat(item.discount) || 0;
+            const taxableAmount = qty * rate * (1 - discount / 100);
+            const taxPercent = 18; // Default for AI extraction
+            const taxAmount = taxableAmount * (taxPercent / 100);
+
+            return {
+              sn: currentItems.length + idx + 1,
+              itemName: item.itemName,
+              make: item.make || '',
+              qty,
+              uom: item.uom || 'NOS',
+              rate,
+              discount,
+              tax: `GST @${taxPercent}%`,
+              amount: parseFloat((taxableAmount + taxAmount).toFixed(2))
+            };
+          });
           const combined = [...currentItems, ...newItems];
           return {
             ...prev,
@@ -219,6 +242,18 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
       const discount = parseFloat(quote?.discount) || 0;
       const netRate = parseFloat(quote?.netRate) || 0;
       
+      const gstStatus = quote?.gstStatus || '18% Extra';
+      const isInclusive = gstStatus.toLowerCase() === 'inclusive';
+      
+      let taxPercent = 0;
+      if (!isInclusive) {
+        if (gstStatus.includes('5%')) taxPercent = 5;
+        else if (gstStatus.includes('18%') || gstStatus.toLowerCase() === 'exclusive') taxPercent = 18;
+      }
+
+      const taxableAmount = qty * netRate;
+      const taxAmount = isInclusive ? 0 : taxableAmount * (taxPercent / 100);
+      
       return {
         sn: idx + 1,
         itemName: ci.description || '',
@@ -227,8 +262,8 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
         uom: ci.uom || 'NOS',
         rate,
         discount,
-        tax: 'GST @18%',
-        amount: parseFloat((qty * netRate).toFixed(2))
+        tax: isInclusive ? 'Inclusive' : `GST @${taxPercent}%`,
+        amount: parseFloat((taxableAmount + taxAmount).toFixed(2))
       };
     });
 
