@@ -118,6 +118,7 @@ model Indent {
   id                Int       @id @default(autoincrement())
   indent_no         String    @unique
   date              DateTime  @default(now())
+  plant_name        String?
   department        String?
   order_placed_by   String?
   order_passed_by   String?

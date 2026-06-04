@@ -39,6 +39,7 @@ const IndentDashboard: React.FC = () => {
   const [newIndent, setNewIndent] = useState<Indent>({
     indent_no: `IND-${Date.now().toString().slice(-6)}`,
     date: new Date().toISOString().split('T')[0],
+    plant_name: '',
     items: [],
     total_items: 0,
     department: '',
@@ -111,9 +112,16 @@ const IndentDashboard: React.FC = () => {
       return;
     }
 
+    // Add serial numbers to items
+    const itemsWithSn = newIndent.items.map((item, index) => ({
+      ...item,
+      sn: index + 1
+    }));
+
     const payload = {
       ...newIndent,
-      total_items: newIndent.items.length,
+      items: itemsWithSn,
+      total_items: itemsWithSn.length,
       created_by_name: user?.username
     };
 
@@ -137,6 +145,7 @@ const IndentDashboard: React.FC = () => {
         setNewIndent({
           indent_no: `IND-${Date.now().toString().slice(-6)}`,
           date: new Date().toISOString().split('T')[0],
+          plant_name: '',
           items: [],
           total_items: 0,
           department: '',
@@ -260,6 +269,7 @@ const IndentDashboard: React.FC = () => {
     setNewIndent({
       indent_no: `IND-${Date.now().toString().slice(-6)}`,
       date: new Date().toISOString().split('T')[0],
+      plant_name: '',
       items: [],
       total_items: 0,
       department: '',
@@ -403,7 +413,7 @@ const IndentDashboard: React.FC = () => {
                    <div className="flex flex-col truncate max-w-[140px]">
                       <span className={`text-[10px] font-black uppercase tracking-tight truncate ${
                         selectedIndent?.id === indent.id ? 'text-slate-300 dark:text-slate-600' : 'text-slate-400'
-                      }`}>{indent.department || 'General Indent'}</span>
+                      }`}>{indent.plant_name || indent.department || 'General Indent'}</span>
                    </div>
                    
                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -576,7 +586,7 @@ const IndentDashboard: React.FC = () => {
                 <div className="grid grid-cols-2 gap-x-12 gap-y-4 pt-4">
                   <div className="border-b border-black/20 pb-1 flex justify-between items-end">
                     <span className="text-[11px] font-black uppercase tracking-tight">Plant Name :-</span>
-                    <span className="text-sm font-bold font-serif italic border-b border-black px-2 flex-1 text-center ml-2">{selectedIndent.department || 'N/A'}</span>
+                    <span className="text-sm font-bold font-serif italic border-b border-black px-2 flex-1 text-center ml-2">{selectedIndent.plant_name || selectedIndent.department || 'N/A'}</span>
                   </div>
                   <div className="border-b border-black/20 pb-1 flex justify-between items-end">
                     <span className="text-[11px] font-black uppercase tracking-tight">Order Date :-</span>
@@ -688,7 +698,7 @@ const IndentDashboard: React.FC = () => {
                 </button>
               </div>
 
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm grid grid-cols-1 md:grid-cols-6 gap-4">
                 <div className="space-y-1">
                   <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Indent Number</label>
                   <input 
@@ -705,6 +715,16 @@ const IndentDashboard: React.FC = () => {
                     className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border-none rounded-lg text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-indigo-500/30 transition-all"
                     value={newIndent.date}
                     onChange={e => setNewIndent({...newIndent, date: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Plant Name</label>
+                  <input 
+                    type="text"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border-none rounded-lg text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-indigo-500/30 transition-all"
+                    placeholder="Plant name..."
+                    value={newIndent.plant_name}
+                    onChange={e => setNewIndent({...newIndent, plant_name: e.target.value})}
                   />
                 </div>
                 <div className="space-y-1">

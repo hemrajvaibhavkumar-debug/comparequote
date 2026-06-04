@@ -96,12 +96,9 @@ function AppContent() {
                 </Link>
                 
                 <div className="hidden sm:flex space-x-1.5 ml-4 items-center">
-                  {(user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO') || user?.permissions.includes('VIEW_APPROVAL_HUB')) && (
-                    <Link to="/purchase-head" className={navLinkStyle('/purchase-head')}>
-                      <ShieldCheck className="w-4 h-4" /> Approval Hub
-                    </Link>
-                  )}
-
+                  <Link to="/indents" className={navLinkStyle('/indents')}>
+                    <ClipboardList className="w-4 h-4" /> Indents
+                  </Link>
                   <Link to="/" className={navLinkStyle('/')}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mr-0.5"><rect width="18" height="18" x="3" y="3" rx="2.5"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M12 3v18"/></svg> Compare
                   </Link>
@@ -117,10 +114,12 @@ function AppContent() {
                   <Link to="/saved-pos" className={navLinkStyle('/saved-pos')}>
                     <Database className="w-4 h-4" /> Saved POs
                   </Link>
-                  <Link to="/indents" className={navLinkStyle('/indents')}>
-                    <ClipboardList className="w-4 h-4" /> Indents
-                  </Link>
                   
+                  {(user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO') || user?.permissions.includes('VIEW_APPROVAL_HUB')) && (
+                    <Link to="/purchase-head" className={navLinkStyle('/purchase-head')}>
+                      <ShieldCheck className="w-4 h-4" /> Approval Hub
+                    </Link>
+                  )}
                   <Link to="/settings" className={navLinkStyle('/settings')}>
                     <SettingsIcon className="w-4 h-4" /> Settings
                   </Link>

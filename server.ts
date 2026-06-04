@@ -1050,19 +1050,44 @@ async function startServer() {
         try {
           console.log(`[n8n] Triggering Indent Webhook for ${indent.indent_no} to ${webhookUrl}...`);
           
-          const itemsArr = Array.isArray(indent.items) 
-            ? indent.items 
-            : (typeof indent.items === 'string' ? JSON.parse(indent.items) : []);
+          let itemsArr = [];
+          if (Array.isArray(indent.items)) {
+            itemsArr = indent.items;
+          } else if (typeof indent.items === 'string') {
+            try {
+              itemsArr = JSON.parse(indent.items);
+            } catch (e) {
+              console.error("[n8n] Failed to parse items string:", e);
+            }
+          }
             
+          // Construct a clean, explicit payload to ensure all data is serializable and present
           const payload = {
-            ...indent,
+            id: indent.id,
+            indent_no: indent.indent_no,
+            date: indent.date,
+            plant_name: indent.plant_name,
+            department: indent.department,
+            order_placed_by: indent.order_placed_by,
+            order_passed_by: indent.order_passed_by,
             items: itemsArr,
-            total_items: indent.total_items || itemsArr.length
+            total_items: indent.total_items || itemsArr.length,
+            status: indent.status,
+            created_by_name: indent.created_by_name,
+            approved_by: indent.approved_by,
+            approved_at: indent.approved_at,
+            rejection_remarks: indent.rejection_remarks,
+            internal_comments: indent.internal_comments
           };
+
+          console.log(`[n8n] Payload being sent:`, JSON.stringify(payload).substring(0, 200) + "...");
 
           const webhookRes = await fetch(webhookUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
             body: JSON.stringify(payload)
           });
           

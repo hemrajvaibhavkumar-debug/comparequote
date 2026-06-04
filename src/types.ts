@@ -125,6 +125,7 @@ export interface POItem {
 }
 
 export interface IndentItem {
+  sn?: number;
   itemName: string;
   qty: number | string;
   uom: string;
@@ -137,6 +138,7 @@ export interface Indent {
   id?: number;
   indent_no: string;
   date: string;
+  plant_name?: string;
   department?: string;
   items: IndentItem[];
   total_items: number;
