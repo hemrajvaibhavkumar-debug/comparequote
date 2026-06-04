@@ -124,13 +124,17 @@ export default function POApprovalView() {
         const signedPo = { ...po!, status: 'APPROVED', approved_at: new Date().toISOString(), approved_by: user?.username || 'Admin' };
         setPo(signedPo);
         
-        // Wait for render cycle to apply signatures in the hidden POPreview
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // IMPORTANT: We need to make sure isExporting is true before capturing
+        setIsExporting(true);
         
-        const generated = await generatePDFBase64();
+        // Wait for render cycle to apply signatures and for paged view to appear
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        const generated = await generatePDFBase64Internal();
         if (generated) {
           pdf_base64 = generated;
         }
+        setIsExporting(false);
       }
 
       const res = await fetch(`/api/po/${id}/status`, {
@@ -156,31 +160,21 @@ export default function POApprovalView() {
       showToast("Error updating status", "error");
     } finally {
       setSubmitting(false);
+      setIsExporting(false);
     }
   };
 
-  const generatePDFBase64 = async (): Promise<string | null> => {
-    if (!printRef.current || !po) {
-      console.error("[generatePDFBase64] Missing ref or PO data");
-      return null;
-    }
+  const generatePDFBase64Internal = async (): Promise<string | null> => {
     try {
-      // 1. Switch to Paged Mode for capture
-      setIsExporting(true);
-      // Wait for React to render the paged view
-      await new Promise(resolve => setTimeout(resolve, 800));
-
       const pagedContainer = document.querySelector('.pdf-paged-view');
       if (!pagedContainer) {
-        console.error("[generatePDFBase64] Paged container not found");
-        setIsExporting(false);
+        console.error("[generatePDFBase64Internal] Paged container not found");
         return null;
       }
 
       const pages = pagedContainer.querySelectorAll('.pdf-page');
       if (pages.length === 0) {
-        console.error("[generatePDFBase64] No pages found to capture");
-        setIsExporting(false);
+        console.error("[generatePDFBase64Internal] No pages found to capture");
         return null;
       }
 
@@ -202,13 +196,19 @@ export default function POApprovalView() {
       }
 
       const pdfOutput = pdf.output('datauristring');
-      setIsExporting(false);
       return pdfOutput.split(',')[1];
     } catch (e) {
-      console.error("[generatePDFBase64] Paged Error:", e);
-      setIsExporting(false);
+      console.error("[generatePDFBase64Internal] Paged Error:", e);
       return null;
     }
+  };
+
+  const generatePDFBase64 = async (): Promise<string | null> => {
+    setIsExporting(true);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    const result = await generatePDFBase64Internal();
+    setIsExporting(false);
+    return result;
   };
 
   const executeSendToVendor = async () => {

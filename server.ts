@@ -1034,12 +1034,49 @@ async function startServer() {
         updateData.rejection_remarks = remarks;
         updateData.approved_by = null;
         updateData.approved_at = null;
+      } else if (status === 'PENDING') {
+        updateData.approved_by = null;
+        updateData.approved_at = null;
+        updateData.rejection_remarks = null;
       }
       
       const indent = await prisma.indent.update({
         where: { id: Number(req.params.id) },
         data: updateData
       });
+
+      if (status === 'APPROVED') {
+        const webhookUrl = process.env.INDENT_WEBHOOK_URL || "https://hemrajgroup.app.n8n.cloud/webhook/ce4e0f9f-d2ae-45ed-a520-e8d624e043ee";
+        try {
+          console.log(`[n8n] Triggering Indent Webhook for ${indent.indent_no} to ${webhookUrl}...`);
+          
+          const itemsArr = Array.isArray(indent.items) 
+            ? indent.items 
+            : (typeof indent.items === 'string' ? JSON.parse(indent.items) : []);
+            
+          const payload = {
+            ...indent,
+            items: itemsArr,
+            total_items: indent.total_items || itemsArr.length
+          };
+
+          const webhookRes = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          
+          if (!webhookRes.ok) {
+            const errBody = await webhookRes.text();
+            console.error(`[n8n] Indent Webhook error (Status ${webhookRes.status}):`, errBody);
+          } else {
+            console.log(`[n8n] Indent Webhook sent successfully (Status ${webhookRes.status}).`);
+          }
+        } catch (webhookErr) {
+          console.error("[Backend] Failed to send Indent Webhook:", webhookErr);
+        }
+      }
+
       res.json(indent);
     } catch (error) {
       res.status(500).json({ error: "Failed to update indent status" });
