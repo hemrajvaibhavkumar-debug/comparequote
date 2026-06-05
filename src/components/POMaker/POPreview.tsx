@@ -345,7 +345,7 @@ const POPreview = React.memo<POPreviewProps>(({ po, setPo, settings, actions, is
                     </div>
                   </>
                 )}
-                {(!po.status || po.status === 'PENDING') && (
+                {po.status !== 'APPROVED' && (
                   <div className="h-16 w-48 mb-2 flex items-end text-[8px] font-normal italic text-gray-400" style={{ borderBottom: '1px dashed #d1d5db' }}>
                     Authorized Signatory Signature & Stamp
                   </div>

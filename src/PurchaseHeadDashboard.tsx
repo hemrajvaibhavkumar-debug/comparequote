@@ -28,7 +28,9 @@ export default function PurchaseHeadDashboard() {
   const [selectedPO, setSelectedPO] = useState<any | null>(null);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
 
-  const canApprove = user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO');
+  const canApproveL1 = user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO_L1');
+  const canApproveL2 = user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO');
+  const canEditApproved = user?.role === 'SUPERADMIN' || user?.permissions.includes('EDIT_APPROVED_PO');
 
   useEffect(() => {
     fetchPOs();
@@ -126,11 +128,12 @@ export default function PurchaseHeadDashboard() {
     setIsCommentsOpen(true);
   };
 
-  const handleQuickStatusUpdate = async (id: number, newStatus: 'APPROVED' | 'REJECTED', e: React.MouseEvent) => {
+  const handleQuickStatusUpdate = async (id: number, newStatus: 'PENDING_L2' | 'APPROVED' | 'REJECTED', e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!window.confirm(`Are you sure you want to ${newStatus.toLowerCase()} PO #${pos.find(p => p.id === id)?.po_no}?`)) return;
+    const label = newStatus === 'PENDING_L2' ? 'approve L1' : newStatus.toLowerCase();
+    if (!window.confirm(`Are you sure you want to ${label} PO #${pos.find(p => p.id === id)?.po_no}?`)) return;
 
     try {
       setActioningId(id);
@@ -146,7 +149,8 @@ export default function PurchaseHeadDashboard() {
       if (res.ok) {
         setPos(prev => prev.map(p => p.id === id ? { ...p, status: newStatus } : p));
       } else {
-        alert("Failed to update status");
+        const err = await res.json();
+        alert(err.error || "Failed to update status");
       }
     } catch (e) {
       console.error(e);
@@ -163,7 +167,7 @@ export default function PurchaseHeadDashboard() {
     
     // 2. Status
     const poStatus = po.status || 'PENDING';
-    const matchesStatus = statusFilter === 'ALL' || poStatus === statusFilter;
+    const matchesStatus = statusFilter === 'ALL' || poStatus === statusFilter || (statusFilter === 'PENDING' && poStatus === 'PENDING_L2');
 
     // 3. Company (Version)
     const matchesCompany = companyFilter === 'ALL' || po.version === companyFilter;
@@ -221,15 +225,144 @@ export default function PurchaseHeadDashboard() {
     switch (s) {
       case 'APPROVED':
         return <span className="px-2 py-1 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Approved</span>;
+      case 'PENDING_L2':
+        return <span className="px-2 py-1 bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1"><Clock className="w-3 h-3" /> Pending Final</span>;
       case 'REJECTED':
         return <span className="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-900 dark:border-slate-100 text-slate-900 dark:text-slate-100 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1"><XCircle className="w-3 h-3" /> Rejected</span>;
       default:
-        return <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1 border border-slate-200 dark:border-slate-700"><Clock className="w-3 h-3" /> Pending</span>;
+        return <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1 border border-slate-200 dark:border-slate-700"><Clock className="w-3 h-3" /> Pending L1</span>;
     }
   };
 
+  const renderPOCard = (po: any) => {
+    const poStatus = po.status || 'PENDING';
+    const isActioning = actioningId === po.id;
+
+    return (
+      <div 
+        key={po.id} 
+        className="bg-white dark:bg-slate-900 rounded-2xl shadow-xs border border-slate-100 dark:border-slate-800 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300 group overflow-hidden relative flex flex-col"
+      >
+        <Link to={`/approve-po/${po.id}`} className="p-6 flex-1 cursor-pointer">
+            <div className="flex justify-between items-start mb-4">
+            <div className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl group-hover:bg-slate-900 group-hover:text-white dark:group-hover:bg-slate-100 dark:group-hover:text-slate-900 transition-all shadow-xs duration-300">
+              <FileText className="w-5 h-5" />
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              {getStatusBadge(poStatus)}
+              <button 
+                onClick={(e) => openComments(e, po)}
+                className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-all cursor-pointer relative"
+                title="Internal Comments"
+              >
+                <StickyNote className="w-4 h-4" />
+                {po.internal_comments && po.internal_comments.length > 0 && (
+                  <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-indigo-600 dark:bg-indigo-400 rounded-full border border-white dark:border-slate-900"></span>
+                )}
+              </button>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2 mb-1">
+            <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded border ${
+              po.version === 'hemraj_rice' ? 'bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800' :
+              po.version === 'hemraj_ind' ? 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800' :
+              'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+            }`}>
+              {po.version === 'hemraj_rice' ? 'Rice Mill' : po.version === 'hemraj_ind' ? 'Industries' : 'Radhashyam'}
+            </span>
+            <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded border ${
+              (po.terms?.po_type || 'Consumables') === 'Capital'
+                ? 'bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800'
+                : 'bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-800'
+            }`}>
+              {po.terms?.po_type || 'Consumables'}
+            </span>
+          </div>
+
+          <h3 className="text-lg font-extrabold text-slate-850 dark:text-slate-100 group-hover:text-slate-900 dark:group-hover:text-white transition-colors uppercase tracking-tight">
+            PO #{po.po_no}
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-2 line-clamp-1 font-semibold uppercase tracking-tight">{po.vendor_name}</p>
+          {po.created_by_name && (
+            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase mb-4 flex items-center gap-1">
+              <User className="w-3 h-3" /> By: {po.created_by_name}
+            </p>
+          )}
+          
+          <div className="space-y-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 font-semibold uppercase">
+              <Calendar className="w-4 h-4 text-slate-350 dark:text-slate-600" />
+              {(() => {
+                const d = new Date(po.date);
+                if (isNaN(d.getTime())) return po.date;
+                const day = String(d.getDate()).padStart(2, '0');
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const year = d.getFullYear();
+                return `${day}/${month}/${year}`;
+              })()}
+            </div>
+            <div className="flex items-center gap-2 text-sm text-slate-850 dark:text-slate-100 font-black">
+              <span className="text-slate-400 dark:text-slate-500 font-semibold text-xs uppercase tracking-wider">Amount:</span>
+              ₹{po.total_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+            </div>
+          </div>
+        </Link>
+        
+        <div className="px-6 py-3.5 bg-slate-50/50 dark:bg-slate-950/50 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
+          {((poStatus === 'PENDING' && canApproveL1) || (poStatus === 'PENDING_L2' && canApproveL2)) ? (
+            <div className="flex items-center gap-3.5 w-full">
+              <button 
+                onClick={(e) => handleQuickStatusUpdate(po.id, 'REJECTED', e)}
+                disabled={isActioning}
+                className="flex-1 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+              >
+                <XCircle className="w-3.5 h-3.5" /> Reject
+              </button>
+              <button 
+                onClick={(e) => handleQuickStatusUpdate(po.id, poStatus === 'PENDING' ? 'PENDING_L2' : 'APPROVED', e)}
+                disabled={isActioning}
+                className="flex-1 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black dark:hover:bg-white disabled:opacity-50 transition-all shadow-md shadow-slate-200 dark:shadow-none flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <CheckCircle className="w-3.5 h-3.5" /> {poStatus === 'PENDING' ? 'Approve L1' : 'Approve'}
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center w-full gap-4">
+              <Link 
+                to={`/approve-po/${po.id}`}
+                className="text-xs font-black text-slate-900 dark:text-slate-100 hover:underline flex items-center justify-center gap-2 uppercase tracking-widest"
+              >
+                {poStatus === 'APPROVED' ? 'Final PDF' : poStatus === 'REJECTED' ? 'Rejected' : 'Review'}
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+              {(poStatus === 'APPROVED' && canEditApproved) && (
+                 <Link 
+                  to={`/po-maker?edit=${po.id}`}
+                  className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 uppercase tracking-widest border border-indigo-200 dark:border-indigo-800 px-3 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all"
+                >
+                  Edit Approved
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
+
+        {isActioning && (
+          <div className="absolute inset-0 bg-white/60 dark:bg-slate-900/60 backdrop-blur-[1px] flex items-center justify-center z-10">
+            <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-slate-900 dark:border-slate-100"></div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const l1PendingPos = filteredPOs.filter(p => (p.status || 'PENDING') === 'PENDING');
+  const l2PendingPos = filteredPOs.filter(p => p.status === 'PENDING_L2');
+  const actionedPos = filteredPOs.filter(p => p.status === 'APPROVED' || p.status === 'REJECTED');
+
   const totalCount = filteredPOs.length;
-  const pendingCount = filteredPOs.filter(p => (p.status || 'PENDING') === 'PENDING').length;
+  const pendingCount = l1PendingPos.length + l2PendingPos.length;
   const approvedCount = filteredPOs.filter(p => p.status === 'APPROVED').length;
   const combinedValue = filteredPOs.reduce((sum, p) => sum + (Number(p.total_amount) || 0), 0);
 
@@ -436,127 +569,55 @@ export default function PurchaseHeadDashboard() {
             <p className="text-slate-400 dark:text-slate-500 text-sm font-medium">There are currently no POs matching your current criteria.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPOs.map((po) => {
-              const poStatus = po.status || 'PENDING';
-              const isActioning = actioningId === po.id;
-
-              return (
-                <div 
-                  key={po.id} 
-                  className="bg-white dark:bg-slate-900 rounded-2xl shadow-xs border border-slate-100 dark:border-slate-800 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300 group overflow-hidden relative flex flex-col"
-                >
-                  <Link to={`/approve-po/${po.id}`} className="p-6 flex-1 cursor-pointer">
-                      <div className="flex justify-between items-start mb-4">
-                      <div className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl group-hover:bg-slate-900 group-hover:text-white dark:group-hover:bg-slate-100 dark:group-hover:text-slate-900 transition-all shadow-xs duration-300">
-                        <FileText className="w-5 h-5" />
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
-                        {getStatusBadge(poStatus)}
-                        <button 
-                          onClick={(e) => openComments(e, po)}
-                          className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-all cursor-pointer relative"
-                          title="Internal Comments"
-                        >
-                          <StickyNote className="w-4 h-4" />
-                          {po.internal_comments && po.internal_comments.length > 0 && (
-                            <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-indigo-600 dark:bg-indigo-400 rounded-full border border-white dark:border-slate-900"></span>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded border ${
-                        po.version === 'hemraj_rice' ? 'bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800' :
-                        po.version === 'hemraj_ind' ? 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800' :
-                        'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
-                      }`}>
-                        {po.version === 'hemraj_rice' ? 'Rice Mill' : po.version === 'hemraj_ind' ? 'Industries' : 'Radhashyam'}
-                      </span>
-                      <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded border ${
-                        (po.terms?.po_type || 'Consumables') === 'Capital'
-                          ? 'bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800'
-                          : 'bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-800'
-                      }`}>
-                        {po.terms?.po_type || 'Consumables'}
-                      </span>
-                    </div>
-
-                    <h3 className="text-lg font-extrabold text-slate-850 dark:text-slate-100 group-hover:text-slate-900 dark:group-hover:text-white transition-colors uppercase tracking-tight">
-                      PO #{po.po_no}
-                    </h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-2 line-clamp-1 font-semibold uppercase tracking-tight">{po.vendor_name}</p>
-                    {po.created_by_name && (
-                      <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase mb-4 flex items-center gap-1">
-                        <User className="w-3 h-3" /> By: {po.created_by_name}
-                      </p>
-                    )}
-                    
-                    <div className="space-y-2 pt-4 border-t border-slate-100 dark:border-slate-800">
-                      <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 font-semibold uppercase">
-                        <Calendar className="w-4 h-4 text-slate-350 dark:text-slate-600" />
-                        {(() => {
-                          const d = new Date(po.date);
-                          if (isNaN(d.getTime())) return po.date;
-                          const day = String(d.getDate()).padStart(2, '0');
-                          const month = String(d.getMonth() + 1).padStart(2, '0');
-                          const year = d.getFullYear();
-                          return `${day}/${month}/${year}`;
-                        })()}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-slate-850 dark:text-slate-100 font-black">
-                        <span className="text-slate-400 dark:text-slate-500 font-semibold text-xs uppercase tracking-wider">Amount:</span>
-                        ₹{po.total_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                      </div>
-                      {poStatus === 'REJECTED' && po.rejection_remarks && (
-                        <div className="mt-2 p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg">
-                          <p className="text-[9px] font-bold text-slate-900 dark:text-slate-100 uppercase tracking-tighter mb-0.5">Rejection Reason:</p>
-                          <p className="text-[10px] text-slate-600 dark:text-slate-400 font-medium leading-tight italic line-clamp-2">
-                            "{po.rejection_remarks}"
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </Link>
-                  
-                  <div className="px-6 py-3.5 bg-slate-50/50 dark:bg-slate-950/50 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
-                    {poStatus === 'PENDING' && canApprove ? (
-                      <div className="flex items-center gap-3.5 w-full">
-                        <button 
-                          onClick={(e) => handleQuickStatusUpdate(po.id, 'REJECTED', e)}
-                          disabled={isActioning}
-                          className="flex-1 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
-                        >
-                          <XCircle className="w-3.5 h-3.5" /> Reject
-                        </button>
-                        <button 
-                          onClick={(e) => handleQuickStatusUpdate(po.id, 'APPROVED', e)}
-                          disabled={isActioning}
-                          className="flex-1 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black dark:hover:bg-white disabled:opacity-50 transition-all shadow-md shadow-slate-200 dark:shadow-none flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
-                        >
-                          <CheckCircle className="w-3.5 h-3.5" /> Approve
-                        </button>
-                      </div>
-                    ) : (
-                      <Link 
-                        to={`/approve-po/${po.id}`}
-                        className="w-full text-center text-xs font-black text-slate-900 dark:text-slate-100 hover:underline flex items-center justify-center gap-2 uppercase tracking-widest"
-                      >
-                        {poStatus === 'APPROVED' ? 'View Final Document' : poStatus === 'REJECTED' ? 'View Rejection Details' : 'Review Details'}
-                        <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                      </Link>
-                    )}
-                  </div>
-
-                  {isActioning && (
-                    <div className="absolute inset-0 bg-white/60 dark:bg-slate-900/60 backdrop-blur-[1px] flex items-center justify-center z-10">
-                      <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-slate-900 dark:border-slate-100"></div>
-                    </div>
-                  )}
+          <div className="space-y-12">
+            {/* L1 Approvals */}
+            {(canApproveL1 || user?.role === 'SUPERADMIN') && (
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <Clock className="w-5 h-5 text-indigo-600" />
+                  <h2 className="text-lg font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight font-sans">Level 1 Approvals (Initial Review)</h2>
                 </div>
-              );
-            })}
+                {l1PendingPos.length === 0 ? (
+                  <p className="text-slate-400 dark:text-slate-600 text-xs font-bold uppercase tracking-widest italic">No pending Level 1 reviews.</p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {l1PendingPos.map(po => renderPOCard(po))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* L2 Approvals */}
+            {(canApproveL2 || user?.role === 'SUPERADMIN') && (
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <ShieldCheck className="w-5 h-5 text-amber-600" />
+                  <h2 className="text-lg font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight font-sans">Final Authorization (Purchase Head)</h2>
+                </div>
+                {l2PendingPos.length === 0 ? (
+                  <p className="text-slate-400 dark:text-slate-600 text-xs font-bold uppercase tracking-widest italic">No pending final authorizations.</p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {l2PendingPos.map(po => renderPOCard(po))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Actioned / History */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <CheckCircle className="w-5 h-5 text-slate-600" />
+                <h2 className="text-lg font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight font-sans">Actioned Records</h2>
+              </div>
+              {actionedPos.length === 0 ? (
+                <p className="text-slate-400 dark:text-slate-600 text-xs font-bold uppercase tracking-widest italic">No actioned records found.</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {actionedPos.map(po => renderPOCard(po))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -572,4 +633,4 @@ export default function PurchaseHeadDashboard() {
       />
     </div>
   );
-}
+    }

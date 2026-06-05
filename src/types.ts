@@ -192,8 +192,10 @@ export interface PurchaseOrder {
   };
   total_amount: number;
   created_by_name?: string;
-  status?: 'PENDING' | 'APPROVED' | 'REJECTED' | string;
+  status?: 'PENDING' | 'PENDING_L2' | 'APPROVED' | 'REJECTED' | string;
   rejection_remarks?: string;
+  l1_approved_by?: string;
+  l1_approved_at?: string;
   approved_by?: string;
   approved_at?: string;
   pdf_base64?: string;

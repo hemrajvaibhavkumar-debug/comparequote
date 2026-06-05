@@ -51,7 +51,7 @@ const IndentDashboard: React.FC = () => {
   const { token, user } = useAuth();
   const { showToast } = useToast();
   
-  const canApprove = user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO');
+  const canApprove = user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_INDENT');
 
   useEffect(() => {
     fetchIndents();

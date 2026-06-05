@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PurchaseOrder, TermsTemplate, POItem, VendorMaster } from '../../types';
 import { Plus, Trash2, ClipboardPaste, Loader2, RotateCcw } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 interface POFormProps {
   po: PurchaseOrder;
@@ -21,6 +22,10 @@ const CONTACT_OPTIONS = [
 ];
 
 const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparisons, onGeneratePONo }) => {
+  const { user } = useAuth();
+  const canEditApproved = user?.role === 'SUPERADMIN' || user?.permissions.includes('EDIT_APPROVED_PO');
+  const isReadOnly = po.status === 'APPROVED' && !canEditApproved;
+
   const [bulkText, setBulkText] = useState('');
   const [isExtracting, setIsExtracting] = useState(false);
   const [showBulkPaste, setShowBulkPaste] = useState(false);
@@ -51,6 +56,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
   };
 
   const updateVendorField = (field: keyof PurchaseOrder['vendor_details'], value: string) => {
+    if (isReadOnly) return;
     setPo(prev => ({
       ...prev,
       vendor_details: { ...prev.vendor_details, [field]: value }
@@ -58,6 +64,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
   };
 
   const handleVendorSelect = (vendorName: string) => {
+    if (isReadOnly) return;
     if (vendorName === 'custom') {
       setPo(prev => ({
         ...prev,
@@ -86,6 +93,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
   };
 
   const addItem = () => {
+    if (isReadOnly) return;
     setPo(prev => {
       const newItems = [...prev.items];
       const nextSn = newItems.length + 1;
@@ -105,6 +113,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
   };
 
   const removeItem = (index: number) => {
+    if (isReadOnly) return;
     setPo(prev => {
       const newItems = prev.items.filter((_, i) => i !== index);
       // Re-calculate SNs
@@ -115,6 +124,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
   };
 
   const updateItem = (index: number, field: keyof POItem, value: any) => {
+    if (isReadOnly) return;
     setPo(prev => {
       const newItems = [...prev.items];
       const item = { ...newItems[index], [field]: value };
@@ -147,6 +157,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
   };
 
   const updateFreightAmount = (val: number) => {
+    if (isReadOnly) return;
     setPo(prev => ({
       ...prev,
       terms: { ...prev.terms, freight_amount: val }
@@ -154,6 +165,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
   };
 
   const updateFreightTax = (val: string) => {
+    if (isReadOnly) return;
     setPo(prev => ({
       ...prev,
       terms: { ...prev.terms, freight_tax: val }
@@ -161,6 +173,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
   };
 
   const applyTemplate = (id: string) => {
+    if (isReadOnly) return;
     const template = templates.find(t => String(t.id) === id);
     if (!template) return;
     setPo(prev => ({
@@ -181,7 +194,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
   };
 
   const handleBulkExtract = async () => {
-    if (!bulkText.trim()) return;
+    if (!bulkText.trim() || isReadOnly) return;
     setIsExtracting(true);
     try {
       const res = await apiFetch('/api/ai/extract-po-items', {
@@ -232,7 +245,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
   };
 
   const processComparisonImport = (data: any, vendorName: string) => {
-    if (!data?.items) return;
+    if (!data?.items || isReadOnly) return;
 
     const compItems = data.items;
     const newPOItems: POItem[] = compItems.map((ci: any, idx: number) => {
@@ -283,7 +296,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
   };
 
   const loadFromComparison = async (comp: any) => {
-    if (!comp?.id) return;
+    if (!comp?.id || isReadOnly) return;
     try {
       const res = await apiFetch(`/api/comparisons/${comp.id}`);
       const data = await res.json();
@@ -316,7 +329,8 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Auto-Generation</span>
             <button 
               onClick={onGeneratePONo}
-              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 rounded-lg transition-colors cursor-pointer"
+              disabled={isReadOnly}
+              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
               title="Regenerate PO Number"
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -328,25 +342,27 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Purchase Order No.</label>
             <input 
               type="text"
-              className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
+              className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 disabled:opacity-50"
               value={po.po_no || ''}
               onChange={e => setPo({...po, po_no: e.target.value})}
               placeholder="e.g. PO/24-25/001"
+              disabled={isReadOnly}
             />
           </div>
           <div className="space-y-1.5">
             <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">PO Date</label>
             <input 
               type="date"
-              className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
+              className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 disabled:opacity-50"
               value={po.date || ''}
               onChange={e => setPo({...po, date: e.target.value})}
+              disabled={isReadOnly}
             />
           </div>
           <div className="space-y-1.5">
             <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">PO Classification</label>
             <select
-              className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 cursor-pointer"
+              className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 cursor-pointer disabled:opacity-50"
               value={po.terms?.po_type || 'Consumables'}
               onChange={e => setPo({
                 ...po,
@@ -355,6 +371,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                   po_type: e.target.value as 'Capital' | 'Consumables'
                 }
               })}
+              disabled={isReadOnly}
             >
               <option value="Consumables">Consumables</option>
               <option value="Capital">Capital</option>
@@ -368,9 +385,10 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             <div className="space-y-1.5">
               <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Quotation Ref Type</label>
               <select
-                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 cursor-pointer"
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 cursor-pointer disabled:opacity-50"
                 value={po.quote_ref_type || 'MAIL'}
                 onChange={e => setPo({...po, quote_ref_type: e.target.value})}
+                disabled={isReadOnly}
               >
                 <option value="MAIL">MAIL</option>
                 <option value="WHATSAPP">WHATSAPP</option>
@@ -382,12 +400,12 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             <div className="space-y-1.5">
               <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Quotation Ref/Doc No.</label>
               <select 
-                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 cursor-pointer"
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 cursor-pointer disabled:opacity-50"
                 value={po.quote_doc_no || ''}
                 onChange={e => {
                   const val = e.target.value;
                   setPo({...po, quote_doc_no: val});
-                  
+
                   // Optional: Auto-load date if found
                   const comp = comparisons.find(c => c.doc_no === val);
                   if (comp && comp.created_at) {
@@ -395,6 +413,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                     setPo(prev => ({ ...prev, quote_doc_no: val, quote_date: date }));
                   }
                 }}
+                disabled={isReadOnly}
               >
                 <option value="">-- Select Doc No --</option>
                 {comparisons.map(c => (
@@ -406,9 +425,10 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Quotation Date</label>
               <input 
                 type="date"
-                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 disabled:opacity-50"
                 value={po.quote_date || ''}
                 onChange={e => setPo({...po, quote_date: e.target.value})}
+                disabled={isReadOnly}
               />
             </div>
           </div>
@@ -421,22 +441,24 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
           <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 font-sans tracking-wide uppercase">Vendor Details</h2>
           <div className="flex flex-wrap gap-2">
              <select 
-               className="flex-1 sm:flex-none text-xs bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 outline-none text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer"
+               className="flex-1 sm:flex-none text-xs bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 outline-none text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer disabled:opacity-50"
                onChange={e => handleVendorSelect(e.target.value)}
                defaultValue=""
+               disabled={isReadOnly}
              >
                <option value="" disabled>Select from Master</option>
                <option value="custom">-- CUSTOM / NEW --</option>
                {vendors.map(v => <option key={v.name} value={v.name}>{v.name}</option>)}
              </select>
-             
+
              <select 
-               className="flex-1 sm:flex-none text-xs bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/30 rounded-xl px-3 py-2 outline-none text-indigo-700 dark:text-indigo-400 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer"
+               className="flex-1 sm:flex-none text-xs bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/30 rounded-xl px-3 py-2 outline-none text-indigo-700 dark:text-indigo-400 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer disabled:opacity-50"
                onChange={e => {
                  const comp = comparisons.find(c => String(c.id) === e.target.value);
                  if (comp) loadFromComparison(comp);
                }}
                defaultValue=""
+               disabled={isReadOnly}
              >
                <option value="" disabled>Import from Comparison</option>
                {comparisons.map(c => <option key={c.id} value={c.id}>{c.doc_no} ({new Date(c.created_at).toLocaleDateString()})</option>)}
@@ -451,12 +473,12 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               <input 
                 type="text"
                 list="vendor-list"
-                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-black focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 uppercase"
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-black focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 uppercase disabled:opacity-50"
                 value={po.vendor_name || ''}
                 onChange={e => {
                   const val = e.target.value;
                   setPo({...po, vendor_name: val});
-                  
+
                   // Auto-populate if it matches a master vendor
                   const matchedVendor = vendors.find(v => v.name.toLowerCase() === val.toLowerCase());
                   if (matchedVendor) {
@@ -464,6 +486,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                   }
                 }}
                 placeholder="Full Company Name"
+                disabled={isReadOnly}
               />
               <datalist id="vendor-list">
                 {vendors.map(v => <option key={v.name} value={v.name} />)}
@@ -472,10 +495,11 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             <div>
               <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">Address</label>
               <textarea 
-                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 h-24 resize-none"
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 h-24 resize-none disabled:opacity-50"
                 value={po.vendor_details.address || ''}
                 onChange={e => updateVendorField('address', e.target.value)}
                 placeholder="Street, City, PIN"
+                disabled={isReadOnly}
               />
             </div>
           </div>
@@ -484,50 +508,55 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">GSTIN</label>
               <input 
                 type="text"
-                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 uppercase"
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 uppercase disabled:opacity-50"
                 value={po.vendor_details.gstin || ''}
                 onChange={e => updateVendorField('gstin', e.target.value)}
                 placeholder="15-digit GSTIN"
+                disabled={isReadOnly}
               />
             </div>
             <div>
               <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">State</label>
               <input 
                 type="text"
-                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 uppercase"
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 uppercase disabled:opacity-50"
                 value={po.vendor_details.state || ''}
                 onChange={e => updateVendorField('state', e.target.value)}
                 placeholder="State Name"
+                disabled={isReadOnly}
               />
             </div>
             <div>
               <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">Contact No</label>
               <input 
                 type="text"
-                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 disabled:opacity-50"
                 value={po.vendor_details.ph || ''}
                 onChange={e => updateVendorField('ph', e.target.value)}
                 placeholder="Mobile / Phone"
+                disabled={isReadOnly}
               />
             </div>
             <div>
               <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">Email</label>
               <input 
                 type="email"
-                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 disabled:opacity-50"
                 value={po.vendor_details.mail || ''}
                 onChange={e => updateVendorField('mail', e.target.value)}
                 placeholder="vendor@mail.com"
+                disabled={isReadOnly}
               />
             </div>
             <div className="col-span-2">
               <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">CC Emails (Optional)</label>
               <input 
                 type="text"
-                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 disabled:opacity-50"
                 value={po.vendor_details.cc || ''}
                 onChange={e => updateVendorField('cc', e.target.value)}
                 placeholder="email1@test.com, email2@test.com"
+                disabled={isReadOnly}
               />
             </div>
           </div>
@@ -541,13 +570,15 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
           <div className="flex gap-2">
             <button 
                onClick={() => setShowBulkPaste(!showBulkPaste)}
-               className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-black dark:hover:bg-white transition shadow-md cursor-pointer"
+               disabled={isReadOnly}
+               className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-black dark:hover:bg-white transition shadow-md cursor-pointer disabled:opacity-50"
             >
               <ClipboardPaste className="w-3.5 h-3.5" /> AI Bulk Paste
             </button>
             <button 
                onClick={addItem}
-               className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-indigo-700 transition shadow-md cursor-pointer"
+               disabled={isReadOnly}
+               className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-indigo-700 transition shadow-md cursor-pointer disabled:opacity-50"
             >
               <Plus className="w-3.5 h-3.5" /> Add New Item
             </button>
@@ -561,15 +592,16 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                 <button onClick={() => setShowBulkPaste(false)} className="text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"><Plus className="w-4 h-4 rotate-45" /></button>
              </div>
              <textarea 
-               className="w-full h-32 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-slate-800 dark:text-slate-100 font-medium"
+               className="w-full h-32 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-slate-800 dark:text-slate-100 font-medium disabled:opacity-50"
                placeholder="Example: 10 nos of 2.5sqmm copper cable, 5 pcs 16A MCB Legrand..."
                value={bulkText}
                onChange={e => setBulkText(e.target.value)}
+               disabled={isReadOnly}
              />
              <div className="flex justify-end mt-3">
                 <button 
                   onClick={handleBulkExtract}
-                  disabled={isExtracting || !bulkText.trim()}
+                  disabled={isExtracting || !bulkText.trim() || isReadOnly}
                   className="px-4 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-black dark:hover:bg-white disabled:opacity-50 transition shadow-lg cursor-pointer"
                 >
                   {isExtracting ? (
@@ -587,7 +619,8 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             <div key={index} className="p-5 bg-slate-50/50 dark:bg-slate-950/50 hover:bg-white dark:hover:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 relative group hover:shadow-md transition-all duration-200">
               <button 
                 onClick={() => removeItem(index)}
-                className="absolute -top-2.5 -right-2.5 bg-rose-600 text-white p-1.5 rounded-full opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition shadow-lg border border-white dark:border-slate-800 hover:bg-rose-700 cursor-pointer"
+                disabled={isReadOnly}
+                className="absolute -top-2.5 -right-2.5 bg-rose-600 text-white p-1.5 rounded-full opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition shadow-lg border border-white dark:border-slate-800 hover:bg-rose-700 cursor-pointer disabled:opacity-50"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -596,35 +629,39 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                   <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Item Name / Description</label>
                   <input 
                     type="text"
-                    className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
+                    className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 disabled:opacity-50"
                     value={item.itemName || ''}
                     onChange={e => updateItem(index, 'itemName', e.target.value)}
+                    disabled={isReadOnly}
                   />
                 </div>
                 <div className="col-span-6 md:col-span-2">
                   <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Make</label>
                   <input 
                     type="text"
-                    className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
+                    className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 disabled:opacity-50"
                     value={item.make || ''}
                     onChange={e => updateItem(index, 'make', e.target.value)}
+                    disabled={isReadOnly}
                   />
                 </div>
                 <div className="col-span-3 md:col-span-2">
                   <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Qty</label>
                   <input 
                     type="number"
-                    className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
+                    className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 disabled:opacity-50"
                     value={item.qty || 0}
                     onChange={e => updateItem(index, 'qty', e.target.value)}
+                    disabled={isReadOnly}
                   />
                 </div>
                 <div className="col-span-3 md:col-span-2">
                   <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">UOM</label>
                   <select 
-                    className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1.5 text-xs bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                    className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1.5 text-xs bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer disabled:opacity-50"
                     value={item.uom || 'NOS'}
                     onChange={e => updateItem(index, 'uom', e.target.value)}
+                    disabled={isReadOnly}
                   >
                     <option value="FT">FT</option>
                     <option value="KG">KG</option>
@@ -638,9 +675,10 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                   <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Rate</label>
                   <input 
                     type="number"
-                    className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
+                    className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 disabled:opacity-50"
                     value={item.rate || 0}
                     onChange={e => updateItem(index, 'rate', e.target.value)}
+                    disabled={isReadOnly}
                   />
                 </div>
                 <div className="col-span-3 md:col-span-3">
@@ -648,17 +686,19 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                   <input 
                     type="number"
                     step="0.001"
-                    className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
+                    className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 disabled:opacity-50"
                     value={item.discount || 0}
                     onChange={e => updateItem(index, 'discount', e.target.value)}
+                    disabled={isReadOnly}
                   />
                 </div>
                 <div className="col-span-3 md:col-span-3">
                   <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Tax</label>
                   <select 
-                    className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1.5 text-xs bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                    className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1.5 text-xs bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer disabled:opacity-50"
                     value={item.tax || 'GST @18%'}
                     onChange={e => updateItem(index, 'tax', e.target.value)}
+                    disabled={isReadOnly}
                   >
                     <option value="GST @18%">18%</option>
                     <option value="GST @5%">5%</option>
@@ -695,9 +735,10 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
           <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 font-sans tracking-wide uppercase">Commercial Terms</h2>
           <div className="relative">
              <select 
-               className="text-xs bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 outline-none text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer"
+               className="text-xs bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 outline-none text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer disabled:opacity-50"
                onChange={e => applyTemplate(e.target.value)}
                defaultValue=""
+               disabled={isReadOnly}
              >
                <option value="" disabled>Apply Template</option>
                {Array.isArray(templates) && templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -712,16 +753,18 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                 <button
                   type="button"
                   onClick={() => setShowIgst(true)}
-                  className="flex items-center gap-1 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors uppercase tracking-wider cursor-pointer"
+                  disabled={isReadOnly}
+                  className="flex items-center gap-1 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors uppercase tracking-wider cursor-pointer disabled:opacity-50"
                 >
                   <Plus className="w-3 h-3" /> Add IGST
                 </button>
               )}
             </div>
             <select 
-              className="mt-1 w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+              className="mt-1 w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer disabled:opacity-50"
               value={po.terms.tax || ''}
               onChange={e => setPo({...po, terms: { ...po.terms, tax: e.target.value }})}
+              disabled={isReadOnly}
             >
               <option value="">Select Tax</option>
               <option value="GST @18%">18%</option>
@@ -746,13 +789,14 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                       }
                     }));
                   }}
-                  className="flex items-center gap-1 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-colors uppercase tracking-wider cursor-pointer"
+                  disabled={isReadOnly}
+                  className="flex items-center gap-1 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-colors uppercase tracking-wider cursor-pointer disabled:opacity-50"
                 >
                   <Trash2 className="w-3 h-3" /> Remove
                 </button>
               </div>
               <select
-                className="mt-1 w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                className="mt-1 w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer disabled:opacity-50"
                 value={po.terms.igst || ''}
                 onChange={e => setPo({
                   ...po,
@@ -761,6 +805,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                     igst: e.target.value
                   }
                 })}
+                disabled={isReadOnly}
               >
                 <option value="">Select IGST</option>
                 <option value="5%">5%</option>
@@ -773,13 +818,14 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Packing</label>
             <div className="flex gap-2">
               <select 
-                className="mt-1 w-1/3 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-2 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                className="mt-1 w-1/3 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-2 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer disabled:opacity-50"
                 onChange={e => {
                   if (e.target.value !== 'CUSTOM') {
                     setPo({...po, terms: { ...po.terms, packing: e.target.value }});
                   }
                 }}
                 defaultValue=""
+                disabled={isReadOnly}
               >
                 <option value="" disabled>Select</option>
                 <option value="Nil">Nil</option>
@@ -788,10 +834,11 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               </select>
               <input 
                 type="text"
-                className="mt-1 flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                className="mt-1 flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50"
                 value={po.terms.packing || ''}
                 onChange={e => setPo({...po, terms: { ...po.terms, packing: e.target.value }})}
                 placeholder="e.g. Nil, Extra"
+                disabled={isReadOnly}
               />
             </div>
           </div>
@@ -799,13 +846,14 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Forwarding</label>
             <div className="flex gap-2">
               <select 
-                className="mt-1 w-1/3 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-2 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                className="mt-1 w-1/3 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-2 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer disabled:opacity-50"
                 onChange={e => {
                   if (e.target.value !== 'CUSTOM') {
                     setPo({...po, terms: { ...po.terms, notes: e.target.value || '' }});
                   }
                 }}
                 defaultValue=""
+                disabled={isReadOnly}
               >
                 <option value="" disabled>Select</option>
                 <option value="Nil">Nil</option>
@@ -815,10 +863,11 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               </select>
               <input 
                 type="text"
-                className="mt-1 flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                className="mt-1 flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50"
                 value={po.terms.notes || ''}
                 onChange={e => setPo({...po, terms: { ...po.terms, notes: e.target.value }})}
                 placeholder="e.g. Free Upto Kolkata"
+                disabled={isReadOnly}
               />
             </div>
           </div>
@@ -830,7 +879,8 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                   ...prev, 
                   terms: { ...prev.terms, payment_milestones: [...(prev.terms.payment_milestones || []), { percentage: 0, description: '' }] } 
                 }))}
-                className="text-[10px] font-semibold bg-indigo-600 text-white px-2.5 py-1.5 rounded-xl hover:bg-indigo-700 transition flex items-center gap-1 hover:-translate-y-0.5 shadow-sm transform cursor-pointer"
+                disabled={isReadOnly}
+                className="text-[10px] font-semibold bg-indigo-600 text-white px-2.5 py-1.5 rounded-xl hover:bg-indigo-700 transition flex items-center gap-1 hover:-translate-y-0.5 shadow-sm transform cursor-pointer disabled:opacity-50"
               >
                 <Plus className="w-3 h-3" /> ADD MILESTONE
               </button>
@@ -855,7 +905,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                     <div className="relative w-24 shrink-0">
                       <input 
                         type="number"
-                        className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950"
+                        className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 disabled:opacity-50"
                         value={m.percentage || ''}
                         onChange={e => {
                           const newMilestones = [...(po.terms.payment_milestones || [])];
@@ -863,11 +913,12 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                           setPo({ ...po, terms: { ...po.terms, payment_milestones: newMilestones } });
                         }}
                         placeholder="0"
+                        disabled={isReadOnly}
                       />
                       <span className="absolute right-3 top-2 text-xs font-bold text-slate-400">%</span>
                     </div>
                     <select 
-                      className="w-1/3 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1.5 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                      className="w-1/3 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-1.5 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer disabled:opacity-50"
                       value={isCustom ? "CUSTOM" : (m.description || "")}
                       onChange={e => {
                         const newMilestones = [...(po.terms.payment_milestones || [])];
@@ -876,6 +927,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                           setPo({ ...po, terms: { ...po.terms, payment_milestones: newMilestones } });
                         }
                       }}
+                      disabled={isReadOnly}
                     >
                       <option value="" disabled>Select Stage</option>
                       {standardOptions.map(opt => (
@@ -885,7 +937,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                     </select>
                     <input 
                       type="text"
-                      className="flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      className="flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50"
                       value={m.description || ''}
                       onChange={e => {
                         const newMilestones = [...(po.terms.payment_milestones || [])];
@@ -893,13 +945,15 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                         setPo({ ...po, terms: { ...po.terms, payment_milestones: newMilestones } });
                       }}
                       placeholder="e.g. Advance against PI"
+                      disabled={isReadOnly}
                     />
                     <button 
                       onClick={() => {
                         const newMilestones = (po.terms.payment_milestones || []).filter((_, i) => i !== idx);
                         setPo({ ...po, terms: { ...po.terms, payment_milestones: newMilestones } });
                       }}
-                      className="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl border border-transparent hover:border-rose-100 dark:hover:border-rose-800 transition-colors cursor-pointer"
+                      disabled={isReadOnly}
+                      className="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl border border-transparent hover:border-rose-100 dark:hover:border-rose-800 transition-colors cursor-pointer disabled:opacity-50"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -922,13 +976,14 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               {(!po.terms.payment_milestones || po.terms.payment_milestones.length === 0) && (
                 <div className="flex gap-2">
                   <select 
-                    className="w-1/2 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-2 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                    className="w-1/2 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-2 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer disabled:opacity-50"
                     onChange={e => {
                       if (e.target.value !== 'CUSTOM') {
                         setPo({...po, terms: { ...po.terms, payment: e.target.value }});
                       }
                     }}
                     defaultValue=""
+                    disabled={isReadOnly}
                   >
                     <option value="" disabled>Select Payment</option>
                     <option value="100% AGAINST PI">100% AGAINST PI</option>
@@ -937,10 +992,11 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                   </select>
                   <input 
                     type="text"
-                    className="flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                    className="flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50"
                     value={po.terms.payment || ''}
                     onChange={e => setPo({...po, terms: { ...po.terms, payment: e.target.value }})}
                     placeholder="Simple payment term or use milestones"
+                    disabled={isReadOnly}
                   />
                 </div>
               )}
@@ -950,9 +1006,10 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Freight</label>
             <div className="flex gap-2">
               <select 
-                className="mt-1 w-1/4 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-2 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                className="mt-1 w-1/4 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-2 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer disabled:opacity-50"
                 value={po.terms.freight || ''}
                 onChange={e => setPo({...po, terms: { ...po.terms, freight: e.target.value }})}
+                disabled={isReadOnly}
               >
                 <option value="">Select</option>
                 <option value="Extra">Extra</option>
@@ -960,9 +1017,10 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                 <option value="Nil">Nil</option>
               </select>
               <select 
-                className="mt-1 w-1/4 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-2 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                className="mt-1 w-1/4 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-2 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer disabled:opacity-50"
                 value={po.terms.freight_tax || 'GST @18%'}
                 onChange={e => updateFreightTax(e.target.value)}
+                disabled={isReadOnly}
               >
                 <option value="GST @18%">18% GST</option>
                 <option value="GST @5%">5% GST</option>
@@ -970,10 +1028,11 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               </select>
               <input 
                 type="number"
-                className="mt-1 flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                className="mt-1 flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50"
                 value={po.terms.freight_amount || 0}
                 onChange={e => updateFreightAmount(Number(e.target.value))}
                 placeholder="Amount"
+                disabled={isReadOnly}
               />
             </div>
           </div>
@@ -992,7 +1051,8 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                     }
                   });
                 }}
-                className="flex items-center gap-1 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors uppercase tracking-wider cursor-pointer"
+                disabled={isReadOnly}
+                className="flex items-center gap-1 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors uppercase tracking-wider cursor-pointer disabled:opacity-50"
               >
                 <Plus className="w-3 h-3" /> Add Item Warranty
               </button>
@@ -1003,19 +1063,21 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               <div className="relative w-32 shrink-0">
                 <input 
                   type="number"
-                  className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 pr-12 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-bold"
+                  className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 pr-12 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-bold disabled:opacity-50"
                   value={po.terms.warranty || ''}
                   onChange={e => setPo({...po, terms: { ...po.terms, warranty: e.target.value }})}
                   placeholder="0"
+                  disabled={isReadOnly}
                 />
                 <span className="absolute right-3 top-2.5 text-[9px] font-bold text-slate-400 uppercase tracking-widest">Year(s)</span>
               </div>
               <input 
                 type="text"
-                className="flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
+                className="flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium disabled:opacity-50"
                 value={po.terms.warranty_description || ''}
                 onChange={e => setPo({...po, terms: { ...po.terms, warranty_description: e.target.value }})}
                 placeholder="e.g. for Compressor / on all items (manual text)"
+                disabled={isReadOnly}
               />
             </div>
 
@@ -1025,7 +1087,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                 <div className="relative w-32 shrink-0">
                   <input 
                     type="number"
-                    className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 pr-12 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-bold"
+                    className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 pr-12 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-bold disabled:opacity-50"
                     value={w.years || ''}
                     onChange={e => {
                       const updated = [...(po.terms.warranties || [])];
@@ -1033,12 +1095,13 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                       setPo({ ...po, terms: { ...po.terms, warranties: updated } });
                     }}
                     placeholder="0"
+                    disabled={isReadOnly}
                   />
                   <span className="absolute right-3 top-2.5 text-[9px] font-bold text-slate-400 uppercase tracking-widest">Year(s)</span>
                 </div>
                 <input 
                   type="text"
-                  className="flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
+                  className="flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium disabled:opacity-50"
                   value={w.description || ''}
                   onChange={e => {
                     const updated = [...(po.terms.warranties || [])];
@@ -1046,6 +1109,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                     setPo({ ...po, terms: { ...po.terms, warranties: updated } });
                   }}
                   placeholder="e.g. for Compressor / on all items (manual text)"
+                  disabled={isReadOnly}
                 />
                 <button
                   type="button"
@@ -1053,7 +1117,8 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                     const updated = (po.terms.warranties || []).filter((_, i) => i !== idx);
                     setPo({ ...po, terms: { ...po.terms, warranties: updated } });
                   }}
-                  className="p-2 text-rose-500 hover:text-rose-700 transition-colors cursor-pointer"
+                  disabled={isReadOnly}
+                  className="p-2 text-rose-500 hover:text-rose-700 transition-colors cursor-pointer disabled:opacity-50"
                   title="Remove warranty"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -1071,13 +1136,14 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Delivery Period</label>
             <div className="flex gap-2">
               <select 
-                className="mt-1 w-1/3 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                className="mt-1 w-1/3 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer disabled:opacity-50"
                 onChange={e => {
                   if (e.target.value !== 'CUSTOM') {
                     setPo({...po, terms: { ...po.terms, delivery: e.target.value }});
                   }
                 }}
                 defaultValue=""
+                disabled={isReadOnly}
               >
                 <option value="" disabled>Select Delivery</option>
                 <option value="Immediate">Immediate</option>
@@ -1085,10 +1151,11 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               </select>
               <input 
                 type="text"
-                className="mt-1 flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                className="mt-1 flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50"
                 value={po.terms.delivery || ''}
                 onChange={e => setPo({...po, terms: { ...po.terms, delivery: e.target.value }})}
                 placeholder="Immediate or enter custom period"
+                disabled={isReadOnly}
               />
             </div>
           </div>
@@ -1096,7 +1163,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Contact No</label>
             <div className="flex gap-2">
               <select 
-                className="mt-1 w-1/3 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                className="mt-1 w-1/3 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer disabled:opacity-50"
                 onChange={e => {
                   if (e.target.value !== 'CUSTOM') {
                     const numberOnly = e.target.value.split(' - ')[0];
@@ -1104,6 +1171,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                   }
                 }}
                 value={CONTACT_OPTIONS.some(opt => opt.startsWith(po.terms.contact_no || 'INVALID')) ? CONTACT_OPTIONS.find(opt => opt.startsWith(po.terms.contact_no || '')) : (po.terms.contact_no ? 'CUSTOM' : '')}
+                disabled={isReadOnly}
               >
                 <option value="">Select Contact</option>
                 {CONTACT_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
@@ -1111,10 +1179,11 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               </select>
               <input 
                 type="text"
-                className="mt-1 flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                className="mt-1 flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50"
                 value={po.terms.contact_no || ''}
                 onChange={e => setPo({...po, terms: { ...po.terms, contact_no: e.target.value }})}
                 placeholder="e.g. +91 98765 43210"
+                disabled={isReadOnly}
               />
             </div>
           </div>
@@ -1123,7 +1192,8 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Additional Notes</label>
               <button 
                 onClick={() => setPo(prev => ({ ...prev, terms: { ...prev.terms, manual_notes: [...(prev.terms.manual_notes || []), ''] } }))}
-                className="text-[10px] font-semibold bg-indigo-600 text-white px-2.5 py-1.5 rounded-xl hover:bg-indigo-700 transition flex items-center gap-1 hover:-translate-y-0.5 shadow-sm transform cursor-pointer"
+                disabled={isReadOnly}
+                className="text-[10px] font-semibold bg-indigo-600 text-white px-2.5 py-1.5 rounded-xl hover:bg-indigo-700 transition flex items-center gap-1 hover:-translate-y-0.5 shadow-sm transform cursor-pointer disabled:opacity-50"
               >
                 <Plus className="w-3 h-3" /> ADD NOTE
               </button>
@@ -1133,7 +1203,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                 <div key={idx} className="flex gap-2 group">
                   <div className="w-16 shrink-0 pt-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Note {idx + 3} ::</div>
                   <textarea 
-                    className="flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 text-xs min-h-[60px] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 placeholder-slate-400"
+                    className="flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-100 text-xs min-h-[60px] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 placeholder-slate-400 disabled:opacity-50"
                     value={note}
                     onChange={e => {
                       const newNotes = [...(po.terms.manual_notes || [])];
@@ -1141,13 +1211,15 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                       setPo({ ...po, terms: { ...po.terms, manual_notes: newNotes } });
                     }}
                     placeholder={`Enter custom note ${idx + 3}...`}
+                    disabled={isReadOnly}
                   />
                   <button 
                     onClick={() => {
                       const newNotes = (po.terms.manual_notes || []).filter((_, i) => i !== idx);
                       setPo({ ...po, terms: { ...po.terms, manual_notes: newNotes } });
                     }}
-                    className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl shrink-0 h-fit transition-colors border border-transparent hover:border-rose-100 dark:hover:border-rose-800 cursor-pointer"
+                    disabled={isReadOnly}
+                    className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl shrink-0 h-fit transition-colors border border-transparent hover:border-rose-100 dark:hover:border-rose-800 cursor-pointer disabled:opacity-50"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

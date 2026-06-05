@@ -58,6 +58,7 @@
     --border-main: var(--color-border);
     --card-bg: rgba(255, 255, 255, 0.7);
     --nav-bg: rgba(255, 255, 255, 0.8);
+    --main-nav-height: 4rem; /* consistent top offset for sticky sub-navs */
   }
 
   .dark {

@@ -91,7 +91,10 @@ async function startServer() {
               "VIEW_SAVED_POS", 
               "MANAGE_SETTINGS", 
               "MANAGE_USERS",
-              "APPROVE_PO"
+              "APPROVE_PO_L1",
+              "APPROVE_PO",
+              "APPROVE_INDENT",
+              "EDIT_APPROVED_PO"
             ]
           }
         });
@@ -892,20 +895,41 @@ async function startServer() {
   });
 
   // Approval Workflow
-  app.put("/api/po/:id/status", authenticateToken, requirePermission("APPROVE_PO"), async (req, res) => {
+  app.put("/api/po/:id/status", authenticateToken, async (req, res) => {
     try {
       const { status, remarks, pdf_base64 } = req.body;
       const user = (req as any).user;
+      const permissions = user.permissions || [];
+      const isSuperAdmin = user.role === 'SUPERADMIN';
       
+      const hasL1 = isSuperAdmin || permissions.includes("APPROVE_PO_L1");
+      const hasL2 = isSuperAdmin || permissions.includes("APPROVE_PO");
+
+      // Permission Checks
+      if (status === 'PENDING_L2' && !hasL1) {
+        return res.status(403).json({ error: "Permission denied: Require PO L1 Approval permission" });
+      }
+      if (status === 'APPROVED' && !hasL2) {
+        return res.status(403).json({ error: "Permission denied: Require Final PO Approval permission" });
+      }
+      if (status === 'REJECTED' && !hasL1 && !hasL2) {
+        return res.status(403).json({ error: "Permission denied: Require approval permissions to reject" });
+      }
+
       const updateData: any = { status };
       if (pdf_base64) updateData.pdf_base64 = pdf_base64;
 
-      if (status === 'APPROVED') {
+      if (status === 'PENDING_L2') {
+        updateData.l1_approved_by = user.username;
+        updateData.l1_approved_at = new Date();
+        updateData.rejection_remarks = null;
+      } else if (status === 'APPROVED') {
         updateData.approved_by = user.username;
         updateData.approved_at = new Date();
-        updateData.rejection_remarks = null; // Clear remarks if re-approved
+        updateData.rejection_remarks = null;
       } else if (status === 'REJECTED') {
         updateData.rejection_remarks = remarks || 'No reason provided';
+        // Reset approval info on rejection if needed, or keep it to see who rejected
         updateData.approved_by = null;
         updateData.approved_at = null;
       }
@@ -1020,7 +1044,7 @@ async function startServer() {
     }
   });
 
-  app.put("/api/indents/:id/status", authenticateToken, requirePermission("APPROVE_PO"), async (req, res) => {
+  app.put("/api/indents/:id/status", authenticateToken, requirePermission("APPROVE_INDENT"), async (req, res) => {
     try {
       const { status, remarks } = req.body;
       const user = (req as any).user;

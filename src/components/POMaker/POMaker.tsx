@@ -129,6 +129,8 @@ const POMaker: React.FC = () => {
     }
   }, [po.version, po.po_no, canAccess, editId]);
 
+  const canEditApproved = user?.role === 'SUPERADMIN' || user?.permissions.includes('EDIT_APPROVED_PO');
+
   const fetchPO = async (id: string) => {
     try {
       const res = await fetch(`/api/po/${id}`, {
@@ -140,6 +142,11 @@ const POMaker: React.FC = () => {
       }
       if (res.ok) {
         const data = await res.json();
+        if (data.status === 'APPROVED' && !canEditApproved) {
+           showToast("This PO is already approved and cannot be modified without special permissions.", "error");
+           navigate('/saved-pos');
+           return;
+        }
         setPo(data);
       }
     } catch (err) {
@@ -416,14 +423,14 @@ const POMaker: React.FC = () => {
             <option value="radhashyam">Radhashyam Industries</option>
           </select>
 
-          {po.status !== 'APPROVED' ? (
+          {(po.status !== 'APPROVED' || canEditApproved) ? (
             <button 
               onClick={handleSave}
               disabled={isGenerating}
-              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl transition font-semibold text-xs shadow-sm disabled:opacity-50 hover:-translate-y-0.5 transform transition-all duration-200 cursor-pointer"
+              className={`flex items-center gap-2 ${po.status === 'APPROVED' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white px-4 py-2 rounded-xl transition font-semibold text-xs shadow-sm disabled:opacity-50 hover:-translate-y-0.5 transform transition-all duration-200 cursor-pointer`}
             >
               {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-              {isGenerating ? 'Saving...' : 'Save to Database'}
+              {isGenerating ? 'Saving...' : (po.status === 'APPROVED' ? 'Update Approved PO' : 'Save to Database')}
             </button>
           ) : (
             <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 px-4 py-2 rounded-xl border border-emerald-200/60 dark:border-emerald-800/60 font-bold text-[10px] uppercase tracking-widest">

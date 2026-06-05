@@ -31,9 +31,10 @@ export default function POApprovalView() {
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [rejectRemarks, setRejectRemarks] = useState('');
 
-  const canApprove = user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO');
+  const canApproveL1 = user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO_L1');
+  const canApproveL2 = user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO');
   const canAddNote = user?.role === 'SUPERADMIN' || user?.permissions.includes('ADD_INTERNAL_COMMENTS');
-  const hasHubAccess = user?.role === 'SUPERADMIN' || user?.permissions.includes('VIEW_APPROVAL_HUB') || user?.permissions.includes('APPROVE_PO');
+  const hasHubAccess = user?.role === 'SUPERADMIN' || user?.permissions.includes('VIEW_APPROVAL_HUB') || user?.permissions.includes('APPROVE_PO') || user?.permissions.includes('APPROVE_PO_L1');
 
   useEffect(() => {
     if (po?.pdf_base64) {
@@ -99,26 +100,28 @@ export default function POApprovalView() {
     fetchData();
   }, [id, token]);
 
-  const handleStatusUpdate = async (newStatus: 'APPROVED' | 'REJECTED') => {
-    if (!canApprove) return;
+  const handleStatusUpdate = async (newStatus: 'PENDING_L2' | 'APPROVED' | 'REJECTED') => {
+    if (newStatus === 'PENDING_L2' && !canApproveL1) return;
+    if (newStatus === 'APPROVED' && !canApproveL2) return;
     
     if (newStatus === 'REJECTED') {
       setShowRejectModal(true);
       return;
     } else {
-      if (!window.confirm(`Are you sure you want to approve this Purchase Order?`)) return;
+      const label = newStatus === 'PENDING_L2' ? 'grant L1 approval to' : 'approve';
+      if (!window.confirm(`Are you sure you want to ${label} this Purchase Order?`)) return;
     }
     
     await executeStatusUpdate(newStatus, '');
   };
 
-  const executeStatusUpdate = async (newStatus: 'APPROVED' | 'REJECTED', remarks: string) => {
+  const executeStatusUpdate = async (newStatus: 'PENDING_L2' | 'APPROVED' | 'REJECTED', remarks: string) => {
     try {
       setSubmitting(true);
       
       let pdf_base64 = po?.pdf_base64;
       
-      // If approving, we need to generate a new SIGNED PDF snapshot
+      // If approving final, we need to generate a new SIGNED PDF snapshot
       if (newStatus === 'APPROVED') {
         // Temporarily set status to APPROVED in local state to render signatures for capture
         const signedPo = { ...po!, status: 'APPROVED', approved_at: new Date().toISOString(), approved_by: user?.username || 'Admin' };
@@ -153,7 +156,8 @@ export default function POApprovalView() {
         setRejectRemarks('');
         showToast(`PO has been ${newStatus.toLowerCase()} successfully.`);
       } else {
-        showToast("Failed to update status", "error");
+        const err = await res.json();
+        showToast(err.error || "Failed to update status", "error");
       }
     } catch (e) {
       console.error(e);
@@ -374,7 +378,9 @@ export default function POApprovalView() {
   const rawStatus = po.status || 'PENDING';
   const poStatus = rawStatus.toUpperCase();
   const isApproved = poStatus === 'APPROVED';
-  const isPending = poStatus === 'PENDING';
+  const isPendingL1 = poStatus === 'PENDING';
+  const isPendingL2 = poStatus === 'PENDING_L2';
+  const isPending = isPendingL1 || isPendingL2;
 
   // Modal Recipients & Company Info
   const vendorEmail = po?.vendor_details?.mail || '';
@@ -447,7 +453,26 @@ export default function POApprovalView() {
         </button>
       )}
 
-      {isPending && canApprove && (
+      {isPendingL1 && canApproveL1 && (
+        <div className="flex items-center gap-2 ml-auto md:ml-0">
+          <button 
+            onClick={() => handleStatusUpdate('REJECTED')}
+            disabled={submitting}
+            className="px-4 py-2 border rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center gap-1.5 bg-rose-50 dark:bg-rose-900/20 hover:bg-rose-100 dark:hover:bg-rose-900/30 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800 transition-all duration-200 disabled:opacity-50 cursor-pointer"
+          >
+            <XCircle className="w-3.5 h-3.5" /> Reject
+          </button>
+          <button 
+            onClick={() => handleStatusUpdate('PENDING_L2')}
+            disabled={submitting}
+            className="px-5 py-2 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white shadow-md shadow-amber-600/10 transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 cursor-pointer"
+          >
+            <ShieldCheck className="w-3.5 h-3.5" /> Approve L1
+          </button>
+        </div>
+      )}
+
+      {isPendingL2 && canApproveL2 && (
         <div className="flex items-center gap-2 ml-auto md:ml-0">
           <button 
             onClick={() => handleStatusUpdate('REJECTED')}
@@ -461,7 +486,7 @@ export default function POApprovalView() {
             disabled={submitting}
             className="px-5 py-2 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/10 transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 cursor-pointer"
           >
-            <ShieldCheck className="w-3.5 h-3.5" /> Approve & Sign
+            <ShieldCheck className="w-3.5 h-3.5" /> Final Approve & Sign
           </button>
         </div>
       )}
@@ -679,7 +704,24 @@ export default function POApprovalView() {
           </div>
 
           <div className="flex items-center gap-4 shrink-0 w-full md:w-auto justify-end">
-            {isPending && canApprove ? (
+            {isPendingL1 && canApproveL1 ? (
+              <>
+                <button 
+                  onClick={() => handleStatusUpdate('REJECTED')}
+                  disabled={submitting}
+                  className="px-6 py-3 border border-rose-200 dark:border-rose-800 rounded-xl font-black text-xs uppercase tracking-widest text-rose-600 dark:text-rose-400 bg-white dark:bg-slate-900 hover:bg-rose-50 dark:hover:bg-rose-900/30 flex items-center gap-2 transition-all duration-200 shadow-sm cursor-pointer disabled:opacity-50"
+                >
+                  <XCircle className="w-4 h-4" /> Reject PO
+                </button>
+                <button 
+                  onClick={() => handleStatusUpdate('PENDING_L2')}
+                  disabled={submitting}
+                  className="px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-600/20 flex items-center gap-2 transition-all duration-200 transform hover:-translate-y-0.5 cursor-pointer disabled:opacity-50"
+                >
+                  <ShieldCheck className="w-5 h-5" /> Approve L1
+                </button>
+              </>
+            ) : isPendingL2 && canApproveL2 ? (
               <>
                 <button 
                   onClick={() => handleStatusUpdate('REJECTED')}
@@ -693,7 +735,7 @@ export default function POApprovalView() {
                   disabled={submitting}
                   className="px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20 flex items-center gap-2 transition-all duration-200 transform hover:-translate-y-0.5 cursor-pointer disabled:opacity-50"
                 >
-                  <ShieldCheck className="w-5 h-5" /> Approve & Sign
+                  <ShieldCheck className="w-5 h-5" /> Final Approve & Sign
                 </button>
               </>
             ) : isApproved ? (

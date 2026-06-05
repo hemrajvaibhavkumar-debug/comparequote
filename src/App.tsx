@@ -45,9 +45,9 @@ const ProtectedRoute = ({ children, permission }: { children: React.ReactNode, p
     
     if (userRole === 'SUPERADMIN') return <>{children}</>;
 
-    // Special case for Approval Hub: allow either full approve or read-only view
+    // Special case for Approval Hub: allow either full approve (L1/L2) or read-only view
     if (permission === 'VIEW_APPROVAL_HUB') {
-       if (userPermissions.includes('VIEW_APPROVAL_HUB') || userPermissions.includes('APPROVE_PO') || userPermissions.includes('VIEW_SAVED_POS')) {
+       if (userPermissions.includes('VIEW_APPROVAL_HUB') || userPermissions.includes('APPROVE_PO') || userPermissions.includes('APPROVE_PO_L1') || userPermissions.includes('VIEW_SAVED_POS')) {
          return <>{children}</>;
        }
     }
@@ -115,7 +115,7 @@ function AppContent() {
                     <Database className="w-4 h-4" /> Saved POs
                   </Link>
                   
-                  {(user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO') || user?.permissions.includes('VIEW_APPROVAL_HUB')) && (
+                  {(user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO') || user?.permissions.includes('APPROVE_PO_L1') || user?.permissions.includes('VIEW_APPROVAL_HUB')) && (
                     <Link to="/purchase-head" className={navLinkStyle('/purchase-head')}>
                       <ShieldCheck className="w-4 h-4" /> Approval Hub
                     </Link>
