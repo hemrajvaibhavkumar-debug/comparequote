@@ -132,6 +132,7 @@ export interface IndentItem {
   applicationArea: string;
   orderPlacedBy: string;
   orderPassedBy: string;
+  oldMaterialStatus: string;
 }
 
 export interface Indent {

@@ -37,7 +37,7 @@ const IndentDashboard: React.FC = () => {
   
   // Form State (used for both create and edit)
   const [newIndent, setNewIndent] = useState<Indent>({
-    indent_no: `IND-${Date.now().toString().slice(-6)}`,
+    indent_no: '',
     date: new Date().toISOString().split('T')[0],
     plant_name: '',
     items: [],
@@ -107,6 +107,11 @@ const IndentDashboard: React.FC = () => {
   };
 
   const handleSaveIndent = async () => {
+    if (!newIndent.indent_no.trim()) {
+      showToast("Please enter an indent number", "error");
+      return;
+    }
+
     if (newIndent.items.length === 0) {
       showToast("Please add at least one item", "error");
       return;
@@ -121,8 +126,7 @@ const IndentDashboard: React.FC = () => {
     const payload = {
       ...newIndent,
       items: itemsWithSn,
-      total_items: itemsWithSn.length,
-      created_by_name: user?.username
+      total_items: itemsWithSn.length
     };
 
     try {
@@ -143,7 +147,7 @@ const IndentDashboard: React.FC = () => {
         showToast(isEdit ? "Indent updated successfully" : "Indent saved successfully");
         setViewState('idle');
         setNewIndent({
-          indent_no: `IND-${Date.now().toString().slice(-6)}`,
+          indent_no: '',
           date: new Date().toISOString().split('T')[0],
           plant_name: '',
           items: [],
@@ -234,7 +238,8 @@ const IndentDashboard: React.FC = () => {
         uom: 'NOS',
         applicationArea: '',
         orderPlacedBy: '',
-        orderPassedBy: ''
+        orderPassedBy: '',
+        oldMaterialStatus: ''
       }]
     }));
   };
@@ -267,7 +272,7 @@ const IndentDashboard: React.FC = () => {
   const startCreate = () => {
     setViewState('create');
     setNewIndent({
-      indent_no: `IND-${Date.now().toString().slice(-6)}`,
+      indent_no: '',
       date: new Date().toISOString().split('T')[0],
       plant_name: '',
       items: [],
@@ -606,10 +611,6 @@ const IndentDashboard: React.FC = () => {
                     <span className="text-[11px] font-black uppercase tracking-tight">Order Passed By :-</span>
                     <span className="text-sm font-bold font-serif italic border-b border-black px-2 flex-1 text-center ml-2">{selectedIndent.order_passed_by || 'N/A'}</span>
                   </div>
-                  <div className="border-b border-black/20 pb-1 flex justify-between items-end">
-                    <span className="text-[11px] font-black uppercase tracking-tight">Created By :-</span>
-                    <span className="text-sm font-bold font-serif italic border-b border-black px-2 flex-1 text-center ml-2">{selectedIndent.created_by_name || 'SYSTEM'}</span>
-                  </div>
                 </div>
               </div>
 
@@ -636,7 +637,7 @@ const IndentDashboard: React.FC = () => {
                         <td className="border-r border-black p-2 text-xs font-bold text-center italic uppercase">{item.uom}</td>
                         <td className="border-r border-black p-2 text-xs font-bold text-center italic uppercase">{item.applicationArea || '-'}</td>
                         <td className="border-r border-black p-2 text-xs font-bold text-center italic uppercase">{item.orderPlacedBy || '-'}</td>
-                        <td className="p-2 text-xs font-bold text-center italic uppercase">{item.orderPassedBy || '-'}</td>
+                        <td className="p-2 text-xs font-bold text-center italic uppercase">{item.oldMaterialStatus || '-'}</td>
                       </tr>
                     ))}
                     {Array.from({ length: Math.max(0, 10 - selectedIndent.items.length) }).map((_, i) => (
@@ -796,6 +797,7 @@ const IndentDashboard: React.FC = () => {
                       <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 w-24 text-center">UOM</th>
                       <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 text-left">App. Area</th>
                       <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 text-left">Req By</th>
+                      <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 text-left">Old Mat. Status</th>
                       <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 w-12"></th>
                     </tr>
                   </thead>
@@ -857,6 +859,15 @@ const IndentDashboard: React.FC = () => {
                             onChange={e => updateItem(idx, 'orderPlacedBy', e.target.value)}
                           />
                         </td>
+                        <td className="px-4 py-2">
+                          <input 
+                            type="text" 
+                            className="w-full bg-transparent border-none text-[11px] font-bold text-slate-900 dark:text-slate-100 uppercase focus:ring-0"
+                            placeholder="Status..."
+                            value={item.oldMaterialStatus}
+                            onChange={e => updateItem(idx, 'oldMaterialStatus', e.target.value)}
+                          />
+                        </td>
                         <td className="px-4 py-2 text-center">
                           <button onClick={() => removeItem(idx)} className="p-1 text-slate-300 hover:text-rose-600 transition-colors cursor-pointer">
                             <Trash2 className="w-3.5 h-3.5" />
@@ -866,7 +877,7 @@ const IndentDashboard: React.FC = () => {
                     ))}
                     {newIndent.items.length === 0 && (
                       <tr>
-                        <td colSpan={7} className="py-20 text-center">
+                        <td colSpan={8} className="py-20 text-center">
                           <div className="max-w-xs mx-auto space-y-2 opacity-50">
                             <Plus className="w-8 h-8 mx-auto text-slate-300" />
                             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">List is empty. Use the toolbar above to add items.</p>
