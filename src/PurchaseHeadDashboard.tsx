@@ -8,7 +8,7 @@ export default function PurchaseHeadDashboard() {
   const [pos, setPos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('PENDING');
   
   // Advanced Filters State
   const [companyFilter, setCompanyFilter] = useState('ALL');
@@ -284,11 +284,18 @@ export default function PurchaseHeadDashboard() {
             PO #{po.po_no}
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-2 line-clamp-1 font-semibold uppercase tracking-tight">{po.vendor_name}</p>
-          {po.created_by_name && (
-            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase mb-4 flex items-center gap-1">
-              <User className="w-3 h-3" /> By: {po.created_by_name}
-            </p>
-          )}
+          <div className="flex flex-col gap-1 mb-4">
+            {po.created_by_name && (
+              <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase flex items-center gap-1">
+                <User className="w-3 h-3" /> Creator: {po.created_by_name}
+              </p>
+            )}
+            {po.l1_approved_by && (
+              <p className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3" /> L1 Appr: {po.l1_approved_by}
+              </p>
+            )}
+          </div>
           
           <div className="space-y-2 pt-4 border-t border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 font-semibold uppercase">

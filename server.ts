@@ -920,11 +920,11 @@ async function startServer() {
       if (pdf_base64) updateData.pdf_base64 = pdf_base64;
 
       if (status === 'PENDING_L2') {
-        updateData.l1_approved_by = user.username;
+        updateData.l1_approved_by = req.body.l1_approved_by || user.username;
         updateData.l1_approved_at = new Date();
         updateData.rejection_remarks = null;
       } else if (status === 'APPROVED') {
-        updateData.approved_by = user.username;
+        updateData.approved_by = req.body.approved_by || user.username;
         updateData.approved_at = new Date();
         updateData.rejection_remarks = null;
       } else if (status === 'REJECTED') {
