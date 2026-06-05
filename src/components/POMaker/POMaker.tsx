@@ -6,6 +6,7 @@ import { Save, ArrowLeft, ShieldCheck, Loader2 } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useApiCache } from '../../context/ApiCacheContext';
+import { useToast } from '../../context/ToastContext';
 
 const POMaker: React.FC = () => {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ const POMaker: React.FC = () => {
   const [isExporting, setIsExporting] = useState(false);
   
   const { token, user, logout } = useAuth();
+  const { showToast } = useToast();
   const {
     fetchCompanySettings: getCompanySettingsFromCache,
     fetchTermsTemplates: getTermsTemplatesFromCache,

@@ -1580,8 +1580,19 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), "dist");
+    
+    // Serve static files with a specific rule for assets
+    app.use("/assets", express.static(path.join(distPath, "assets"), {
+      fallthrough: false // If file doesn't exist in /assets, don't fall through to next middleware
+    }));
+    
     app.use(express.static(distPath));
+    
     app.get("*", (req, res) => {
+      // Don't serve index.html for missing asset requests
+      if (req.path.startsWith("/assets/")) {
+        return res.status(404).send("Asset not found");
+      }
       res.sendFile(path.join(distPath, "index.html"));
     });
   }
