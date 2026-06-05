@@ -384,10 +384,10 @@ const IndentDashboard: React.FC = () => {
             <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-slate-300" /></div>
           ) : filteredIndents.length > 0 ? (
             filteredIndents.map(indent => (
-              <button
+              <div
                 key={indent.id}
                 onClick={() => selectIndent(indent)}
-                className={`w-full text-left p-4 rounded-2xl transition-all group border ${
+                className={`w-full text-left p-4 rounded-2xl transition-all group border cursor-pointer ${
                   selectedIndent?.id === indent.id 
                     ? 'bg-slate-900 dark:bg-slate-100 border-slate-900 dark:border-slate-100 shadow-md' 
                     : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700'
@@ -448,7 +448,7 @@ const IndentDashboard: React.FC = () => {
                       </span>
                    </div>
                 </div>
-              </button>
+              </div>
             ))
           ) : (
             <div className="text-center py-10 text-slate-300 dark:text-slate-700 font-bold text-xs uppercase tracking-widest">

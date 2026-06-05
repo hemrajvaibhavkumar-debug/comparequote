@@ -659,10 +659,10 @@ export default function POApprovalView() {
                 </div>
                 <div>
                   <h4 className="text-lg font-black text-slate-900 dark:text-slate-100 font-sans tracking-tight uppercase">
-                    {canApprove ? 'Finalize Approval' : 'Awaiting Review'}
+                    {(canApproveL1 || canApproveL2) ? 'Finalize Approval' : 'Awaiting Review'}
                   </h4>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">
-                    {canApprove 
+                    {(canApproveL1 || canApproveL2) 
                       ? 'Carefully review the document above. Approving will apply your signature and the company stamp.'
                       : 'This document is currently pending approval by the Purchase Head.'}
                   </p>
