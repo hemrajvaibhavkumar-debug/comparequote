@@ -872,15 +872,21 @@ export default function POApprovalView() {
               <div>
                 <label className="block text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest mb-2">Approved By (Employee Name)</label>
                 <div className="relative group">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
-                  <input 
-                    type="text"
-                    autoFocus
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 dark:focus:border-indigo-400 text-slate-800 dark:text-slate-100 text-sm font-semibold transition-all"
-                    placeholder="Enter employee name..."
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors z-10" />
+                  <select 
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 dark:focus:border-indigo-400 text-slate-800 dark:text-slate-100 text-sm font-semibold transition-all appearance-none cursor-pointer"
                     value={approverName}
                     onChange={(e) => setApproverName(e.target.value)}
-                  />
+                  >
+                    <option value="" disabled>Select employee name...</option>
+                    <option value="Amit">Amit</option>
+                    <option value="Sayanta">Sayanta</option>
+                    <option value="Arpita">Arpita</option>
+                    <option value="Proloy">Proloy</option>
+                  </select>
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                    <ChevronRight className="w-4 h-4 rotate-90" />
+                  </div>
                 </div>
               </div>
               <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold italic uppercase tracking-tight">
