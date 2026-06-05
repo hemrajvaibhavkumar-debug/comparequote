@@ -6,6 +6,7 @@ import { useAuth } from './context/AuthContext';
 import { useApiCache, usePOs } from './context/ApiCacheContext';
 import CommentsModal from './components/CommentsModal';
 import { useQueryClient } from '@tanstack/react-query';
+import { useToast } from './context/ToastContext';
 
 const SavedPOs: React.FC = () => {
   const { data: posData, isLoading: loading } = usePOs();
@@ -21,6 +22,7 @@ const SavedPOs: React.FC = () => {
 
   const { token, user, logout } = useAuth();
   const { invalidatePOs } = useApiCache();
+  const { showToast } = useToast();
   const canView = user?.role === 'SUPERADMIN' || user?.permissions.includes('VIEW_SAVED_POS');
 
   const handleAddComment = async (text: string) => {
@@ -98,9 +100,14 @@ const SavedPOs: React.FC = () => {
       });
       if (res.ok) {
         invalidatePOs();
+        showToast("PO deleted successfully");
+      } else {
+        const errData = await res.json();
+        showToast(errData.error || "Failed to delete PO", "error");
       }
     } catch (err) {
       console.error('Failed to delete PO', err);
+      showToast("Error deleting PO", "error");
     }
   };
 
@@ -247,7 +254,7 @@ const SavedPOs: React.FC = () => {
                       <td className="px-6 py-5 cursor-pointer" onClick={() => navigate(`/approve-po/${po.id}`)}>
                         <div className="flex flex-col">
                           <span className="font-extrabold text-slate-850 dark:text-slate-200 uppercase text-xs tracking-tight truncate max-w-xs">{po.vendor_name}</span>
-                          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mt-1">GST: {po.vendor_details.gstin || 'N/A'}</span>
+                          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mt-1">GST: {po.vendor_details?.gstin || 'N/A'}</span>
                         </div>
                       </td>
                       <td className="px-6 py-5 text-right cursor-pointer" onClick={() => navigate(`/approve-po/${po.id}`)}>

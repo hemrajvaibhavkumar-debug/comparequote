@@ -164,16 +164,16 @@ export interface PurchaseOrder {
   quote_ref_type?: 'MAIL' | 'WHATSAPP' | string;
   vendor_name: string;
   version?: 'hemraj_ind' | 'hemraj_rice' | 'radhashyam';
-  vendor_details: {
+  vendor_details?: {
     address: string;
     gstin: string;
     mail: string;
     ph: string;
     state?: string;
     cc?: string;
-  };
+  } | null;
   items: POItem[];
-  terms: {
+  terms?: {
     tax: string;
     packing: string;
     payment: string;
@@ -190,7 +190,7 @@ export interface PurchaseOrder {
     notes?: string;
     manual_notes?: string[];
     po_type?: 'Capital' | 'Consumables' | string;
-  };
+  } | null;
   total_amount: number;
   created_by_name?: string;
   status?: 'PENDING' | 'PENDING_L2' | 'APPROVED' | 'REJECTED' | string;

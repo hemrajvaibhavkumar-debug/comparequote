@@ -262,7 +262,8 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
           currentQuote.mrp = value;
         } else {
           // Calculate MRP from Net Rate and Discount: NetRate = MRP * (1 - Disc/100) => MRP = NetRate / (1 - Disc/100)
-          currentQuote.mrp = (newVal / (1 - discVal / 100)).toFixed(2);
+          // Avoid division by zero if discount is 100%
+          currentQuote.mrp = discVal === 100 ? value : (newVal / (1 - discVal / 100)).toFixed(2);
         }
       }
 

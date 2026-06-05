@@ -59,7 +59,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
     if (isReadOnly) return;
     setPo(prev => ({
       ...prev,
-      vendor_details: { ...prev.vendor_details, [field]: value }
+      vendor_details: { ...(prev.vendor_details || {}), [field]: value } as any
     }));
   };
 
@@ -81,14 +81,14 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
       ...prev,
       vendor_name: vendor.name,
       vendor_details: {
-        ...prev.vendor_details,
+        ...(prev.vendor_details || {}),
         address: vendor.address || '',
         gstin: vendor.gstin || '',
         state: vendor.state || '',
         ph: vendor.mobile_no || '',
         mail: vendor.email || '',
-        cc: prev.vendor_details.cc || ''
-      }
+        cc: prev.vendor_details?.cc || ''
+      } as any
     }));
   };
 
@@ -496,7 +496,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">Address</label>
               <textarea 
                 className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 h-24 resize-none disabled:opacity-50"
-                value={po.vendor_details.address || ''}
+                value={po.vendor_details?.address || ''}
                 onChange={e => updateVendorField('address', e.target.value)}
                 placeholder="Street, City, PIN"
                 disabled={isReadOnly}
@@ -509,7 +509,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               <input 
                 type="text"
                 className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 uppercase disabled:opacity-50"
-                value={po.vendor_details.gstin || ''}
+                value={po.vendor_details?.gstin || ''}
                 onChange={e => updateVendorField('gstin', e.target.value)}
                 placeholder="15-digit GSTIN"
                 disabled={isReadOnly}
@@ -520,7 +520,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               <input 
                 type="text"
                 className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 uppercase disabled:opacity-50"
-                value={po.vendor_details.state || ''}
+                value={po.vendor_details?.state || ''}
                 onChange={e => updateVendorField('state', e.target.value)}
                 placeholder="State Name"
                 disabled={isReadOnly}
@@ -531,7 +531,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               <input 
                 type="text"
                 className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 disabled:opacity-50"
-                value={po.vendor_details.ph || ''}
+                value={po.vendor_details?.ph || ''}
                 onChange={e => updateVendorField('ph', e.target.value)}
                 placeholder="Mobile / Phone"
                 disabled={isReadOnly}
@@ -542,7 +542,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               <input 
                 type="email"
                 className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 disabled:opacity-50"
-                value={po.vendor_details.mail || ''}
+                value={po.vendor_details?.mail || ''}
                 onChange={e => updateVendorField('mail', e.target.value)}
                 placeholder="vendor@mail.com"
                 disabled={isReadOnly}
@@ -553,7 +553,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               <input 
                 type="text"
                 className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 disabled:opacity-50"
-                value={po.vendor_details.cc || ''}
+                value={po.vendor_details?.cc || ''}
                 onChange={e => updateVendorField('cc', e.target.value)}
                 placeholder="email1@test.com, email2@test.com"
                 disabled={isReadOnly}

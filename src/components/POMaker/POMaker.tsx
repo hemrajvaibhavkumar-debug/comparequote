@@ -315,11 +315,11 @@ const POMaker: React.FC = () => {
               },
               body: JSON.stringify({
                 name: po.vendor_name.trim(),
-                address: po.vendor_details.address || '',
-                state: po.vendor_details.state || '',
-                gstin: po.vendor_details.gstin || '',
-                mobile_no: po.vendor_details.ph || '',
-                email: po.vendor_details.mail || ''
+                address: po.vendor_details?.address || '',
+                state: po.vendor_details?.state || '',
+                gstin: po.vendor_details?.gstin || '',
+                mobile_no: po.vendor_details?.ph || '',
+                email: po.vendor_details?.mail || ''
               })
             });
             if (newVendorRes.ok) {

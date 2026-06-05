@@ -9,63 +9,99 @@ interface POPreviewProps {
   isPDF?: boolean;
 }
 
-const TermsAndNotes = ({ po }: { po: PurchaseOrder }) => (
-  <div className="mt-4 no-break">
-    <div className="text-[10px] space-y-1 mb-2 text-black border border-black p-2 rounded font-bold text-left bg-[#fdfdfe]">
-      <p className="font-black text-[11px] underline mb-1 uppercase tracking-wide">Commercial Terms::</p>
-      <div className="grid grid-cols-[140px_1fr] gap-y-1">
-        <span className="uppercase text-[9px]">Tax ::</span> <span className="uppercase">{po.terms.tax}</span>
-        {po.terms.igst && (
-          <>
-            <span className="uppercase text-[9px]">IGST ::</span> <span className="uppercase">{po.terms.igst}</span>
-          </>
-        )}
-        <span className="uppercase text-[9px]">Packing ::</span> <span className="uppercase">{po.terms.packing}</span>
-        <span className="uppercase text-[9px]">Forwarding ::</span> <span className="uppercase">{po.terms.notes}</span>
-        <span className="uppercase text-[9px]">Payment Terms ::</span>
-        <div className="flex flex-col">
-          {po.terms.payment_milestones && po.terms.payment_milestones.length > 0 ? (
-            po.terms.payment_milestones.map((m, idx) => (
-              <span key={idx} className="uppercase font-black">{m.percentage}% - {m.description}</span>
-            ))
-          ) : (
-            <span className="uppercase">{po.terms.payment}</span>
+const TermsAndNotes = ({ po }: { po: PurchaseOrder }) => {
+  const terms = po.terms || {
+    tax: '',
+    packing: '',
+    payment: '',
+    freight: '',
+    freight_amount: 0,
+    freight_tax: '',
+    delivery: '',
+    notes: '',
+    igst: '',
+    payment_milestones: [],
+    warranty: '',
+    warranty_description: '',
+    warranties: [],
+    manual_notes: []
+  };
+
+  return (
+    <div className="mt-4 no-break">
+      <div className="text-[10px] space-y-1 mb-2 text-black border border-black p-2 rounded font-bold text-left bg-[#fdfdfe]">
+        <p className="font-black text-[11px] underline mb-1 uppercase tracking-wide">Commercial Terms::</p>
+        <div className="grid grid-cols-[140px_1fr] gap-y-1">
+          <span className="uppercase text-[9px]">Tax ::</span> <span className="uppercase">{terms.tax}</span>
+          {terms.igst && (
+            <>
+              <span className="uppercase text-[9px]">IGST ::</span> <span className="uppercase">{terms.igst}</span>
+            </>
+          )}
+          <span className="uppercase text-[9px]">Packing ::</span> <span className="uppercase">{terms.packing}</span>
+          <span className="uppercase text-[9px]">Forwarding ::</span> <span className="uppercase">{terms.notes}</span>
+          <span className="uppercase text-[9px]">Payment Terms ::</span>
+          <div className="flex flex-col">
+            {terms.payment_milestones && terms.payment_milestones.length > 0 ? (
+              terms.payment_milestones.map((m, idx) => (
+                <span key={idx} className="uppercase font-black">{m.percentage}% - {m.description}</span>
+              ))
+            ) : (
+              <span className="uppercase">{terms.payment}</span>
+            )}
+          </div>
+          <span className="uppercase text-[9px]">Freight ::</span> <span className="uppercase">{terms.freight} {terms.freight_amount ? `- ₹${Number(terms.freight_amount).toLocaleString()}` : ''}</span>
+          {terms.warranty && (
+            <>
+              <span className="uppercase text-[9px]">Warranty ::</span> <span className="uppercase">{terms.warranty} YEAR(S) {terms.warranty_description && ` ${terms.warranty_description}`}</span>
+            </>
+          )}
+          {terms.warranties && terms.warranties.map((w, idx) => (
+            <React.Fragment key={idx}>
+              <span className="uppercase text-[9px]">Warranty ::</span> <span className="uppercase">{w.years} YEAR(S) {w.description && ` ${w.description}`}</span>
+            </React.Fragment>
+          ))}
+          <span className="uppercase text-[9px]">Delivery Period ::</span> <span className="uppercase">{terms.delivery}</span>
+          {terms.contact_no && (
+            <>
+              <span className="uppercase text-[9px]">Contact No ::</span> 
+              <span>{terms.contact_no.split(' - ')[0]}</span>
+            </>
           )}
         </div>
-        <span className="uppercase text-[9px]">Freight ::</span> <span className="uppercase">{po.terms.freight} {po.terms.freight_amount ? `- ₹${Number(po.terms.freight_amount).toLocaleString()}` : ''}</span>
-        {po.terms.warranty && (
-          <>
-            <span className="uppercase text-[9px]">Warranty ::</span> <span className="uppercase">{po.terms.warranty} YEAR(S) {po.terms.warranty_description && ` ${po.terms.warranty_description}`}</span>
-          </>
-        )}
-        {po.terms.warranties && po.terms.warranties.map((w, idx) => (
-          <React.Fragment key={idx}>
-            <span className="uppercase text-[9px]">Warranty ::</span> <span className="uppercase">{w.years} YEAR(S) {w.description && ` ${w.description}`}</span>
-          </React.Fragment>
-        ))}
-        <span className="uppercase text-[9px]">Delivery Period ::</span> <span className="uppercase">{po.terms.delivery}</span>
-        {po.terms.contact_no && (
-          <>
-            <span className="uppercase text-[9px]">Contact No ::</span> 
-            <span>{po.terms.contact_no.split(' - ')[0]}</span>
-          </>
-        )}
+      </div>
+
+      <div className="text-[10px] space-y-1 mb-2 uppercase italic font-black text-black border-l-4 border-black pl-4 py-1 text-left">
+         <p>NOTE 1 :: <span className="underline">E-Way bill is mandatory for Rs 50,000 and above Purchase Value.</span></p>
+         <p>NOTE 2 :: If we have any type of dispute from specification then we will reject material.</p>
+         {(terms.manual_notes || []).map((note, idx) => (
+           <p key={idx}>NOTE {idx + 3} :: {note}</p>
+         ))}
       </div>
     </div>
-
-    <div className="text-[10px] space-y-1 mb-2 uppercase italic font-black text-black border-l-4 border-black pl-4 py-1 text-left">
-       <p>NOTE 1 :: <span className="underline">E-Way bill is mandatory for Rs 50,000 and above Purchase Value.</span></p>
-       <p>NOTE 2 :: If we have any type of dispute from specification then we will reject material.</p>
-       {(po.terms.manual_notes || []).map((note, idx) => (
-         <p key={idx}>NOTE {idx + 3} :: {note}</p>
-       ))}
-    </div>
-  </div>
-);
+  );
+};
 
 const POPreview = React.memo<POPreviewProps>(({ po, setPo, settings, actions, isPDF }) => {
   const printRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const vendorDetails = po.vendor_details || { address: '', state: '', gstin: '', mail: '', ph: '' };
+  const terms = po.terms || {
+    tax: '',
+    packing: '',
+    payment: '',
+    freight: '',
+    freight_amount: 0,
+    freight_tax: '',
+    delivery: '',
+    notes: '',
+    igst: '',
+    payment_milestones: [],
+    warranty: '',
+    warranty_description: '',
+    warranties: [],
+    manual_notes: []
+  };
 
   useEffect(() => {
     if (isPDF) {
@@ -445,20 +481,20 @@ const POPreview = React.memo<POPreviewProps>(({ po, setPo, settings, actions, is
             <td className="border border-black p-1 text-right uppercase">Total Item Amount</td>
             <td className="border border-black p-1 text-right w-24">{Number(po.total_amount).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
           </tr>
-          {po.terms.freight_amount ? (
+          {terms.freight_amount ? (
             <>
               <tr className="font-black bg-gray-50">
                 <td className="border border-black p-1 text-right uppercase">Freight Amount</td>
-                <td className="border border-black p-1 text-right">{Number(po.terms.freight_amount).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                <td className="border border-black p-1 text-right">{Number(terms.freight_amount).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
               </tr>
               <tr className="font-black bg-gray-50">
-                <td className="border border-black p-1 text-right uppercase">Freight GST ({po.terms.freight_tax || '18%'})</td>
+                <td className="border border-black p-1 text-right uppercase">Freight GST ({terms.freight_tax || '18%'})</td>
                 <td className="border border-black p-1 text-right">
                   {(() => {
-                    const taxStr = po.terms.freight_tax || 'GST @18%';
+                    const taxStr = terms.freight_tax || 'GST @18%';
                     const taxMatch = taxStr.match(/(\d+)%/);
                     const taxPercent = taxMatch ? parseFloat(taxMatch[1]) : 18;
-                    return Number(po.terms.freight_amount * (taxPercent / 100)).toLocaleString(undefined, {minimumFractionDigits: 2});
+                    return Number(terms.freight_amount * (taxPercent / 100)).toLocaleString(undefined, {minimumFractionDigits: 2});
                   })()}
                 </td>
               </tr>
@@ -468,10 +504,10 @@ const POPreview = React.memo<POPreviewProps>(({ po, setPo, settings, actions, is
             <td className="border border-black p-1.5 text-right uppercase text-[10px]">Grand Total Amount</td>
             <td className="border border-black p-1.5 text-right text-[10px]">
               ₹{(() => {
-                const taxStr = po.terms.freight_tax || 'GST @18%';
+                const taxStr = terms.freight_tax || 'GST @18%';
                 const taxMatch = taxStr.match(/(\d+)%/);
                 const taxPercent = taxMatch ? parseFloat(taxMatch[1]) : 18;
-                const fAmount = Number(po.terms.freight_amount) || 0;
+                const fAmount = Number(terms.freight_amount) || 0;
                 const fTax = fAmount * (taxPercent / 100);
                 return (Number(po.total_amount) + fAmount + fTax).toLocaleString(undefined, {minimumFractionDigits: 2});
               })()}
@@ -585,12 +621,12 @@ const POPreview = React.memo<POPreviewProps>(({ po, setPo, settings, actions, is
                       <div className="font-bold pt-1 uppercase shrink-0">To,</div>
                       <div className="flex-1">
                         <p className="font-black text-sm text-black uppercase mb-1">{po.vendor_name || 'VENDOR NAME'}</p>
-                        <p className="whitespace-pre-wrap max-w-[450px] text-black italic font-medium">{po.vendor_details.address}</p>
+                        <p className="whitespace-pre-wrap max-w-[450px] text-black italic font-medium">{vendorDetails.address}</p>
                         <div className="mt-1 space-y-0.5 text-black grid grid-cols-2 gap-x-8 border-t border-black/10 pt-1 font-bold text-left text-[10px]">
-                          <p><span className="uppercase text-[8px] mr-1">STATE :</span> {po.vendor_details.state}</p>
-                          <p><span className="uppercase text-[8px] mr-1">GSTIN :</span> {po.vendor_details.gstin}</p>
-                          <p><span className="uppercase text-[8px] mr-1">Mail ID :</span> {po.vendor_details.mail}</p>
-                          <p><span className="uppercase text-[8px] mr-1">Ph :</span> {po.vendor_details.ph}</p>
+                          <p><span className="uppercase text-[8px] mr-1">STATE :</span> {vendorDetails.state}</p>
+                          <p><span className="uppercase text-[8px] mr-1">GSTIN :</span> {vendorDetails.gstin}</p>
+                          <p><span className="uppercase text-[8px] mr-1">Mail ID :</span> {vendorDetails.mail}</p>
+                          <p><span className="uppercase text-[8px] mr-1">Ph :</span> {vendorDetails.ph}</p>
                         </div>
                       </div>
                     </div>

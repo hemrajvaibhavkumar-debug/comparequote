@@ -287,8 +287,8 @@ export default function POApprovalView() {
       return;
     }
 
-    const recipient = po.vendor_details.mail;
-    const cc = po.vendor_details.cc ? ` (CC: ${po.vendor_details.cc})` : '';
+    const recipient = po.vendor_details?.mail || '';
+    const cc = po.vendor_details?.cc ? ` (CC: ${po.vendor_details.cc})` : '';
     if (window.confirm(`Are you sure you want to send PO #${po.po_no} to ${recipient}${cc}?`)) {
       executeSendToVendor();
     }
