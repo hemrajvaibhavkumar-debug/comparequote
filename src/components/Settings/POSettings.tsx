@@ -253,7 +253,7 @@ const POSettings: React.FC = () => {
       <div className="ambient-glow ambient-blue -bottom-40 -left-40" />
 
       {/* Header */}
-      <div className="glass-navbar sticky z-40 print-hidden relative z-10" style={{ top: 'var(--main-nav-height)' }}>
+      <div className="glass-navbar print-hidden">
         <div className="max-w-6xl mx-auto px-8 py-4">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="flex items-center gap-3">

@@ -384,18 +384,33 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-1.5">
               <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Quotation Ref Type</label>
-              <select
-                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 cursor-pointer disabled:opacity-50"
-                value={po.quote_ref_type || 'MAIL'}
-                onChange={e => setPo({...po, quote_ref_type: e.target.value})}
-                disabled={isReadOnly}
-              >
-                <option value="MAIL">MAIL</option>
-                <option value="WHATSAPP">WHATSAPP</option>
-                <option value="LETTER">LETTER</option>
-                <option value="QUOTATION">QUOTATION</option>
-                <option value="DISCUSSIONS">DISCUSSIONS</option>
-              </select>
+              <div className="flex gap-2">
+                <select
+                  className="mt-1 w-1/3 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-2.5 text-xs text-slate-800 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 cursor-pointer disabled:opacity-50"
+                  value={['MAIL', 'WHATSAPP', 'LETTER', 'QUOTATION', 'DISCUSSIONS'].includes(po.quote_ref_type || '') ? po.quote_ref_type : (po.quote_ref_type ? 'CUSTOM' : 'MAIL')}
+                  onChange={e => {
+                    if (e.target.value !== 'CUSTOM') {
+                      setPo({...po, quote_ref_type: e.target.value});
+                    }
+                  }}
+                  disabled={isReadOnly}
+                >
+                  <option value="MAIL">MAIL</option>
+                  <option value="WHATSAPP">WHATSAPP</option>
+                  <option value="LETTER">LETTER</option>
+                  <option value="QUOTATION">QUOTATION</option>
+                  <option value="DISCUSSIONS">DISCUSSIONS</option>
+                  <option value="CUSTOM">CUSTOM...</option>
+                </select>
+                <input 
+                  type="text"
+                  className="mt-1 flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 disabled:opacity-50"
+                  value={po.quote_ref_type || ''}
+                  onChange={e => setPo({...po, quote_ref_type: e.target.value})}
+                  placeholder="e.g. EMAIL, CALL"
+                  disabled={isReadOnly}
+                />
+              </div>
             </div>
             <div className="space-y-1.5">
               <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Quotation Ref/Doc No.</label>
