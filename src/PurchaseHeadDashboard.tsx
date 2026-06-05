@@ -159,64 +159,65 @@ export default function PurchaseHeadDashboard() {
       setActioningId(null);
     }
   };
+  const filteredPOs = React.useMemo(() => {
+    return pos.filter(po => {
+      // 1. Search Term
+      const matchesSearch = po.po_no.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                           po.vendor_name.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // 2. Status
+      const poStatus = po.status || 'PENDING';
+      const matchesStatus = statusFilter === 'ALL' || poStatus === statusFilter || (statusFilter === 'PENDING' && poStatus === 'PENDING_L2');
+      
+      // 3. Company Filter
+      const matchesCompany = companyFilter === 'ALL' || po.version === companyFilter;
 
-  const filteredPOs = pos.filter(po => {
-    // 1. Search Term
-    const matchesSearch = po.po_no.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         po.vendor_name.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    // 2. Status
-    const poStatus = po.status || 'PENDING';
-    const matchesStatus = statusFilter === 'ALL' || poStatus === statusFilter || (statusFilter === 'PENDING' && poStatus === 'PENDING_L2');
+      // 4. Creator
+      const matchesCreator = creatorFilter === 'ALL' || po.created_by_name === creatorFilter;
 
-    // 3. Company (Version)
-    const matchesCompany = companyFilter === 'ALL' || po.version === companyFilter;
+      // 5. Amount Range
+      const amount = Number(po.total_amount) || 0;
+      const matchesMinAmount = !minAmount || amount >= Number(minAmount);
+      const matchesMaxAmount = !maxAmount || amount <= Number(maxAmount);
 
-    // 4. Creator
-    const matchesCreator = creatorFilter === 'ALL' || po.created_by_name === creatorFilter;
+      // 6. Date Filter
+      let matchesDate = true;
+      if (dateFilter !== 'ALL') {
+        const poDate = new Date(po.date);
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
 
-    // 5. Amount Range
-    const amount = Number(po.total_amount) || 0;
-    const matchesMinAmount = !minAmount || amount >= Number(minAmount);
-    const matchesMaxAmount = !maxAmount || amount <= Number(maxAmount);
-
-    // 6. Date Filter
-    let matchesDate = true;
-    if (dateFilter !== 'ALL') {
-      const poDate = new Date(po.date);
-      const now = new Date();
-      now.setHours(0, 0, 0, 0);
-
-      if (dateFilter === 'TODAY') {
-        matchesDate = poDate >= now;
-      } else if (dateFilter === 'THIS_WEEK') {
-        const weekAgo = new Date(now);
-        weekAgo.setDate(now.getDate() - 7);
-        matchesDate = poDate >= weekAgo;
-      } else if (dateFilter === 'THIS_MONTH') {
-        const monthAgo = new Date(now);
-        monthAgo.setMonth(now.getMonth() - 1);
-        matchesDate = poDate >= monthAgo;
-      } else if (dateFilter === 'CUSTOM') {
-        const start = customStartDate ? new Date(customStartDate) : null;
-        const end = customEndDate ? new Date(customEndDate) : null;
-        if (start) {
-          start.setHours(0, 0, 0, 0);
-          matchesDate = matchesDate && poDate >= start;
-        }
-        if (end) {
-          end.setHours(23, 59, 59, 999);
-          matchesDate = matchesDate && poDate <= end;
+        if (dateFilter === 'TODAY') {
+          matchesDate = poDate >= now;
+        } else if (dateFilter === 'THIS_WEEK') {
+          const weekAgo = new Date(now);
+          weekAgo.setDate(now.getDate() - 7);
+          matchesDate = poDate >= weekAgo;
+        } else if (dateFilter === 'THIS_MONTH') {
+          const monthAgo = new Date(now);
+          monthAgo.setMonth(now.getMonth() - 1);
+          matchesDate = poDate >= monthAgo;
+        } else if (dateFilter === 'CUSTOM') {
+          const start = customStartDate ? new Date(customStartDate) : null;
+          const end = customEndDate ? new Date(customEndDate) : null;
+          if (start) {
+            start.setHours(0, 0, 0, 0);
+            matchesDate = matchesDate && poDate >= start;
+          }
+          if (end) {
+            end.setHours(23, 59, 59, 999);
+            matchesDate = matchesDate && poDate <= end;
+          }
         }
       }
-    }
 
-    // 7. Classification
-    const poType = po.terms?.po_type || 'Consumables';
-    const matchesClassification = classificationFilter === 'ALL' || poType === classificationFilter;
+      // 7. Classification
+      const poType = po.terms?.po_type || 'Consumables';
+      const matchesClassification = classificationFilter === 'ALL' || poType === classificationFilter;
 
-    return matchesSearch && matchesStatus && matchesCompany && matchesCreator && matchesMinAmount && matchesMaxAmount && matchesDate && matchesClassification;
-  });
+      return matchesSearch && matchesStatus && matchesCompany && matchesCreator && matchesMinAmount && matchesMaxAmount && matchesDate && matchesClassification;
+    });
+  }, [pos, searchTerm, statusFilter, companyFilter, creatorFilter, minAmount, maxAmount, dateFilter, customStartDate, customEndDate, classificationFilter]);
 
   const uniqueCreators = Array.from(new Set(pos.map(p => p.created_by_name).filter(Boolean)));
 
@@ -293,6 +294,11 @@ export default function PurchaseHeadDashboard() {
             {po.l1_approved_by && (
               <p className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase flex items-center gap-1">
                 <ShieldCheck className="w-3 h-3" /> L1 Appr: {po.l1_approved_by}
+              </p>
+            )}
+            {po.approved_by && (
+              <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase flex items-center gap-1">
+                <CheckCircle className="w-3 h-3" /> Final Appr: {po.approved_by}
               </p>
             )}
           </div>

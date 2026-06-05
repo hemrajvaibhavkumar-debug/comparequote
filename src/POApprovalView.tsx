@@ -110,7 +110,12 @@ export default function POApprovalView() {
     if (newStatus === 'REJECTED') {
       setShowRejectModal(true);
       return;
+    } else if (newStatus === 'APPROVED') {
+      // Final Approval: Default to ROHIT AGGARWAL and skip modal
+      if (!window.confirm(`Are you sure you want to finalize and sign this Purchase Order?`)) return;
+      executeStatusUpdate('APPROVED', '', 'ROHIT AGGARWAL');
     } else {
+      // L1 Approval: Still prompt for name
       setPendingStatusUpdate(newStatus);
       setApproverName(user?.username || '');
       setShowApproveModal(true);

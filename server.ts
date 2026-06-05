@@ -728,7 +728,21 @@ async function startServer() {
 
       const pos = await prisma.purchaseOrder.findMany({
         orderBy: { updated_at: "desc" },
-        take: 500
+        take: 500,
+        select: {
+          id: true,
+          po_no: true,
+          date: true,
+          vendor_name: true,
+          version: true,
+          total_amount: true,
+          created_by_name: true,
+          status: true,
+          updated_at: true,
+          l1_approved_by: true,
+          approved_by: true,
+          quote_doc_no: true
+        }
       });
       dbCache.set(cacheKey, pos);
       res.json(pos);

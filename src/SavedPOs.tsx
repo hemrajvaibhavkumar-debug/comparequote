@@ -262,6 +262,20 @@ const SavedPOs: React.FC = () => {
                       <td className="px-6 py-5 cursor-pointer" onClick={() => navigate(`/approve-po/${po.id}`)}>
                         <div className="flex flex-col items-center gap-2">
                           {getStatusBadge(po.status || 'PENDING')}
+                          {(po.l1_approved_by || po.approved_by) && (
+                            <div className="flex flex-col items-center gap-1 mt-1">
+                              {po.l1_approved_by && (
+                                <span className="text-[9px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-tight bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 rounded border border-amber-200/50 dark:border-amber-900/50" title="L1 Reviewer">
+                                  L1: {po.l1_approved_by}
+                                </span>
+                              )}
+                              {po.approved_by && (
+                                <span className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-tight bg-indigo-50 dark:bg-indigo-950/30 px-2 py-0.5 rounded border border-indigo-200/50 dark:border-indigo-900/50" title="Final Approver">
+                                  Final: {po.approved_by}
+                                </span>
+                              )}
+                            </div>
+                          )}
                           {po.status === 'REJECTED' && po.rejection_remarks && (
                             <div className="max-w-[150px] text-center">
                               <p className="text-[9px] font-bold text-slate-900 dark:text-slate-100 uppercase tracking-tighter mb-0.5 underline decoration-slate-300 dark:decoration-slate-700">Reason:</p>
