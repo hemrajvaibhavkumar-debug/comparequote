@@ -143,6 +143,12 @@ export default function POApprovalView() {
         const generated = await generatePDFBase64Internal();
         if (generated) {
           pdf_base64 = generated;
+        } else {
+          showToast("Critical: Failed to generate signed PDF snapshot. Approval aborted.", "error");
+          setPo(po); // Revert local state
+          setSubmitting(false);
+          setIsExporting(false);
+          return;
         }
         setIsExporting(false);
       }
@@ -453,16 +459,15 @@ export default function POApprovalView() {
         <Download className="w-3.5 h-3.5" /> Download PDF
       </button>
 
-      {isApproved && (
-        <button 
-          onClick={handleSendToVendor}
-          disabled={sending}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-[10px] uppercase tracking-widest bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 cursor-pointer"
-        >
-          {sending ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Mail className="w-3.5 h-3.5" />}
-          Send to Vendor
-        </button>
-      )}
+      <button 
+        onClick={handleSendToVendor}
+        disabled={sending || !isApproved}
+        className="flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-[10px] uppercase tracking-widest bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0 cursor-pointer disabled:cursor-not-allowed"
+        title={!isApproved ? "PO must be approved and signed before sending to vendor" : ""}
+      >
+        {sending ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Mail className="w-3.5 h-3.5" />}
+        Send to Vendor
+      </button>
 
       {isPendingL1 && canApproveL1 && (
         <div className="flex items-center gap-2 ml-auto md:ml-0">
@@ -768,8 +773,9 @@ export default function POApprovalView() {
             ) : isApproved ? (
               <button 
                 onClick={handleSendToVendor}
-                disabled={sending}
-                className="px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20 flex items-center gap-3 transition-all duration-200 transform hover:-translate-y-0.5 cursor-pointer disabled:opacity-50"
+                disabled={sending || !po.pdf_base64}
+                className="px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20 flex items-center gap-3 transition-all duration-200 transform hover:-translate-y-0.5 cursor-pointer disabled:opacity-50 disabled:hover:translate-y-0 disabled:cursor-not-allowed"
+                title={!po.pdf_base64 ? "Signed document snapshot is missing. Please regenerate snapshot." : ""}
               >
                 {sending ? (
                   <>
@@ -879,10 +885,10 @@ export default function POApprovalView() {
                     onChange={(e) => setApproverName(e.target.value)}
                   >
                     <option value="" disabled>Select employee name...</option>
-                    <option value="Amit">Amit</option>
-                    <option value="Sayanta">Sayanta</option>
-                    <option value="Arpita">Arpita</option>
-                    <option value="Proloy">Proloy</option>
+                    <option value="Amit Ray">Amit Ray</option>
+                    <option value="Sayanta Chakroborty">Sayanta Chakroborty</option>
+                    <option value="Arpita Ghosh">Arpita Ghosh</option>
+                    <option value="Proloy Ghosh">Proloy Ghosh</option>
                   </select>
                   <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                     <ChevronRight className="w-4 h-4 rotate-90" />

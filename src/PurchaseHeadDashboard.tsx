@@ -212,7 +212,8 @@ export default function PurchaseHeadDashboard() {
       }
 
       // 7. Classification
-      const poType = po.terms?.po_type || 'Consumables';
+      const terms = typeof po.terms === 'string' ? JSON.parse(po.terms) : (po.terms || {});
+      const poType = terms?.po_type || 'Consumables';
       const matchesClassification = classificationFilter === 'ALL' || poType === classificationFilter;
 
       return matchesSearch && matchesStatus && matchesCompany && matchesCreator && matchesMinAmount && matchesMaxAmount && matchesDate && matchesClassification;
@@ -238,6 +239,9 @@ export default function PurchaseHeadDashboard() {
   const renderPOCard = (po: any) => {
     const poStatus = po.status || 'PENDING';
     const isActioning = actioningId === po.id;
+
+    const terms = typeof po.terms === 'string' ? JSON.parse(po.terms) : (po.terms || {});
+    const poTypeDisplay = terms?.po_type || 'Consumables';
 
     return (
       <div 
@@ -273,11 +277,11 @@ export default function PurchaseHeadDashboard() {
               {po.version === 'hemraj_rice' ? 'Rice Mill' : po.version === 'hemraj_ind' ? 'Industries' : 'Radhashyam'}
             </span>
             <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded border ${
-              (po.terms?.po_type || 'Consumables') === 'Capital'
+              poTypeDisplay === 'Capital'
                 ? 'bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800'
                 : 'bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-800'
             }`}>
-              {po.terms?.po_type || 'Consumables'}
+              {poTypeDisplay}
             </span>
           </div>
 

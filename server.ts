@@ -60,7 +60,7 @@ async function startServer() {
   app.set('trust proxy', 1);
   const PORT = 3000;
 
-  // Auto-Seeder for SuperAdmin and Roles
+  // Auto-Seeder for SuperAdmin and Roles 
   const seedDefaults = async (retries = 3) => {
     try {
       console.log(`[Auth] Attempting to seed defaults (Attempts remaining: ${retries})...`);
@@ -91,10 +91,7 @@ async function startServer() {
               "VIEW_SAVED_POS", 
               "MANAGE_SETTINGS", 
               "MANAGE_USERS",
-              "APPROVE_PO_L1",
-              "APPROVE_PO",
-              "APPROVE_INDENT",
-              "EDIT_APPROVED_PO"
+              "APPROVE_PO"
             ]
           }
         });
@@ -728,24 +725,20 @@ async function startServer() {
 
       const pos = await prisma.purchaseOrder.findMany({
         orderBy: { updated_at: "desc" },
-        take: 500,
-        select: {
-          id: true,
-          po_no: true,
-          date: true,
-          vendor_name: true,
-          version: true,
-          total_amount: true,
-          created_by_name: true,
-          status: true,
-          updated_at: true,
-          l1_approved_by: true,
-          approved_by: true,
-          quote_doc_no: true
-        }
+        take: 500
       });
-      dbCache.set(cacheKey, pos);
-      res.json(pos);
+
+      // Ensure JSON fields are parsed objects
+      const parsedPos = pos.map(po => ({
+        ...po,
+        terms: typeof po.terms === 'string' ? JSON.parse(po.terms) : (po.terms || {}),
+        items: typeof po.items === 'string' ? JSON.parse(po.items) : (po.items || []),
+        vendor_details: typeof po.vendor_details === 'string' ? JSON.parse(po.vendor_details) : (po.vendor_details || {}),
+        internal_comments: typeof po.internal_comments === 'string' ? JSON.parse(po.internal_comments) : (po.internal_comments || []),
+      }));
+
+      dbCache.set(cacheKey, parsedPos);
+      res.json(parsedPos);
     } catch (error: any) {
       console.error("[Backend] Error fetching POs:", error.message || error);
       res.status(500).json({ 
@@ -781,8 +774,18 @@ async function startServer() {
 
       const po = await prisma.purchaseOrder.findUnique({ where: { id: Number(req.params.id) } });
       if (!po) return res.status(404).json({ error: "PO not found" });
-      dbCache.set(cacheKey, po);
-      res.json(po);
+
+      // Ensure JSON fields are parsed objects
+      const parsedPo = {
+        ...po,
+        terms: typeof po.terms === 'string' ? JSON.parse(po.terms) : (po.terms || {}),
+        items: typeof po.items === 'string' ? JSON.parse(po.items) : (po.items || []),
+        vendor_details: typeof po.vendor_details === 'string' ? JSON.parse(po.vendor_details) : (po.vendor_details || {}),
+        internal_comments: typeof po.internal_comments === 'string' ? JSON.parse(po.internal_comments) : (po.internal_comments || []),
+      };
+
+      dbCache.set(cacheKey, parsedPo);
+      res.json(parsedPo);
     } catch (error) {
       console.error("[Backend] PO Fetch Error:", error);
       res.status(500).json({ error: "Failed to fetch PO" });
@@ -909,41 +912,20 @@ async function startServer() {
   });
 
   // Approval Workflow
-  app.put("/api/po/:id/status", authenticateToken, async (req, res) => {
+  app.put("/api/po/:id/status", authenticateToken, requirePermission("APPROVE_PO"), async (req, res) => {
     try {
       const { status, remarks, pdf_base64 } = req.body;
       const user = (req as any).user;
-      const permissions = user.permissions || [];
-      const isSuperAdmin = user.role === 'SUPERADMIN';
       
-      const hasL1 = isSuperAdmin || permissions.includes("APPROVE_PO_L1");
-      const hasL2 = isSuperAdmin || permissions.includes("APPROVE_PO");
-
-      // Permission Checks
-      if (status === 'PENDING_L2' && !hasL1) {
-        return res.status(403).json({ error: "Permission denied: Require PO L1 Approval permission" });
-      }
-      if (status === 'APPROVED' && !hasL2) {
-        return res.status(403).json({ error: "Permission denied: Require Final PO Approval permission" });
-      }
-      if (status === 'REJECTED' && !hasL1 && !hasL2) {
-        return res.status(403).json({ error: "Permission denied: Require approval permissions to reject" });
-      }
-
       const updateData: any = { status };
       if (pdf_base64) updateData.pdf_base64 = pdf_base64;
 
-      if (status === 'PENDING_L2') {
-        updateData.l1_approved_by = req.body.l1_approved_by || user.username;
-        updateData.l1_approved_at = new Date();
-        updateData.rejection_remarks = null;
-      } else if (status === 'APPROVED') {
-        updateData.approved_by = req.body.approved_by || user.username;
+      if (status === 'APPROVED') {
+        updateData.approved_by = user.username;
         updateData.approved_at = new Date();
-        updateData.rejection_remarks = null;
+        updateData.rejection_remarks = null; // Clear remarks if re-approved
       } else if (status === 'REJECTED') {
         updateData.rejection_remarks = remarks || 'No reason provided';
-        // Reset approval info on rejection if needed, or keep it to see who rejected
         updateData.approved_by = null;
         updateData.approved_at = null;
       }
@@ -1058,7 +1040,7 @@ async function startServer() {
     }
   });
 
-  app.put("/api/indents/:id/status", authenticateToken, requirePermission("APPROVE_INDENT"), async (req, res) => {
+  app.put("/api/indents/:id/status", authenticateToken, requirePermission("APPROVE_PO"), async (req, res) => {
     try {
       const { status, remarks } = req.body;
       const user = (req as any).user;
@@ -1084,56 +1066,30 @@ async function startServer() {
       });
 
       if (status === 'APPROVED') {
-        const webhookUrl = process.env.INDENT_WEBHOOK_URL || "https://hemrajgroup.app.n8n.cloud/webhook/ce4e0f9f-d2ae-45ed-a520-e8d624e043ee";
+        const webhookUrl = process.env.INDENT_WEBHOOK_URL || "https://hemrajgroup.app.n8n.cloud/webhook-test/ce4e0f9f-d2ae-45ed-a520-e8d624e043ee";
         try {
           console.log(`[n8n] Triggering Indent Webhook for ${indent.indent_no} to ${webhookUrl}...`);
           
-          let itemsArr = [];
-          if (Array.isArray(indent.items)) {
-            itemsArr = indent.items;
-          } else if (typeof indent.items === 'string') {
-            try {
-              itemsArr = JSON.parse(indent.items);
-            } catch (e) {
-              console.error("[n8n] Failed to parse items string:", e);
-            }
-          }
+          const itemsArr = Array.isArray(indent.items) 
+            ? indent.items 
+            : (typeof indent.items === 'string' ? JSON.parse(indent.items) : []);
             
-          // Construct a clean, explicit payload to ensure all data is serializable and present
           const payload = {
-            id: indent.id,
-            indent_no: indent.indent_no,
-            date: indent.date,
-            plant_name: indent.plant_name,
-            department: indent.department,
-            order_placed_by: indent.order_placed_by,
-            order_passed_by: indent.order_passed_by,
+            ...indent,
             items: itemsArr,
-            total_items: indent.total_items || itemsArr.length,
-            status: indent.status,
-            created_by_name: indent.created_by_name,
-            approved_by: indent.approved_by,
-            approved_at: indent.approved_at,
-            rejection_remarks: indent.rejection_remarks,
-            internal_comments: indent.internal_comments
+            total_items: indent.total_items || itemsArr.length
           };
-
-          console.log(`[n8n] Payload being sent:`, JSON.stringify(payload).substring(0, 200) + "...");
 
           const webhookRes = await fetch(webhookUrl, {
             method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
           
           if (!webhookRes.ok) {
-            const errBody = await webhookRes.text();
-            console.error(`[n8n] Indent Webhook error (Status ${webhookRes.status}):`, errBody);
+            console.error("[n8n] Indent Webhook error:", await webhookRes.text());
           } else {
-            console.log(`[n8n] Indent Webhook sent successfully (Status ${webhookRes.status}).`);
+            console.log("[n8n] Indent Webhook sent successfully.");
           }
         } catch (webhookErr) {
           console.error("[Backend] Failed to send Indent Webhook:", webhookErr);
@@ -1580,19 +1536,8 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), "dist");
-    
-    // Serve static files with a specific rule for assets
-    app.use("/assets", express.static(path.join(distPath, "assets"), {
-      fallthrough: false // If file doesn't exist in /assets, don't fall through to next middleware
-    }));
-    
     app.use(express.static(distPath));
-    
     app.get("*", (req, res) => {
-      // Don't serve index.html for missing asset requests
-      if (req.path.startsWith("/assets/")) {
-        return res.status(404).send("Asset not found");
-      }
       res.sendFile(path.join(distPath, "index.html"));
     });
   }

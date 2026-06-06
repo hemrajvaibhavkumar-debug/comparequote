@@ -233,7 +233,22 @@ const SavedPOs: React.FC = () => {
                     <tr key={po.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-950/50 transition-colors group">
                       <td className="px-6 py-5 cursor-pointer" onClick={() => navigate(`/approve-po/${po.id}`)}>
                         <div className="flex flex-col">
-                          <span className="font-extrabold text-slate-800 dark:text-slate-100 group-hover:text-slate-900 dark:group-hover:text-white transition-colors uppercase tracking-tight">#{po.po_no}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-extrabold text-slate-800 dark:text-slate-100 group-hover:text-slate-900 dark:group-hover:text-white transition-colors uppercase tracking-tight">#{po.po_no}</span>
+                            {(() => {
+                              const terms = typeof po.terms === 'string' ? JSON.parse(po.terms) : (po.terms || {});
+                              const poType = terms?.po_type || 'Consumables';
+                              return (
+                                <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded border ${
+                                  poType === 'Capital'
+                                    ? 'bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800'
+                                    : 'bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-800'
+                                }`}>
+                                  {poType}
+                                </span>
+                              );
+                            })()}
+                          </div>
                           <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mt-1 flex items-center gap-1.5">
                             <Clock className="w-3.5 h-3.5" /> {(() => {
                               const d = new Date(po.date);
