@@ -7,20 +7,27 @@ import CommentsModal from './components/CommentsModal';
 export default function PurchaseHeadDashboard() {
   const [pos, setPos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [stats, setStats] = useState({
+    pendingCount: 0,
+    approvedCount: 0,
+    combinedValue: 0,
+    uniqueCreators: [] as string[]
+  });
+
+  const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('PENDING');
-  
-  // Advanced Filters State
   const [companyFilter, setCompanyFilter] = useState('ALL');
-  const [dateFilter, setDateFilter] = useState('ALL'); // ALL, TODAY, THIS_WEEK, THIS_MONTH, CUSTOM
+  const [dateFilter, setDateFilter] = useState('ALL');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [creatorFilter, setCreatorFilter] = useState('ALL');
   const [minAmount, setMinAmount] = useState('');
   const [maxAmount, setMaxAmount] = useState('');
-  const [classificationFilter, setClassificationFilter] = useState('ALL'); // ALL, Capital, Consumables
-  const [showFilters, setShowFilters] = useState(false);
-
+  const [classificationFilter, setClassificationFilter] = useState('ALL');
   const [actioningId, setActioningId] = useState<number | null>(null);
   const { token, logout, user } = useAuth();
   
@@ -33,13 +40,28 @@ export default function PurchaseHeadDashboard() {
   const canEditApproved = user?.role === 'SUPERADMIN' || user?.permissions.includes('EDIT_APPROVED_PO');
 
   useEffect(() => {
-    fetchPOs();
-  }, []);
+    fetchPOs(1);
+  }, [searchTerm, statusFilter, companyFilter, dateFilter, customStartDate, customEndDate, creatorFilter, minAmount, maxAmount, classificationFilter]);
 
-  const fetchPOs = async () => {
+  const fetchPOs = async (pageNum = 1) => {
     try {
       setLoading(true);
-      const res = await fetch('/api/po', {
+      const params = new URLSearchParams({
+        page: pageNum.toString(),
+        limit: '24',
+        status: statusFilter,
+        search: searchTerm,
+        version: companyFilter,
+        creator: creatorFilter,
+        minAmount: minAmount,
+        maxAmount: maxAmount,
+        dateFilter: dateFilter,
+        startDate: customStartDate,
+        endDate: customEndDate,
+        classification: classificationFilter
+      });
+
+      const res = await fetch(`/api/po/dashboard?${params.toString()}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -49,16 +71,27 @@ export default function PurchaseHeadDashboard() {
       }
 
       const data = await res.json();
-      if (res.ok && Array.isArray(data)) {
-        setPos(data);
-      } else {
-        console.error("Failed to fetch POs: Expected array but received", data);
-        setPos([]);
+      if (res.ok) {
+        if (pageNum === 1) {
+          setPos(data.pos);
+        } else {
+          setPos(prev => [...prev, ...data.pos]);
+        }
+        setTotalPages(data.totalPages);
+        setTotalCount(data.total);
+        setPage(data.page);
+        if (data.stats) setStats(data.stats);
       }
     } catch (e) {
       console.error("Failed to fetch POs", e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMore = () => {
+    if (page < totalPages) {
+      fetchPOs(page + 1);
     }
   };
 
@@ -159,68 +192,10 @@ export default function PurchaseHeadDashboard() {
       setActioningId(null);
     }
   };
-  const filteredPOs = React.useMemo(() => {
-    return pos.filter(po => {
-      // 1. Search Term
-      const matchesSearch = po.po_no.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                           po.vendor_name.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      // 2. Status
-      const poStatus = po.status || 'PENDING';
-      const matchesStatus = statusFilter === 'ALL' || poStatus === statusFilter || (statusFilter === 'PENDING' && poStatus === 'PENDING_L2');
-      
-      // 3. Company Filter
-      const matchesCompany = companyFilter === 'ALL' || po.version === companyFilter;
 
-      // 4. Creator
-      const matchesCreator = creatorFilter === 'ALL' || po.created_by_name === creatorFilter;
-
-      // 5. Amount Range
-      const amount = Number(po.total_amount) || 0;
-      const matchesMinAmount = !minAmount || amount >= Number(minAmount);
-      const matchesMaxAmount = !maxAmount || amount <= Number(maxAmount);
-
-      // 6. Date Filter
-      let matchesDate = true;
-      if (dateFilter !== 'ALL') {
-        const poDate = new Date(po.date);
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
-
-        if (dateFilter === 'TODAY') {
-          matchesDate = poDate >= now;
-        } else if (dateFilter === 'THIS_WEEK') {
-          const weekAgo = new Date(now);
-          weekAgo.setDate(now.getDate() - 7);
-          matchesDate = poDate >= weekAgo;
-        } else if (dateFilter === 'THIS_MONTH') {
-          const monthAgo = new Date(now);
-          monthAgo.setMonth(now.getMonth() - 1);
-          matchesDate = poDate >= monthAgo;
-        } else if (dateFilter === 'CUSTOM') {
-          const start = customStartDate ? new Date(customStartDate) : null;
-          const end = customEndDate ? new Date(customEndDate) : null;
-          if (start) {
-            start.setHours(0, 0, 0, 0);
-            matchesDate = matchesDate && poDate >= start;
-          }
-          if (end) {
-            end.setHours(23, 59, 59, 999);
-            matchesDate = matchesDate && poDate <= end;
-          }
-        }
-      }
-
-      // 7. Classification
-      const terms = typeof po.terms === 'string' ? JSON.parse(po.terms) : (po.terms || {});
-      const poType = terms?.po_type || 'Consumables';
-      const matchesClassification = classificationFilter === 'ALL' || poType === classificationFilter;
-
-      return matchesSearch && matchesStatus && matchesCompany && matchesCreator && matchesMinAmount && matchesMaxAmount && matchesDate && matchesClassification;
-    });
-  }, [pos, searchTerm, statusFilter, companyFilter, creatorFilter, minAmount, maxAmount, dateFilter, customStartDate, customEndDate, classificationFilter]);
-
-  const uniqueCreators = Array.from(new Set(pos.map(p => p.created_by_name).filter(Boolean)));
+  const l1PendingPos = pos.filter(p => (p.status || 'PENDING') === 'PENDING');
+  const l2PendingPos = pos.filter(p => p.status === 'PENDING_L2');
+  const actionedPos = pos.filter(p => p.status === 'APPROVED' || p.status === 'REJECTED');
 
   const getStatusBadge = (status: string) => {
     const s = status || 'PENDING';
@@ -311,6 +286,7 @@ export default function PurchaseHeadDashboard() {
             <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 font-semibold uppercase">
               <Calendar className="w-4 h-4 text-slate-350 dark:text-slate-600" />
               {(() => {
+                if (!po.date) return '';
                 const d = new Date(po.date);
                 if (isNaN(d.getTime())) return po.date;
                 const day = String(d.getDate()).padStart(2, '0');
@@ -374,15 +350,6 @@ export default function PurchaseHeadDashboard() {
     );
   };
 
-  const l1PendingPos = filteredPOs.filter(p => (p.status || 'PENDING') === 'PENDING');
-  const l2PendingPos = filteredPOs.filter(p => p.status === 'PENDING_L2');
-  const actionedPos = filteredPOs.filter(p => p.status === 'APPROVED' || p.status === 'REJECTED');
-
-  const totalCount = filteredPOs.length;
-  const pendingCount = l1PendingPos.length + l2PendingPos.length;
-  const approvedCount = filteredPOs.filter(p => p.status === 'APPROVED').length;
-  const combinedValue = filteredPOs.reduce((sum, p) => sum + (Number(p.total_amount) || 0), 0);
-
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 transition-colors duration-300 p-4 sm:p-8 relative">
       {/* Background ambient glows */}
@@ -407,7 +374,10 @@ export default function PurchaseHeadDashboard() {
                   placeholder="Search POs..." 
                   className="pl-10 pr-4 py-2.5 bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-slate-100/10 focus:border-slate-900 dark:focus:border-slate-100 w-full sm:w-64 transition-all text-sm font-medium text-slate-800 dark:text-slate-100"
                   value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
+                  onChange={e => {
+                    setSearchTerm(e.target.value);
+                    setPage(1);
+                  }}
                 />
               </div>
 
@@ -415,7 +385,10 @@ export default function PurchaseHeadDashboard() {
                 <Filter className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
                 <select 
                   value={statusFilter}
-                  onChange={e => setStatusFilter(e.target.value)}
+                  onChange={e => {
+                    setStatusFilter(e.target.value);
+                    setPage(1);
+                  }}
                   className="pl-10 pr-10 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-slate-100/10 transition-all appearance-none cursor-pointer w-full sm:w-auto"
                 >
                   <option value="ALL">Show All POs</option>
@@ -447,7 +420,7 @@ export default function PurchaseHeadDashboard() {
                 <label className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">Company / Unit</label>
                 <select 
                   value={companyFilter}
-                  onChange={e => setCompanyFilter(e.target.value)}
+                  onChange={e => { setCompanyFilter(e.target.value); setPage(1); }}
                   className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
                 >
                   <option value="ALL">All Units</option>
@@ -462,7 +435,7 @@ export default function PurchaseHeadDashboard() {
                 <label className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">Time Period</label>
                 <select 
                   value={dateFilter}
-                  onChange={e => setDateFilter(e.target.value)}
+                  onChange={e => { setDateFilter(e.target.value); setPage(1); }}
                   className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
                 >
                   <option value="ALL">All Time</option>
@@ -473,8 +446,8 @@ export default function PurchaseHeadDashboard() {
                 </select>
                 {dateFilter === 'CUSTOM' && (
                   <div className="grid grid-cols-2 gap-2 mt-2">
-                    <input type="date" value={customStartDate} onChange={e => setCustomStartDate(e.target.value)} className="w-full px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] font-bold" />
-                    <input type="date" value={customEndDate} onChange={e => setCustomEndDate(e.target.value)} className="w-full px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] font-bold" />
+                    <input type="date" value={customStartDate} onChange={e => { setCustomStartDate(e.target.value); setPage(1); }} className="w-full px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] font-bold" />
+                    <input type="date" value={customEndDate} onChange={e => { setCustomEndDate(e.target.value); setPage(1); }} className="w-full px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] font-bold" />
                   </div>
                 )}
               </div>
@@ -484,7 +457,7 @@ export default function PurchaseHeadDashboard() {
                 <label className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">PO Classification</label>
                 <select 
                   value={classificationFilter}
-                  onChange={e => setClassificationFilter(e.target.value)}
+                  onChange={e => { setClassificationFilter(e.target.value); setPage(1); }}
                   className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
                 >
                   <option value="ALL">All Types</option>
@@ -499,11 +472,11 @@ export default function PurchaseHeadDashboard() {
                   <label className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">Created By</label>
                   <select 
                     value={creatorFilter}
-                    onChange={e => setCreatorFilter(e.target.value)}
+                    onChange={e => { setCreatorFilter(e.target.value); setPage(1); }}
                     className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
                   >
                     <option value="ALL">All Creators</option>
-                    {uniqueCreators.map(c => <option key={c} value={c}>{c}</option>)}
+                    {stats.uniqueCreators.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
               </div>
@@ -512,17 +485,17 @@ export default function PurchaseHeadDashboard() {
                 <div className="w-full sm:w-auto">
                   <label className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest mb-1.5 block">Amount Range (₹)</label>
                   <div className="flex gap-2 items-center">
-                    <input type="number" placeholder="Min" value={minAmount} onChange={e => setMinAmount(e.target.value)} className="w-32 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold" />
+                    <input type="number" placeholder="Min" value={minAmount} onChange={e => { setMinAmount(e.target.value); setPage(1); }} className="w-32 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold" />
                     <span className="text-slate-300">to</span>
-                    <input type="number" placeholder="Max" value={maxAmount} onChange={e => setMaxAmount(e.target.value)} className="w-32 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold" />
+                    <input type="number" placeholder="Max" value={maxAmount} onChange={e => { setMaxAmount(e.target.value); setPage(1); }} className="w-32 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold" />
                   </div>
                 </div>
                 
                 <button 
                   onClick={() => {
-                    setSearchTerm(''); setStatusFilter('ALL'); setCompanyFilter('ALL'); setDateFilter('ALL');
+                    setSearchTerm(''); setStatusFilter('PENDING'); setCompanyFilter('ALL'); setDateFilter('ALL');
                     setCreatorFilter('ALL'); setMinAmount(''); setMaxAmount(''); setCustomStartDate(''); setCustomEndDate('');
-                    setClassificationFilter('ALL');
+                    setClassificationFilter('ALL'); setPage(1);
                   }}
                   className="px-6 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-500 hover:text-rose-600 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all flex items-center gap-2 cursor-pointer border border-slate-200 dark:border-slate-700 hover:border-rose-200 dark:hover:border-rose-900/50"
                 >
@@ -550,7 +523,7 @@ export default function PurchaseHeadDashboard() {
             </div>
             <div>
               <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 tracking-wider">Awaiting Sign</span>
-              <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100 mt-0.5">{pendingCount} POs</h3>
+              <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100 mt-0.5">{stats.pendingCount} POs</h3>
             </div>
           </div>
           <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-xs flex items-center gap-4 border-l-4 border-l-slate-900 dark:border-l-slate-200">
@@ -559,7 +532,7 @@ export default function PurchaseHeadDashboard() {
             </div>
             <div>
               <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 tracking-wider">Approved Count</span>
-              <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100 mt-0.5">{approvedCount} POs</h3>
+              <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100 mt-0.5">{stats.approvedCount} POs</h3>
             </div>
           </div>
           <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-xs flex items-center gap-4 border-l-4 border-l-black dark:border-l-white">
@@ -568,16 +541,16 @@ export default function PurchaseHeadDashboard() {
             </div>
             <div>
               <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 tracking-wider">Combined Value</span>
-              <h3 className="text-md font-black text-slate-900 dark:text-slate-100 mt-0.5">₹{combinedValue.toLocaleString('en-IN')}</h3>
+              <h3 className="text-md font-black text-slate-900 dark:text-slate-100 mt-0.5">₹{stats.combinedValue.toLocaleString('en-IN')}</h3>
             </div>
           </div>
         </div>
 
-        {loading ? (
+        {loading && pos.length === 0 ? (
           <div className="flex justify-center py-24">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-slate-900 dark:border-slate-100"></div>
           </div>
-        ) : filteredPOs.length === 0 ? (
+        ) : pos.length === 0 ? (
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xs p-16 text-center border border-slate-100 dark:border-slate-800 max-w-2xl mx-auto space-y-4">
             <div className="bg-slate-50 dark:bg-slate-800 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
               <FileText className="text-slate-350 dark:text-slate-600 w-6 h-6" />
@@ -588,14 +561,14 @@ export default function PurchaseHeadDashboard() {
         ) : (
           <div className="space-y-12">
             {/* L1 Approvals */}
-            {(canApproveL1 || user?.role === 'SUPERADMIN') && (
+            {(statusFilter === 'ALL' || statusFilter === 'PENDING') && (canApproveL1 || user?.role === 'SUPERADMIN') && (
               <div className="space-y-6">
                 <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
                   <Clock className="w-5 h-5 text-indigo-600" />
                   <h2 className="text-lg font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight font-sans">Level 1 Approvals (Initial Review)</h2>
                 </div>
                 {l1PendingPos.length === 0 ? (
-                  <p className="text-slate-400 dark:text-slate-600 text-xs font-bold uppercase tracking-widest italic">No pending Level 1 reviews.</p>
+                  <p className="text-slate-400 dark:text-slate-600 text-xs font-bold uppercase tracking-widest italic">No pending Level 1 reviews on this page.</p>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {l1PendingPos.map(po => renderPOCard(po))}
@@ -605,14 +578,14 @@ export default function PurchaseHeadDashboard() {
             )}
 
             {/* L2 Approvals */}
-            {(canApproveL2 || user?.role === 'SUPERADMIN') && (
+            {(statusFilter === 'ALL' || statusFilter === 'PENDING') && (canApproveL2 || user?.role === 'SUPERADMIN') && (
               <div className="space-y-6">
                 <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
                   <ShieldCheck className="w-5 h-5 text-amber-600" />
                   <h2 className="text-lg font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight font-sans">Final Authorization (Purchase Head)</h2>
                 </div>
                 {l2PendingPos.length === 0 ? (
-                  <p className="text-slate-400 dark:text-slate-600 text-xs font-bold uppercase tracking-widest italic">No pending final authorizations.</p>
+                  <p className="text-slate-400 dark:text-slate-600 text-xs font-bold uppercase tracking-widest italic">No pending final authorizations on this page.</p>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {l2PendingPos.map(po => renderPOCard(po))}
@@ -622,18 +595,42 @@ export default function PurchaseHeadDashboard() {
             )}
 
             {/* Actioned / History */}
-            <div className="space-y-6">
-              <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
-                <CheckCircle className="w-5 h-5 text-slate-600" />
-                <h2 className="text-lg font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight font-sans">Actioned Records</h2>
-              </div>
-              {actionedPos.length === 0 ? (
-                <p className="text-slate-400 dark:text-slate-600 text-xs font-bold uppercase tracking-widest italic">No actioned records found.</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {actionedPos.map(po => renderPOCard(po))}
+            {(statusFilter === 'ALL' || statusFilter === 'APPROVED' || statusFilter === 'REJECTED') && (
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <CheckCircle className="w-5 h-5 text-slate-600" />
+                  <h2 className="text-lg font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight font-sans">Actioned Records</h2>
                 </div>
-              )}
+                {actionedPos.length === 0 ? (
+                  <p className="text-slate-400 dark:text-slate-600 text-xs font-bold uppercase tracking-widest italic">No actioned records found on this page.</p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {actionedPos.map(po => renderPOCard(po))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Load More Button */}
+            {page < totalPages && (
+              <div className="flex justify-center pt-8">
+                <button 
+                  onClick={loadMore}
+                  disabled={loading}
+                  className="px-10 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-sm hover:shadow-md hover:border-slate-900 dark:hover:border-slate-100 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-3 cursor-pointer"
+                >
+                  {loading ? (
+                    <div className="w-4 h-4 border-2 border-slate-900 dark:border-slate-100 border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <Clock className="w-4 h-4" />
+                  )}
+                  Load More Records
+                </button>
+              </div>
+            )}
+            
+            <div className="text-center text-[10px] text-slate-400 dark:text-slate-600 font-bold uppercase tracking-widest">
+              Showing {pos.length} of {totalCount} total results
             </div>
           </div>
         )}

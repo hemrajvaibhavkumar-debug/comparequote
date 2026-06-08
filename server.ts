@@ -141,6 +141,31 @@ async function startServer() {
     };
   };
 
+  const requireAnyPermission = (permissionsList: string[]) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+      const user = (req as any).user;
+      if (user.role === 'SUPERADMIN') return next();
+      
+      const permissions = user.permissions || [];
+      const hasAny = permissionsList.some(p => permissions.includes(p));
+      if (hasAny) {
+        return next();
+      }
+      res.status(403).json({ error: `Permission denied. Requires one of: ${permissionsList.join(', ')}` });
+    };
+  };
+
+  const parsePOFields = (po: any) => {
+    if (!po) return po;
+    return {
+      ...po,
+      terms: typeof po.terms === 'string' ? JSON.parse(po.terms) : (po.terms || {}),
+      items: typeof po.items === 'string' ? JSON.parse(po.items) : (po.items || []),
+      vendor_details: typeof po.vendor_details === 'string' ? JSON.parse(po.vendor_details) : (po.vendor_details || {}),
+      internal_comments: typeof po.internal_comments === 'string' ? JSON.parse(po.internal_comments) : (po.internal_comments || []),
+    };
+  };
+
   // Refactored Login Route
   app.post("/api/login", loginLimiter, async (req, res) => {
     const { username, password } = req.body;
@@ -230,7 +255,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/extract", extractLimiter, async (req, res) => {
+  app.post("/api/extract", authenticateToken, requirePermission("ACCESS_COMPARE"), extractLimiter, async (req, res) => {
     try {
       const { input, files, userPrompt } = req.body;
       console.log(`[AI] Extraction requested. Files: ${files?.length || 0}, Text: ${input ? 'Yes' : 'No'}, User Prompt: ${userPrompt ? 'Yes' : 'No'}`);
@@ -517,7 +542,7 @@ async function startServer() {
     }
   });
 
-  app.put("/api/settings/company", authenticateToken, async (req, res) => {
+  app.put("/api/settings/company", authenticateToken, requirePermission("MANAGE_SETTINGS"), async (req, res) => {
     try {
       const settings = await prisma.companySettings.upsert({
         where: { id: 1 },
@@ -546,7 +571,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/settings/terms", authenticateToken, async (req, res) => {
+  app.post("/api/settings/terms", authenticateToken, requirePermission("MANAGE_SETTINGS"), async (req, res) => {
     try {
       const template = await prisma.termsTemplate.create({ data: req.body });
       dbCache.delete("settings:terms");
@@ -556,7 +581,7 @@ async function startServer() {
     }
   });
 
-  app.delete("/api/settings/terms/:id", authenticateToken, async (req, res) => {
+  app.delete("/api/settings/terms/:id", authenticateToken, requirePermission("MANAGE_SETTINGS"), async (req, res) => {
     try {
       await prisma.termsTemplate.delete({ where: { id: Number(req.params.id) } });
       dbCache.delete("settings:terms");
@@ -584,7 +609,7 @@ async function startServer() {
     }
   });
 
-  app.post("/api/settings/vendors", authenticateToken, async (req, res) => {
+  app.post("/api/settings/vendors", authenticateToken, requirePermission("MANAGE_SETTINGS"), async (req, res) => {
     try {
       const vendor = await prisma.vendorMaster.upsert({
         where: { name: req.body.name },
@@ -599,7 +624,7 @@ async function startServer() {
     }
   });
 
-  app.delete("/api/settings/vendors/:name", authenticateToken, async (req, res) => {
+  app.delete("/api/settings/vendors/:name", authenticateToken, requirePermission("MANAGE_SETTINGS"), async (req, res) => {
     try {
       await prisma.vendorMaster.delete({ where: { name: req.params.name } });
       dbCache.delete("settings:vendors");
@@ -668,7 +693,7 @@ async function startServer() {
   });
 
   // Purchase Orders
-  app.get("/api/po/check/:poNo", authenticateToken, async (req, res) => {
+  app.get("/api/po/check/:poNo", authenticateToken, requirePermission("ACCESS_PO_MAKER"), async (req, res) => {
     try {
       const { poNo } = req.params;
       const po = await prisma.purchaseOrder.findUnique({
@@ -681,7 +706,7 @@ async function startServer() {
     }
   });
 
-  app.get("/api/po/latest", authenticateToken, async (req, res) => {
+  app.get("/api/po/latest", authenticateToken, requirePermission("ACCESS_PO_MAKER"), async (req, res) => {
     try {
       const { version } = req.query;
       const cacheKey = `po:latest:${version}`;
@@ -717,7 +742,159 @@ async function startServer() {
     }
   });
 
-  app.get("/api/po", authenticateToken, async (req, res) => {
+  app.get("/api/po/dashboard", authenticateToken, requireAnyPermission(["VIEW_SAVED_POS", "VIEW_APPROVAL_HUB", "APPROVE_PO", "APPROVE_PO_L1"]), async (req, res) => {
+    try {
+      const { 
+        page = '1', 
+        limit = '25', 
+        status, 
+        search, 
+        version, 
+        creator, 
+        minAmount, 
+        maxAmount, 
+        dateFilter, 
+        startDate, 
+        endDate,
+        classification 
+      } = req.query;
+
+      const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
+      const take = parseInt(limit as string);
+
+      const where: any = {};
+
+      if (status && status !== 'ALL') {
+        if (status === 'PENDING') {
+          where.status = { in: ['PENDING', 'PENDING_L2'] };
+        } else {
+          where.status = status;
+        }
+      }
+
+      if (search) {
+        where.OR = [
+          { po_no: { contains: search as string, mode: 'insensitive' } },
+          { vendor_name: { contains: search as string, mode: 'insensitive' } }
+        ];
+      }
+
+      if (version && version !== 'ALL') {
+        where.version = version;
+      }
+
+      if (creator && creator !== 'ALL') {
+        where.created_by_name = creator;
+      }
+
+      if (minAmount || maxAmount) {
+        where.total_amount = {};
+        if (minAmount) where.total_amount.gte = parseFloat(minAmount as string);
+        if (maxAmount) where.total_amount.lte = parseFloat(maxAmount as string);
+      }
+
+      if (dateFilter && dateFilter !== 'ALL') {
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        if (dateFilter === 'TODAY') {
+          where.date = { gte: now };
+        } else if (dateFilter === 'THIS_WEEK') {
+          const weekAgo = new Date(now);
+          weekAgo.setDate(now.getDate() - 7);
+          where.date = { gte: weekAgo };
+        } else if (dateFilter === 'THIS_MONTH') {
+          const monthAgo = new Date(now);
+          monthAgo.setMonth(now.getMonth() - 1);
+          where.date = { gte: monthAgo };
+        } else if (dateFilter === 'CUSTOM') {
+          where.date = {};
+          if (startDate) where.date.gte = new Date(startDate as string);
+          if (endDate) {
+            const end = new Date(endDate as string);
+            end.setHours(23, 59, 59, 999);
+            where.date.lte = end;
+          }
+        }
+      }
+
+      // Filter by classification (po_type inside terms JSON)
+      if (classification && classification !== 'ALL') {
+        where.terms = {
+          path: ['po_type'],
+          equals: classification
+        };
+      }
+
+      const [pos, total, stats, creators] = await Promise.all([
+        prisma.purchaseOrder.findMany({
+          where,
+          orderBy: { updated_at: "desc" },
+          skip,
+          take,
+          select: {
+            id: true,
+            po_no: true,
+            date: true,
+            vendor_name: true,
+            version: true,
+            total_amount: true,
+            created_by_name: true,
+            status: true,
+            l1_approved_by: true,
+            approved_by: true,
+            internal_comments: true,
+            terms: true,
+            updated_at: true
+          }
+        }),
+        prisma.purchaseOrder.count({ where }),
+        prisma.purchaseOrder.aggregate({
+          where,
+          _sum: { total_amount: true },
+          _count: {
+            id: true,
+          }
+        }),
+        // Fetch specific counts for statuses within the current filter
+        prisma.$transaction([
+          prisma.purchaseOrder.count({ where: { ...where, status: { in: ['PENDING', 'PENDING_L2'] } } }),
+          prisma.purchaseOrder.count({ where: { ...where, status: 'APPROVED' } }),
+          prisma.purchaseOrder.findMany({
+            where: { created_by_name: { not: null } },
+            select: { created_by_name: true },
+            distinct: ['created_by_name']
+          })
+        ])
+      ]);
+
+      const [pendingCount, approvedCount, creatorsList] = creators;
+
+      const parsedPos = pos.map(po => ({
+        ...po,
+        terms: typeof po.terms === 'string' ? JSON.parse(po.terms) : (po.terms || {}),
+        internal_comments: typeof po.internal_comments === 'string' ? JSON.parse(po.internal_comments) : (po.internal_comments || []),
+      }));
+
+      res.json({
+        pos: parsedPos,
+        total,
+        page: parseInt(page as string),
+        limit: take,
+        totalPages: Math.ceil(total / take),
+        stats: {
+          pendingCount,
+          approvedCount,
+          combinedValue: stats._sum.total_amount || 0,
+          uniqueCreators: creatorsList.map(c => c.created_by_name).filter(Boolean)
+        }
+      });
+    } catch (error: any) {
+      console.error("[Dashboard API] Error:", error);
+      res.status(500).json({ error: "Failed to fetch dashboard POs", details: error.message });
+    }
+  });
+
+  app.get("/api/po", authenticateToken, requireAnyPermission(["VIEW_SAVED_POS", "VIEW_APPROVAL_HUB", "APPROVE_PO", "APPROVE_PO_L1"]), async (req, res) => {
     try {
       const cacheKey = "po:list";
       const cached = dbCache.get<any[]>(cacheKey);
@@ -747,13 +924,13 @@ async function startServer() {
       });
     }
   });
-  app.post("/api/po", authenticateToken, async (req, res) => {
+  app.post("/api/po", authenticateToken, requirePermission("ACCESS_PO_MAKER"), async (req, res) => {
     try {
       const { id, created_at, ...data } = req.body;
       if (data.date) data.date = new Date(data.date);
       const po = await prisma.purchaseOrder.create({ data });
       dbCache.clearPattern("po:");
-      res.json(po);
+      res.json(parsePOFields(po));
     } catch (error: any) {
       console.error("[Backend] PO Save Error:", error);
       if (error.code === 'P2002') {
@@ -766,7 +943,7 @@ async function startServer() {
     }
   });
 
-  app.get("/api/po/:id", authenticateToken, async (req, res) => {
+  app.get("/api/po/:id", authenticateToken, requireAnyPermission(["VIEW_SAVED_POS", "VIEW_APPROVAL_HUB", "APPROVE_PO", "APPROVE_PO_L1"]), async (req, res) => {
     try {
       const cacheKey = `po:detail:${req.params.id}`;
       const cached = dbCache.get<any>(cacheKey);
@@ -792,7 +969,7 @@ async function startServer() {
     }
   });
 
-  app.put("/api/po/:id", authenticateToken, async (req, res) => {
+  app.put("/api/po/:id", authenticateToken, requirePermission("ACCESS_PO_MAKER"), async (req, res) => {
     try {
       // Remove id from body to avoid primary key update attempt
       const { id, created_at, status, approved_by, approved_at, rejection_remarks, ...data } = req.body;
@@ -810,14 +987,14 @@ async function startServer() {
         }
       });
       dbCache.clearPattern("po:");
-      res.json(po);
+      res.json(parsePOFields(po));
     } catch (error) {
       console.error("[Backend] PO Update Error:", error);
       res.status(500).json({ error: "Failed to update PO", details: String(error) });
     }
   });
 
-  app.delete("/api/po/:id", authenticateToken, async (req, res) => {
+  app.delete("/api/po/:id", authenticateToken, requirePermission("ACCESS_PO_MAKER"), async (req, res) => {
     try {
       const id = Number(req.params.id);
       const po = await prisma.purchaseOrder.findUnique({ where: { id } });
@@ -835,7 +1012,7 @@ async function startServer() {
   });
 
   // Comments for PO
-  app.post("/api/po/:id/comments", authenticateToken, async (req, res) => {
+  app.post("/api/po/:id/comments", authenticateToken, requirePermission("ADD_INTERNAL_COMMENTS"), async (req, res) => {
     try {
       const id = Number(req.params.id);
       const { text } = req.body;
@@ -858,13 +1035,13 @@ async function startServer() {
       });
 
       dbCache.clearPattern("po:");
-      res.json(updated);
+      res.json(parsePOFields(updated));
     } catch (error) {
       res.status(500).json({ error: "Failed to add comment" });
     }
   });
 
-  app.delete("/api/po/:id/comments/:commentId", authenticateToken, async (req, res) => {
+  app.delete("/api/po/:id/comments/:commentId", authenticateToken, requirePermission("ADD_INTERNAL_COMMENTS"), async (req, res) => {
     try {
       const { id, commentId } = req.params;
       const po = await prisma.purchaseOrder.findUnique({ where: { id: Number(id) } });
@@ -879,13 +1056,13 @@ async function startServer() {
       });
 
       dbCache.clearPattern("po:");
-      res.json(updated);
+      res.json(parsePOFields(updated));
     } catch (error) {
       res.status(500).json({ error: "Failed to delete comment" });
     }
   });
 
-  app.put("/api/po/:id/comments/:commentId", authenticateToken, async (req, res) => {
+  app.put("/api/po/:id/comments/:commentId", authenticateToken, requirePermission("ADD_INTERNAL_COMMENTS"), async (req, res) => {
     try {
       const { id, commentId } = req.params;
       const { text } = req.body;
@@ -905,25 +1082,50 @@ async function startServer() {
       });
 
       dbCache.clearPattern("po:");
-      res.json(updated);
+      res.json(parsePOFields(updated));
     } catch (error) {
       res.status(500).json({ error: "Failed to update comment" });
     }
   });
 
   // Approval Workflow
-  app.put("/api/po/:id/status", authenticateToken, requirePermission("APPROVE_PO"), async (req, res) => {
+  app.put("/api/po/:id/status", authenticateToken, async (req, res) => {
     try {
-      const { status, remarks, pdf_base64 } = req.body;
+      const { status, remarks, pdf_base64, l1_approved_by, approved_by } = req.body;
       const user = (req as any).user;
       
+      const hasL1 = user.role === 'SUPERADMIN' || (user.permissions || []).includes('APPROVE_PO_L1');
+      const hasL2 = user.role === 'SUPERADMIN' || (user.permissions || []).includes('APPROVE_PO');
+
+      if (status === 'APPROVED') {
+        if (!hasL2) {
+          return res.status(403).json({ error: "Permission denied: APPROVE_PO" });
+        }
+      } else if (status === 'PENDING_L2') {
+        if (!hasL1 && !hasL2) {
+          return res.status(403).json({ error: "Permission denied: APPROVE_PO_L1" });
+        }
+      } else if (status === 'REJECTED') {
+        if (!hasL1 && !hasL2) {
+          return res.status(403).json({ error: "Permission denied: APPROVE_PO_L1 or APPROVE_PO" });
+        }
+      } else {
+        if (!hasL1 && !hasL2) {
+          return res.status(403).json({ error: "Permission denied" });
+        }
+      }
+
       const updateData: any = { status };
       if (pdf_base64) updateData.pdf_base64 = pdf_base64;
 
       if (status === 'APPROVED') {
-        updateData.approved_by = user.username;
+        updateData.approved_by = approved_by || user.username;
         updateData.approved_at = new Date();
         updateData.rejection_remarks = null; // Clear remarks if re-approved
+      } else if (status === 'PENDING_L2') {
+        updateData.l1_approved_by = l1_approved_by || user.username;
+        updateData.l1_approved_at = new Date();
+        updateData.rejection_remarks = null;
       } else if (status === 'REJECTED') {
         updateData.rejection_remarks = remarks || 'No reason provided';
         updateData.approved_by = null;
@@ -935,7 +1137,7 @@ async function startServer() {
         data: updateData
       });
       dbCache.clearPattern("po:");
-      res.json(po);
+      res.json(parsePOFields(po));
     } catch (error) {
       console.error("[Backend] PO Status Update Error:", error);
       res.status(500).json({ error: "Failed to update PO status" });
@@ -1040,7 +1242,7 @@ async function startServer() {
     }
   });
 
-  app.put("/api/indents/:id/status", authenticateToken, requirePermission("APPROVE_PO"), async (req, res) => {
+  app.put("/api/indents/:id/status", authenticateToken, requirePermission("APPROVE_INDENT"), async (req, res) => {
     try {
       const { status, remarks } = req.body;
       const user = (req as any).user;
@@ -1309,7 +1511,7 @@ async function startServer() {
 
   // --- Comparison CRUD ---
 
-  app.post("/api/comparisons", authenticateToken, async (req, res) => {
+  app.post("/api/comparisons", authenticateToken, requirePermission("ACCESS_COMPARE"), async (req, res) => {
     try {
       const { doc_no, data, executive_id, plant_id } = req.body;
       const comparison = await prisma.comparison.upsert({
@@ -1335,7 +1537,7 @@ async function startServer() {
     }
   });
 
-  app.get("/api/comparisons/latest-year", authenticateToken, async (req, res) => {
+  app.get("/api/comparisons/latest-year", authenticateToken, requirePermission("VIEW_SAVED_TABLES"), async (req, res) => {
     try {
       const cacheKey = "comparisons:latest-year";
       const cached = dbCache.get<any>(cacheKey);
@@ -1381,7 +1583,7 @@ async function startServer() {
     }
   });
 
-  app.get("/api/comparisons", authenticateToken, async (req, res) => {
+  app.get("/api/comparisons", authenticateToken, requirePermission("VIEW_SAVED_TABLES"), async (req, res) => {
    try {
      const limit = parseInt(req.query.limit as string) || 500;
      const cacheKey = `comparisons:list:limit_${limit}`;
@@ -1405,7 +1607,7 @@ async function startServer() {
     }
   });
 
-  app.get("/api/comparisons/by-doc/:doc_no", authenticateToken, async (req, res) => {
+  app.get("/api/comparisons/by-doc/:doc_no", authenticateToken, requirePermission("VIEW_SAVED_TABLES"), async (req, res) => {
     try {
       const { doc_no } = req.params;
       const cacheKey = `comparisons:detail:doc_no:${doc_no}`;
@@ -1425,7 +1627,7 @@ async function startServer() {
     }
   });
 
-  app.get("/api/comparisons/:id", authenticateToken, async (req, res) => {
+  app.get("/api/comparisons/:id", authenticateToken, requirePermission("VIEW_SAVED_TABLES"), async (req, res) => {
     try {
       const cacheKey = `comparisons:detail:${req.params.id}`;
       const cached = dbCache.get<any>(cacheKey);
@@ -1444,7 +1646,7 @@ async function startServer() {
     }
   });
 
-  app.put("/api/comparisons/:id", authenticateToken, async (req, res) => {
+  app.put("/api/comparisons/:id", authenticateToken, requirePermission("VIEW_SAVED_TABLES"), async (req, res) => {
     try {
       const { doc_no, data, executive_id, plant_id } = req.body;
       const comparison = await prisma.comparison.update({
@@ -1464,7 +1666,7 @@ async function startServer() {
     }
   });
 
-  app.delete("/api/comparisons/:id", authenticateToken, async (req, res) => {
+  app.delete("/api/comparisons/:id", authenticateToken, requirePermission("VIEW_SAVED_TABLES"), async (req, res) => {
     try {
       await prisma.comparison.delete({
         where: { id: parseInt(req.params.id) },
@@ -1478,7 +1680,7 @@ async function startServer() {
   });
 
   // Comments for Comparison
-  app.post("/api/comparisons/:id/comments", authenticateToken, async (req, res) => {
+  app.post("/api/comparisons/:id/comments", authenticateToken, requirePermission("ADD_INTERNAL_COMMENTS"), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const { text } = req.body;
@@ -1507,7 +1709,7 @@ async function startServer() {
     }
   });
 
-  app.delete("/api/comparisons/:id/comments/:commentId", authenticateToken, async (req, res) => {
+  app.delete("/api/comparisons/:id/comments/:commentId", authenticateToken, requirePermission("ADD_INTERNAL_COMMENTS"), async (req, res) => {
     try {
       const { id, commentId } = req.params;
       const comp = await prisma.comparison.findUnique({ where: { id: Number(id) } });

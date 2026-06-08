@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Shield, Key, Trash2, Plus, X, Check, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useApiCache } from '../../context/ApiCacheContext';
 
 interface UserData {
   id: number;
@@ -15,18 +16,24 @@ const ALL_PERMISSIONS = [
   { key: "VIEW_SAVED_TABLES", label: "View Saved Tables", description: "View and edit previously saved comparison tables" },
   { key: "ACCESS_PO_MAKER", label: "PO Maker", description: "Create and edit Purchase Orders" },
   { key: "VIEW_SAVED_POS", label: "View Saved POs", description: "Access the list of all created POs" },
-  { key: "VIEW_APPROVAL_HUB", label: "View Approval  Hub", description: "View POs and approval status (Read-only)" },
-  { key: "APPROVE_PO", label: "Approval Hub Actions", description: "Review, sign, and approve/reject POs" },
+  { key: "VIEW_APPROVAL_HUB", label: "View Approval Hub", description: "View POs and approval status (Read-only)" },
+  { key: "APPROVE_PO", label: "PO Approval (L2/Final)", description: "Review, sign, and finalize PO approvals" },
+  { key: "APPROVE_PO_L1", label: "PO Approval (L1)", description: "Initial review and Level 1 approval of POs" },
+  { key: "APPROVE_INDENT", label: "Approve Indents", description: "Review and approve purchase indents" },
+  { key: "ADD_INTERNAL_COMMENTS", label: "Internal Comments", description: "Add and view internal notes/comments on documents" },
+  { key: "EDIT_APPROVED_PO", label: "Edit Approved POs", description: "Make corrections to already approved purchase orders" },
   { key: "MANAGE_SETTINGS", label: "Company Settings", description: "Manage company info, terms, and vendors" },
   { key: "MANAGE_USERS", label: "User Management", description: "Create and manage other user accounts" },
 ];
 
 export default function UserManagement() {
   const [users, setUsers] = useState<UserData[]>([]);
+  const [roles, setRoles] = useState<{id: number, name: string}[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
   const { token, user: currentUser } = useAuth();
+  const { fetchRoles } = useApiCache();
  
   // Form State
   const [username, setUsername] = useState('');
@@ -36,12 +43,29 @@ export default function UserManagement() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchUsers();
+    loadData();
   }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    await Promise.all([
+      fetchUsers(),
+      loadRoles()
+    ]);
+    setLoading(false);
+  };
+
+  const loadRoles = async () => {
+    try {
+      const data = await fetchRoles();
+      setRoles(data);
+    } catch (e) {
+      console.error("Failed to fetch roles", e);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
-      setLoading(true);
       const res = await fetch('/api/users', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -51,8 +75,6 @@ export default function UserManagement() {
       }
     } catch (e) {
       console.error("Failed to fetch users", e);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -269,14 +291,26 @@ export default function UserManagement() {
 
               <div className="space-y-1.5">
                 <label className="text-xs font-black uppercase tracking-widest text-gray-600">System Role</label>
-                <div className="flex gap-2">
-                  {['USER', 'PURCHASE_HEAD', 'SUPERADMIN'].map(r => (
+                <div className="flex flex-wrap gap-2">
+                  {roles.map(r => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => setRole(r.name)}
+                      className={`py-2 px-3 border rounded-lg text-[10px] font-bold transition-all uppercase tracking-wider ${
+                        role === r.name ? 'bg-black text-white border-black shadow-md' : 'bg-white text-gray-600 border-gray-200 hover:border-black'
+                      }`}
+                    >
+                      {r.name}
+                    </button>
+                  ))}
+                  {roles.length === 0 && ['USER', 'PURCHASE_HEAD', 'SUPERADMIN'].map(r => (
                     <button
                       key={r}
                       type="button"
                       onClick={() => setRole(r)}
-                      className={`flex-1 py-2 px-3 border rounded-lg text-xs font-bold transition-all ${
-                        role === r ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200 hover:border-black'
+                      className={`py-2 px-3 border rounded-lg text-[10px] font-bold transition-all uppercase tracking-wider ${
+                        role === r ? 'bg-black text-white border-black shadow-md' : 'bg-white text-gray-600 border-gray-200 hover:border-black'
                       }`}
                     >
                       {r}

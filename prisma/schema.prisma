@@ -103,6 +103,9 @@ model PurchaseOrder {
   updated_at        DateTime  @updatedAt
 
   @@index([status, updated_at(sort: Desc)])
+  @@index([po_no])
+  @@index([vendor_name])
+  @@index([created_by_name])
 }
 
 model VendorMaster {

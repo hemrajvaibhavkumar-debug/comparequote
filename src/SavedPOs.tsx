@@ -150,8 +150,8 @@ const SavedPOs: React.FC = () => {
   }
 
   const filteredPOs = pos.filter(po => {
-    const matchesSearch = po.po_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         po.vendor_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (po.po_no || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (po.vendor_name || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'ALL' || (po.status || 'PENDING') === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -251,6 +251,7 @@ const SavedPOs: React.FC = () => {
                           </div>
                           <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mt-1 flex items-center gap-1.5">
                             <Clock className="w-3.5 h-3.5" /> {(() => {
+                              if (!po.date) return '';
                               const d = new Date(po.date);
                               if (isNaN(d.getTime())) return po.date;
                               const day = String(d.getDate()).padStart(2, '0');

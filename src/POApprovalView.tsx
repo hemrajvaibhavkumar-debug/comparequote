@@ -294,7 +294,7 @@ export default function POApprovalView() {
     }
 
     const recipient = po.vendor_details?.mail || '';
-    const cc = po.vendor_details?.cc ? ` (CC: ${po.vendor_details.cc})` : '';
+    const cc = po.vendor_details?.cc ? ` (CC: ${po.vendor_details?.cc})` : '';
     if (window.confirm(`Are you sure you want to send PO #${po.po_no} to ${recipient}${cc}?`)) {
       executeSendToVendor();
     }
@@ -411,7 +411,7 @@ export default function POApprovalView() {
   // Header Actions to be passed to POPreview
   const headerActions = (
     <div className="flex items-center gap-3 w-full flex-wrap">
-      {po.pdf_base64 && (
+      {isApproved && (
         <button 
           onClick={async () => {
             if (!window.confirm("Regenerate the PDF snapshot? This can fix display issues.")) return;
@@ -516,7 +516,7 @@ export default function POApprovalView() {
       <div className="ambient-glow ambient-blue -bottom-40 -left-40" />
 
       {/* Glass navigation header */}
-      <div className="glass-navbar px-6 py-4 sticky top-0 z-50 shadow-sm print-hidden">
+      <div className="glass-navbar px-6 py-4 sticky top-16 z-40 shadow-sm print-hidden">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6">
             <button 
@@ -773,9 +773,9 @@ export default function POApprovalView() {
             ) : isApproved ? (
               <button 
                 onClick={handleSendToVendor}
-                disabled={sending || !po.pdf_base64}
+                disabled={sending}
                 className="px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20 flex items-center gap-3 transition-all duration-200 transform hover:-translate-y-0.5 cursor-pointer disabled:opacity-50 disabled:hover:translate-y-0 disabled:cursor-not-allowed"
-                title={!po.pdf_base64 ? "Signed document snapshot is missing. Please regenerate snapshot." : ""}
+                title=""
               >
                 {sending ? (
                   <>
