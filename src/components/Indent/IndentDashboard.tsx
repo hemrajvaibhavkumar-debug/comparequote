@@ -630,7 +630,7 @@ const IndentDashboard: React.FC = () => {
                   </>
                 ) : (
                   <div className="flex items-center gap-3">
-                    {viewState === 'create' && (
+                    {(viewState === 'create' || viewState === 'edit') && (
                       <label className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer shadow-md active:scale-95">
                         {isExtracting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
                         {isExtracting ? "Scanning..." : "Scan Slip"}
@@ -795,6 +795,12 @@ const IndentDashboard: React.FC = () => {
                         <td className="border-r border-black p-2 text-xs font-bold uppercase italic">
                           {viewState === 'view' ? item.itemName : (
                             <textarea 
+                              ref={el => {
+                                if (el) {
+                                  el.style.height = 'inherit';
+                                  el.style.height = `${el.scrollHeight}px`;
+                                }
+                              }}
                               rows={1}
                               className="w-full bg-transparent border-none p-0 focus:ring-0 resize-none font-bold uppercase italic text-xs min-h-[1rem]"
                               value={item.itemName}
@@ -808,51 +814,101 @@ const IndentDashboard: React.FC = () => {
                         </td>
                         <td className="border-r border-black p-2 text-xs font-bold text-center italic">
                           {viewState === 'view' ? item.qty : (
-                            <input 
-                              type="text" 
-                              className="w-full bg-transparent border-none p-0 focus:ring-0 text-center font-bold italic text-xs"
+                            <textarea 
+                              ref={el => {
+                                if (el) {
+                                  el.style.height = 'inherit';
+                                  el.style.height = `${el.scrollHeight}px`;
+                                }
+                              }}
+                              rows={1}
+                              className="w-full bg-transparent border-none p-0 focus:ring-0 resize-none font-bold italic text-xs text-center min-h-[1rem]"
                               value={item.qty}
-                              onChange={e => updateItem(idx, 'qty', e.target.value)}
+                              onChange={e => {
+                                updateItem(idx, 'qty', e.target.value);
+                                e.target.style.height = 'inherit';
+                                e.target.style.height = `${e.target.scrollHeight}px`;
+                              }}
                             />
                           )}
                         </td>
                         <td className="border-r border-black p-2 text-xs font-bold text-center italic uppercase">
                           {viewState === 'view' ? item.uom : (
-                            <input 
-                              type="text" 
-                              className="w-full bg-transparent border-none p-0 focus:ring-0 text-center font-bold italic text-xs uppercase"
+                            <textarea 
+                              ref={el => {
+                                if (el) {
+                                  el.style.height = 'inherit';
+                                  el.style.height = `${el.scrollHeight}px`;
+                                }
+                              }}
+                              rows={1}
+                              className="w-full bg-transparent border-none p-0 focus:ring-0 resize-none font-bold italic text-xs text-center uppercase min-h-[1rem]"
                               value={item.uom}
-                              onChange={e => updateItem(idx, 'uom', e.target.value)}
+                              onChange={e => {
+                                updateItem(idx, 'uom', e.target.value);
+                                e.target.style.height = 'inherit';
+                                e.target.style.height = `${e.target.scrollHeight}px`;
+                              }}
                             />
                           )}
                         </td>
                         <td className="border-r border-black p-2 text-xs font-bold text-center italic uppercase">
                           {viewState === 'view' ? item.applicationArea : (
-                            <input 
-                              type="text" 
-                              className="w-full bg-transparent border-none p-0 focus:ring-0 text-center font-bold italic text-xs uppercase"
+                            <textarea 
+                              ref={el => {
+                                if (el) {
+                                  el.style.height = 'inherit';
+                                  el.style.height = `${el.scrollHeight}px`;
+                                }
+                              }}
+                              rows={1}
+                              className="w-full bg-transparent border-none p-0 focus:ring-0 resize-none font-bold italic text-xs text-center uppercase min-h-[1rem]"
                               value={item.applicationArea}
-                              onChange={e => updateItem(idx, 'applicationArea', e.target.value)}
+                              onChange={e => {
+                                updateItem(idx, 'applicationArea', e.target.value);
+                                e.target.style.height = 'inherit';
+                                e.target.style.height = `${e.target.scrollHeight}px`;
+                              }}
                             />
                           )}
                         </td>
                         <td className="border-r border-black p-2 text-xs font-bold text-center italic uppercase">
                           {viewState === 'view' ? item.orderPlacedBy : (
-                            <input 
-                              type="text" 
-                              className="w-full bg-transparent border-none p-0 focus:ring-0 text-center font-bold italic text-xs uppercase"
+                            <textarea 
+                              ref={el => {
+                                if (el) {
+                                  el.style.height = 'inherit';
+                                  el.style.height = `${el.scrollHeight}px`;
+                                }
+                              }}
+                              rows={1}
+                              className="w-full bg-transparent border-none p-0 focus:ring-0 resize-none font-bold italic text-xs text-center uppercase min-h-[1rem]"
                               value={item.orderPlacedBy}
-                              onChange={e => updateItem(idx, 'orderPlacedBy', e.target.value)}
+                              onChange={e => {
+                                updateItem(idx, 'orderPlacedBy', e.target.value);
+                                e.target.style.height = 'inherit';
+                                e.target.style.height = `${e.target.scrollHeight}px`;
+                              }}
                             />
                           )}
                         </td>
                         <td className="border-r border-black p-2 text-xs font-bold text-center italic uppercase">
                           {viewState === 'view' ? item.oldMaterialStatus : (
-                            <input 
-                              type="text" 
-                              className="w-full bg-transparent border-none p-0 focus:ring-0 text-center font-bold italic text-xs uppercase"
+                            <textarea 
+                              ref={el => {
+                                if (el) {
+                                  el.style.height = 'inherit';
+                                  el.style.height = `${el.scrollHeight}px`;
+                                }
+                              }}
+                              rows={1}
+                              className="w-full bg-transparent border-none p-0 focus:ring-0 resize-none font-bold italic text-xs text-center uppercase min-h-[1rem]"
                               value={item.oldMaterialStatus}
-                              onChange={e => updateItem(idx, 'oldMaterialStatus', e.target.value)}
+                              onChange={e => {
+                                updateItem(idx, 'oldMaterialStatus', e.target.value);
+                                e.target.style.height = 'inherit';
+                                e.target.style.height = `${el.scrollHeight}px`;
+                              }}
                             />
                           )}
                         </td>
