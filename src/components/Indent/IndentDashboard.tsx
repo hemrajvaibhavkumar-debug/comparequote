@@ -907,7 +907,7 @@ const IndentDashboard: React.FC = () => {
                               onChange={e => {
                                 updateItem(idx, 'oldMaterialStatus', e.target.value);
                                 e.target.style.height = 'inherit';
-                                e.target.style.height = `${el.scrollHeight}px`;
+                                e.target.style.height = `${e.target.scrollHeight}px`;
                               }}
                             />
                           )}
