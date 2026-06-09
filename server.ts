@@ -365,23 +365,23 @@ async function startServer() {
         return ComparisonDataSchema.parse(parsed);
       };
 
-      // 1. OpenRouter - Gemini 2.0 Flash (Primary)
+      // 1. OpenRouter - Gemini 3.0 Flash (Primary)
       if (process.env.OPENROUTER_API_KEY) {
         try {
-          const result = await callAI(openrouter, "google/gemini-2.0-flash-001");
-          console.log("[AI] OpenRouter Gemini 2.0 Flash successful.");
+          const result = await callAI(openrouter, "google/gemini-3-flash");
+          console.log("[AI] OpenRouter Gemini 3.0 Flash successful.");
           return res.json(result);
         } catch (err: any) {
-          console.error("[AI] OpenRouter Gemini 2.0 Flash failed:", err.message || err);
+          console.error("[AI] OpenRouter Gemini 3.0 Flash failed:", err.message || err);
         }
 
-        // 2. OpenRouter - Gemini 1.5 Flash (Fallback 1)
+        // 2. OpenRouter - Gemini 3.5 Flash (Fallback 1)
         try {
-          const result = await callAI(openrouter, "google/gemini-flash-1.5");
-          console.log("[AI] OpenRouter Gemini 1.5 Flash successful.");
+          const result = await callAI(openrouter, "google/gemini-3.5-flash");
+          console.log("[AI] OpenRouter Gemini 3.5 Flash successful.");
           return res.json(result);
         } catch (err: any) {
-          console.error("[AI] OpenRouter Gemini 1.5 Flash failed:", err.message || err);
+          console.error("[AI] OpenRouter Gemini 3.5 Flash failed:", err.message || err);
         }
       }
 
