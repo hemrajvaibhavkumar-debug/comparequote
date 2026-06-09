@@ -144,6 +144,7 @@ export interface Indent {
   items: IndentItem[];
   total_items: number;
   status?: 'PENDING' | 'APPROVED' | 'REJECTED' | string;
+  is_urgent?: boolean;
   created_by_name?: string;
   order_placed_by?: string;
   order_passed_by?: string;

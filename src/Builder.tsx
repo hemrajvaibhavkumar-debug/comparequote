@@ -330,7 +330,7 @@ const Builder: React.FC = () => {
   const handleExtract = async () => {
     setIsExtracting(true);
     try {
-      const extracted = await extractQuotations(inputText, files, extractionPrompt);
+      const extracted = await extractQuotations(inputText, files, extractionPrompt, token || undefined);
       if (extracted?.items) {
         extracted.items = extracted.items.map((item) => {
           const processedQuotes = item.vendorQuotes?.map((q: any) => {

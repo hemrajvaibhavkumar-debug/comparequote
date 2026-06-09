@@ -52,6 +52,14 @@ async function extractTextFromPDF(buffer: Buffer): Promise<string> {
 async function startServer() {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "" });
+  const openrouter = new OpenAI({
+    apiKey: process.env.OPENROUTER_API_KEY || "",
+    baseURL: "https://openrouter.ai/api/v1",
+    defaultHeaders: {
+      "HTTP-Referer": "https://quotecompare.ai",
+      "X-Title": "QuoteCompare AI",
+    }
+  });
   const groq = new OpenAI({
     apiKey: process.env.GROQ_API_KEY || "",
     baseURL: "https://api.groq.com/openai/v1"
@@ -321,8 +329,8 @@ async function startServer() {
         ]
       }`;
 
-      // Helper to process with OpenAI
-      const callOpenAI = async (model: string) => {
+      // Helper to process with AI
+      const callAI = async (client: OpenAI, model: string) => {
         console.log(`[AI] Attempting extraction with ${model}...`);
         
         let pdfText = "";
@@ -345,7 +353,7 @@ async function startServer() {
           ]}
         ];
 
-        const response = await openai.chat.completions.create({
+        const response = await client.chat.completions.create({
           model,
           messages,
           response_format: { type: "json_object" },
@@ -357,29 +365,40 @@ async function startServer() {
         return ComparisonDataSchema.parse(parsed);
       };
 
-      // 1. GPT-4o-mini (Primary)
+      // 1. OpenRouter - Gemini 2.0 Flash (Primary)
+      if (process.env.OPENROUTER_API_KEY) {
+        try {
+          const result = await callAI(openrouter, "google/gemini-2.0-flash-001");
+          console.log("[AI] OpenRouter Gemini 2.0 Flash successful.");
+          return res.json(result);
+        } catch (err: any) {
+          console.error("[AI] OpenRouter Gemini 2.0 Flash failed:", err.message || err);
+        }
+
+        // 2. OpenRouter - Gemini 1.5 Flash (Fallback 1)
+        try {
+          const result = await callAI(openrouter, "google/gemini-flash-1.5");
+          console.log("[AI] OpenRouter Gemini 1.5 Flash successful.");
+          return res.json(result);
+        } catch (err: any) {
+          console.error("[AI] OpenRouter Gemini 1.5 Flash failed:", err.message || err);
+        }
+      }
+
+      // 3. Native OpenAI Fallback
       if (process.env.OPENAI_API_KEY) {
         try {
-          const result = await callOpenAI("gpt-4o-mini");
+          const result = await callAI(openai, "gpt-4o-mini");
           console.log("[AI] GPT-4o-mini successful.");
           return res.json(result);
         } catch (err: any) {
           console.error("[AI] GPT-4o-mini failed:", err.message || err);
         }
-
-        // 2. GPT-4o (Fallback 1)
-        try {
-          const result = await callOpenAI("gpt-4o");
-          console.log("[AI] GPT-4o successful.");
-          return res.json(result);
-        } catch (err: any) {
-          console.error("[AI] GPT-4o failed:", err.message || err);
-        }
       }
 
-      // 3. Gemini (Fallback - Native File Processing)
-      console.log("[AI] Attempting extraction with Gemini (Fallback)...");
-      const modelName = "gemini-2.5-flash"; 
+      // 4. Native Gemini Fallback
+      console.log("[AI] Attempting extraction with Native Gemini (Final Fallback)...");
+      const modelName = "gemini-1.5-flash"; 
       const response = await ai.models.generateContent({
         model: modelName,
         contents: [

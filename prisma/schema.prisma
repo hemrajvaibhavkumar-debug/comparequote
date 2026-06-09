@@ -130,6 +130,7 @@ model Indent {
   items             Json      // Array of objects: { itemName, qty, uom, applicationArea, orderPlacedBy, orderPassedBy }
   total_items       Int       @default(0)
   status            String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  is_urgent         Boolean   @default(false)
   created_by_name   String?
   rejection_remarks String?
   approved_by       String?

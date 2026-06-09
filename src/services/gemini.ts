@@ -1,11 +1,17 @@
 import { ComparisonData } from "../types";
 
-export async function extractQuotations(input: string, files?: { mimeType: string, data: string }[], userPrompt?: string): Promise<ComparisonData> {
+export async function extractQuotations(input: string, files?: { mimeType: string, data: string }[], userPrompt?: string, token?: string): Promise<ComparisonData> {
+  const headers: any = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const response = await fetch('/api/extract', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify({ input, files, userPrompt }),
   });
 

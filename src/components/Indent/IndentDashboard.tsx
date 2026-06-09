@@ -19,11 +19,49 @@ import {
   Loader2,
   ArrowRight,
   Printer,
-  X
+  X,
+  Link2,
+  Link2Off
 } from 'lucide-react';
+
+const LinkToggle = ({ isLinked, onToggle, className = "" }: { isLinked: boolean, onToggle: () => void, className?: string }) => (
+  <button 
+    onClick={(e) => { e.stopPropagation(); onToggle(); }} 
+    className={`print:hidden p-1 rounded-md hover:bg-slate-200/50 transition-all cursor-pointer border ${
+      isLinked 
+        ? 'text-blue-600 bg-blue-50 border-blue-200 shadow-sm' 
+        : 'text-slate-500 border-transparent hover:border-slate-300'
+    } ${className}`}
+    title={isLinked ? "Unlink column" : "Link column (auto-fill all rows)"}
+  >
+    {isLinked ? <Link2 className="w-3.5 h-3.5" /> : <Link2Off className="w-3.5 h-3.5" />}
+  </button>
+);
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { Indent, IndentItem } from '../../types';
+
+const EditableText = ({ value, onChange, className = "", readOnly = false }: { value: string, onChange: (val: string) => void, className?: string, readOnly?: boolean }) => {
+  if (readOnly) {
+    return <span className={`inline-block border-b border-black px-2 flex-1 text-center ml-2 ${className}`}>{value || 'N/A'}</span>;
+  }
+  return (
+    <span
+      contentEditable
+      suppressContentEditableWarning
+      className={`hover:bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500/30 px-2 rounded transition-all inline-block border-b border-black px-2 flex-1 text-center ml-2 min-w-[50px] ${className}`}
+      onBlur={(e) => onChange(e.currentTarget.textContent || '')}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          e.currentTarget.blur();
+        }
+      }}
+    >
+      {value}
+    </span>
+  );
+};
 
 const IndentDashboard: React.FC = () => {
   const [indents, setIndents] = useState<Indent[]>([]);
@@ -34,6 +72,16 @@ const IndentDashboard: React.FC = () => {
   const [selectedIndent, setSelectedIndent] = useState<Indent | null>(null);
   const [isExtracting, setIsExtracting] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [linkedColumns, setLinkedColumns] = useState<Set<string>>(new Set());
+  
+  const toggleLink = (field: string) => {
+    setLinkedColumns(prev => {
+      const next = new Set(prev);
+      if (next.has(field)) next.delete(field);
+      else next.add(field);
+      return next;
+    });
+  };
   
   // Form State (used for both create and edit)
   const [newIndent, setNewIndent] = useState<Indent>({
@@ -44,7 +92,8 @@ const IndentDashboard: React.FC = () => {
     total_items: 0,
     department: '',
     order_placed_by: '',
-    order_passed_by: ''
+    order_passed_by: '',
+    is_urgent: false
   });
 
   const navigate = useNavigate();
@@ -154,7 +203,8 @@ const IndentDashboard: React.FC = () => {
           total_items: 0,
           department: '',
           order_placed_by: '',
-          order_passed_by: ''
+          order_passed_by: '',
+          is_urgent: false
         });
         fetchIndents();
       } else {
@@ -245,9 +295,19 @@ const IndentDashboard: React.FC = () => {
   };
 
   const updateItem = (index: number, field: keyof IndentItem, value: string) => {
-    const newItems = [...newIndent.items];
-    newItems[index] = { ...newItems[index], [field]: value };
-    setNewIndent(prev => ({ ...prev, items: newItems }));
+    const isLinked = linkedColumns.has(field);
+    setNewIndent(prev => {
+      const newItems = [...prev.items];
+      if (isLinked) {
+        // Propagate to all items
+        for (let i = 0; i < newItems.length; i++) {
+          newItems[i] = { ...newItems[i], [field]: value };
+        }
+      } else {
+        newItems[index] = { ...newItems[index], [field]: value };
+      }
+      return { ...prev, items: newItems };
+    });
   };
 
   const removeItem = (index: number) => {
@@ -279,7 +339,8 @@ const IndentDashboard: React.FC = () => {
       total_items: 0,
       department: '',
       order_placed_by: '',
-      order_passed_by: ''
+      order_passed_by: '',
+      is_urgent: false
     });
     setSelectedIndent(null);
   };
@@ -491,83 +552,106 @@ const IndentDashboard: React.FC = () => {
               New Indent Request
             </button>
           </div>
-        ) : viewState === 'view' && selectedIndent ? (
+        ) : (viewState === 'view' || viewState === 'create' || viewState === 'edit') ? (
           <div className="p-4 sm:p-8 lg:p-12 animate-in fade-in duration-500">
             {/* Action Bar */}
-            <div className="max-w-4xl mx-auto mb-8 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 relative z-10">
+            <div className="max-w-4xl mx-auto mb-8 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 relative z-10 no-print">
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-xl ${
-                  selectedIndent.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-600' :
-                  selectedIndent.status === 'REJECTED' ? 'bg-rose-500/10 text-rose-600' :
+                  (viewState === 'view' ? selectedIndent?.status : newIndent.status) === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-600' :
+                  (viewState === 'view' ? selectedIndent?.status : newIndent.status) === 'REJECTED' ? 'bg-rose-500/10 text-rose-600' :
                   'bg-amber-500/10 text-amber-600'
                 }`}>
-                  {selectedIndent.status === 'APPROVED' ? <CheckCircle className="w-5 h-5" /> : 
-                   selectedIndent.status === 'REJECTED' ? <XCircle className="w-5 h-5" /> : 
+                  {(viewState === 'view' ? selectedIndent?.status : newIndent.status) === 'APPROVED' ? <CheckCircle className="w-5 h-5" /> : 
+                   (viewState === 'view' ? selectedIndent?.status : newIndent.status) === 'REJECTED' ? <XCircle className="w-5 h-5" /> : 
                    <Clock className="w-5 h-5" />}
                 </div>
                 <div>
-                  <h4 className="text-xs font-black uppercase tracking-widest text-slate-900 dark:text-slate-100">{selectedIndent.status || 'PENDING'} STATUS</h4>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Indent #{selectedIndent.indent_no}</p>
+                  <h4 className="text-xs font-black uppercase tracking-widest text-slate-900 dark:text-slate-100">
+                    {viewState === 'view' ? selectedIndent?.status : (viewState === 'edit' ? 'EDITING' : 'NEW INDENT')} STATUS
+                  </h4>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                    {viewState === 'view' ? `Indent #${selectedIndent?.indent_no}` : (newIndent.indent_no ? `Indent #${newIndent.indent_no}` : 'Draft Indent')}
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 mr-2 bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800">
-                  <button 
-                    onClick={handleEditIndent}
-                    className="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 px-3"
-                    title="Edit Indent"
-                  >
-                    <Edit className="w-4 h-4" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Edit</span>
-                  </button>
-                  
-                  {(!selectedIndent.status || selectedIndent.status === 'PENDING') && (
-                    <>
-                      <div className="w-px h-4 bg-slate-200 dark:bg-slate-700" />
-                      <button 
-                        onClick={() => handleDeleteIndent(selectedIndent.id!)}
-                        className="p-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 px-3"
-                        title="Delete Indent"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Delete</span>
-                      </button>
-                    </>
-                  )}
-                </div>
-
-                {selectedIndent.status === 'PENDING' && canApprove && (
+                {viewState === 'view' && selectedIndent ? (
                   <>
+                    <div className="flex items-center gap-2 mr-2 bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800">
+                      <button 
+                        onClick={handleEditIndent}
+                        className="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 px-3"
+                        title="Edit Indent"
+                      >
+                        <Edit className="w-4 h-4" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Edit</span>
+                      </button>
+                      
+                      {(!selectedIndent.status || selectedIndent.status === 'PENDING') && (
+                        <>
+                          <div className="w-px h-4 bg-slate-200 dark:bg-slate-700" />
+                          <button 
+                            onClick={() => handleDeleteIndent(selectedIndent.id!)}
+                            className="p-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 px-3"
+                            title="Delete Indent"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Delete</span>
+                          </button>
+                        </>
+                      )}
+                    </div>
+
+                    {selectedIndent.status === 'PENDING' && canApprove && (
+                      <>
+                        <button 
+                          onClick={() => handleStatusUpdate(selectedIndent.id!, 'REJECTED')}
+                          className="px-5 py-2 bg-white dark:bg-slate-800 border border-rose-200 dark:border-rose-900/50 text-rose-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-all cursor-pointer"
+                        >
+                          Reject
+                        </button>
+                        <button 
+                          onClick={() => handleStatusUpdate(selectedIndent.id!, 'APPROVED')}
+                          className="px-5 py-2 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-md shadow-emerald-200 dark:shadow-none transition-all cursor-pointer"
+                        >
+                          Approve
+                        </button>
+                      </>
+                    )}
                     <button 
-                      onClick={() => handleStatusUpdate(selectedIndent.id!, 'REJECTED')}
-                      className="px-5 py-2 bg-white dark:bg-slate-800 border border-rose-200 dark:border-rose-900/50 text-rose-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-all cursor-pointer"
+                      onClick={() => window.print()}
+                      className="p-2.5 text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
+                      title="Print Slip"
                     >
-                      Reject
-                    </button>
-                    <button 
-                      onClick={() => handleStatusUpdate(selectedIndent.id!, 'APPROVED')}
-                      className="px-5 py-2 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-md shadow-emerald-200 dark:shadow-none transition-all cursor-pointer"
-                    >
-                      Approve
+                      <Printer className="w-5 h-5" />
                     </button>
                   </>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    {viewState === 'create' && (
+                      <label className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer shadow-md active:scale-95">
+                        {isExtracting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                        {isExtracting ? "Scanning..." : "Scan Slip"}
+                        <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={isExtracting} />
+                      </label>
+                    )}
+                    <button 
+                      onClick={addItem}
+                      className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all cursor-pointer"
+                    >
+                      Add Row
+                    </button>
+                    <button 
+                      onClick={handleSaveIndent}
+                      disabled={newIndent.items.length === 0 || isExtracting}
+                      className="px-6 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg active:scale-95 disabled:opacity-50 cursor-pointer"
+                    >
+                      {viewState === 'edit' ? 'Update' : 'Save'} Indent
+                    </button>
+                  </div>
                 )}
-                {selectedIndent.status !== 'PENDING' && canApprove && (
-                  <button 
-                    onClick={() => handleStatusUpdate(selectedIndent.id!, 'PENDING')}
-                    className="px-5 py-2 bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-900/50 text-amber-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-all cursor-pointer"
-                  >
-                    Unapprove
-                  </button>
-                )}
-                <button 
-                  onClick={() => window.print()}
-                  className="p-2.5 text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
-                  title="Print Slip"
-                >
-                  <Printer className="w-5 h-5" />
-                </button>
                 <button 
                   onClick={() => setViewState('idle')}
                   className="p-2.5 text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
@@ -577,70 +661,211 @@ const IndentDashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Realistic Paper Format - WRAPPED IN print-paper for fixed printing */}
+            {/* Realistic Paper Format */}
             <div className="print-paper max-w-4xl mx-auto bg-white shadow-2xl border border-slate-300 dark:border-slate-800 p-8 sm:p-12 mb-20 relative text-black print:shadow-none print:p-0 print:border-none">
               <div className="absolute top-0 left-0 w-full h-1 bg-indigo-600 print:hidden" />
               
               {/* Slip Header */}
               <div className="space-y-6">
-                <div className="text-center border-b-2 border-black pb-4">
-                  <h1 className="text-2xl font-black tracking-tighter uppercase mb-0.5">Order Book (Urgent)</h1>
-                  <p className="text-[10px] font-bold print:hidden">DIGITAL RECORD SYNCED: {new Date(selectedIndent.created_at || "").toLocaleString()}</p>
+                <div className="text-center border-b-2 border-black pb-4 relative">
+                  <h1 className="text-2xl font-black tracking-tighter uppercase mb-0.5">
+                    Order Book {(viewState === 'view' ? selectedIndent?.is_urgent : newIndent.is_urgent) ? '(Urgent)' : '(Normal)'}
+                  </h1>
+                  {viewState !== 'view' && (
+                    <button 
+                      onClick={() => setNewIndent(prev => ({ ...prev, is_urgent: !prev.is_urgent }))}
+                      className="absolute top-0 right-0 p-1.5 bg-slate-100 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all no-print"
+                    >
+                      Toggle Urgency
+                    </button>
+                  )}
+                  <p className="text-[10px] font-bold print:hidden uppercase">
+                    DIGITAL RECORD SYNCED: {new Date((viewState === 'view' ? selectedIndent?.created_at : new Date().toISOString()) || "").toLocaleString()}
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-x-12 gap-y-4 pt-4">
                   <div className="border-b border-black/20 pb-1 flex justify-between items-end">
                     <span className="text-[11px] font-black uppercase tracking-tight">Plant Name :-</span>
-                    <span className="text-sm font-bold font-serif italic border-b border-black px-2 flex-1 text-center ml-2">{selectedIndent.plant_name || selectedIndent.department || 'N/A'}</span>
+                    <EditableText 
+                      value={(viewState === 'view' ? selectedIndent?.plant_name : newIndent.plant_name) || ''} 
+                      onChange={val => viewState !== 'view' && setNewIndent({...newIndent, plant_name: val})}
+                      readOnly={viewState === 'view'}
+                      className="font-serif italic text-sm"
+                    />
                   </div>
                   <div className="border-b border-black/20 pb-1 flex justify-between items-end">
                     <span className="text-[11px] font-black uppercase tracking-tight">Order Date :-</span>
-                    <span className="text-sm font-bold font-serif italic border-b border-black px-2 flex-1 text-center ml-2">
-                      {new Date(selectedIndent.date).toLocaleDateString('en-GB')}
-                    </span>
+                    {viewState === 'view' ? (
+                      <span className="text-sm font-bold font-serif italic border-b border-black px-2 flex-1 text-center ml-2">
+                        {new Date(selectedIndent?.date || "").toLocaleDateString('en-GB')}
+                      </span>
+                    ) : (
+                      <input 
+                        type="date"
+                        className="bg-transparent border-none text-sm font-bold font-serif italic border-b border-black px-2 flex-1 text-center ml-2 focus:ring-0 p-0"
+                        value={newIndent.date}
+                        onChange={e => setNewIndent({...newIndent, date: e.target.value})}
+                      />
+                    )}
                   </div>
                   <div className="border-b border-black/20 pb-1 flex justify-between items-end">
                     <span className="text-[11px] font-black uppercase tracking-tight">Order No :-</span>
-                    <span className="text-sm font-bold font-serif italic border-b border-black px-2 flex-1 text-center ml-2">{selectedIndent.indent_no}</span>
+                    <EditableText 
+                      value={(viewState === 'view' ? selectedIndent?.indent_no : newIndent.indent_no) || ''} 
+                      onChange={val => viewState !== 'view' && setNewIndent({...newIndent, indent_no: val})}
+                      readOnly={viewState === 'view'}
+                      className="font-serif italic text-sm"
+                    />
                   </div>
                   <div className="border-b border-black/20 pb-1 flex justify-between items-end">
-                    <span className="text-[11px] font-black uppercase tracking-tight">Order Placed By :-</span>
-                    <span className="text-sm font-bold font-serif italic border-b border-black px-2 flex-1 text-center ml-2">{selectedIndent.order_placed_by || 'N/A'}</span>
+                    <span className="text-[11px] font-black uppercase tracking-tight text-nowrap">Order Placed By :-</span>
+                    <EditableText 
+                      value={(viewState === 'view' ? selectedIndent?.order_placed_by : newIndent.order_placed_by) || ''} 
+                      onChange={val => viewState !== 'view' && setNewIndent({...newIndent, order_placed_by: val})}
+                      readOnly={viewState === 'view'}
+                      className="font-serif italic text-sm"
+                    />
                   </div>
                   <div className="border-b border-black/20 pb-1 flex justify-between items-end">
-                    <span className="text-[11px] font-black uppercase tracking-tight">Order Passed By :-</span>
-                    <span className="text-sm font-bold font-serif italic border-b border-black px-2 flex-1 text-center ml-2">{selectedIndent.order_passed_by || 'N/A'}</span>
+                    <span className="text-[11px] font-black uppercase tracking-tight text-nowrap">Order Passed By :-</span>
+                    <EditableText 
+                      value={(viewState === 'view' ? selectedIndent?.order_passed_by : newIndent.order_passed_by) || ''} 
+                      onChange={val => viewState !== 'view' && setNewIndent({...newIndent, order_passed_by: val})}
+                      readOnly={viewState === 'view'}
+                      className="font-serif italic text-sm"
+                    />
+                  </div>
+                  <div className="border-b border-black/20 pb-1 flex justify-between items-end">
+                    <span className="text-[11px] font-black uppercase tracking-tight">Department :-</span>
+                    <EditableText 
+                      value={(viewState === 'view' ? selectedIndent?.department : newIndent.department) || ''} 
+                      onChange={val => viewState !== 'view' && setNewIndent({...newIndent, department: val})}
+                      readOnly={viewState === 'view'}
+                      className="font-serif italic text-sm"
+                    />
                   </div>
                 </div>
               </div>
 
               {/* Items Table */}
-              <div className="mt-10 border-2 border-black">
-                <table className="w-full border-collapse">
+              <div className="mt-10 border-2 border-black overflow-x-auto no-scrollbar">
+                <table className="w-full border-collapse min-w-[800px]">
                   <thead>
                     <tr className="bg-slate-50 border-b-2 border-black">
                       <th className="border-r border-black p-2 text-[10px] font-black uppercase w-12 text-center">SL NO</th>
                       <th className="border-r border-black p-2 text-[10px] font-black uppercase text-left">ITEM NAME</th>
-                      <th className="border-r border-black p-2 text-[10px] font-black uppercase w-16 text-center">QTY</th>
-                      <th className="border-r border-black p-2 text-[10px] font-black uppercase w-16 text-center">UOM</th>
-                      <th className="border-r border-black p-2 text-[10px] font-black uppercase w-32 text-center">APPLICATION AREA</th>
-                      <th className="border-r border-black p-2 text-[10px] font-black uppercase w-32 text-center">MATERIAL REQ BY</th>
-                      <th className="p-2 text-[10px] font-black uppercase w-32 text-center leading-tight">OLD MATERIAL STATUS</th>
+                      <th className="border-r border-black p-2 text-[10px] font-black uppercase w-16 text-center">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span>QTY</span>
+                          {viewState !== 'view' && <LinkToggle isLinked={linkedColumns.has('qty')} onToggle={() => toggleLink('qty')} />}
+                        </div>
+                      </th>
+                      <th className="border-r border-black p-2 text-[10px] font-black uppercase w-16 text-center">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span>UOM</span>
+                          {viewState !== 'view' && <LinkToggle isLinked={linkedColumns.has('uom')} onToggle={() => toggleLink('uom')} />}
+                        </div>
+                      </th>
+                      <th className="border-r border-black p-2 text-[10px] font-black uppercase w-32 text-center">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span>APPLICATION AREA</span>
+                          {viewState !== 'view' && <LinkToggle isLinked={linkedColumns.has('applicationArea')} onToggle={() => toggleLink('applicationArea')} />}
+                        </div>
+                      </th>
+                      <th className="border-r border-black p-2 text-[10px] font-black uppercase w-32 text-center">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span>MATERIAL REQ BY</span>
+                          {viewState !== 'view' && <LinkToggle isLinked={linkedColumns.has('orderPlacedBy')} onToggle={() => toggleLink('orderPlacedBy')} />}
+                        </div>
+                      </th>
+                      <th className="border-r border-black p-2 text-[10px] font-black uppercase w-32 text-center leading-tight">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span>OLD MATERIAL STATUS</span>
+                          {viewState !== 'view' && <LinkToggle isLinked={linkedColumns.has('oldMaterialStatus')} onToggle={() => toggleLink('oldMaterialStatus')} />}
+                        </div>
+                      </th>
+                      {viewState !== 'view' && <th className="p-2 text-[10px] font-black uppercase w-10 text-center no-print"></th>}
                     </tr>
                   </thead>
                   <tbody>
-                    {selectedIndent.items.map((item, idx) => (
-                      <tr key={idx} className="border-b border-black last:border-b-0 min-h-[40px]">
+                    {(viewState === 'view' ? selectedIndent?.items : newIndent.items)?.map((item, idx) => (
+                      <tr key={idx} className="border-b border-black last:border-b-0 min-h-[40px] group">
                         <td className="border-r border-black p-2 text-xs font-bold text-center italic">{idx + 1}</td>
-                        <td className="border-r border-black p-2 text-xs font-bold uppercase italic">{item.itemName}</td>
-                        <td className="border-r border-black p-2 text-xs font-bold text-center italic">{item.qty}</td>
-                        <td className="border-r border-black p-2 text-xs font-bold text-center italic uppercase">{item.uom}</td>
-                        <td className="border-r border-black p-2 text-xs font-bold text-center italic uppercase">{item.applicationArea || '-'}</td>
-                        <td className="border-r border-black p-2 text-xs font-bold text-center italic uppercase">{item.orderPlacedBy || '-'}</td>
-                        <td className="p-2 text-xs font-bold text-center italic uppercase">{item.oldMaterialStatus || '-'}</td>
+                        <td className="border-r border-black p-2 text-xs font-bold uppercase italic">
+                          {viewState === 'view' ? item.itemName : (
+                            <textarea 
+                              rows={1}
+                              className="w-full bg-transparent border-none p-0 focus:ring-0 resize-none font-bold uppercase italic text-xs min-h-[1rem]"
+                              value={item.itemName}
+                              onChange={e => {
+                                updateItem(idx, 'itemName', e.target.value);
+                                e.target.style.height = 'inherit';
+                                e.target.style.height = `${e.target.scrollHeight}px`;
+                              }}
+                            />
+                          )}
+                        </td>
+                        <td className="border-r border-black p-2 text-xs font-bold text-center italic">
+                          {viewState === 'view' ? item.qty : (
+                            <input 
+                              type="text" 
+                              className="w-full bg-transparent border-none p-0 focus:ring-0 text-center font-bold italic text-xs"
+                              value={item.qty}
+                              onChange={e => updateItem(idx, 'qty', e.target.value)}
+                            />
+                          )}
+                        </td>
+                        <td className="border-r border-black p-2 text-xs font-bold text-center italic uppercase">
+                          {viewState === 'view' ? item.uom : (
+                            <input 
+                              type="text" 
+                              className="w-full bg-transparent border-none p-0 focus:ring-0 text-center font-bold italic text-xs uppercase"
+                              value={item.uom}
+                              onChange={e => updateItem(idx, 'uom', e.target.value)}
+                            />
+                          )}
+                        </td>
+                        <td className="border-r border-black p-2 text-xs font-bold text-center italic uppercase">
+                          {viewState === 'view' ? item.applicationArea : (
+                            <input 
+                              type="text" 
+                              className="w-full bg-transparent border-none p-0 focus:ring-0 text-center font-bold italic text-xs uppercase"
+                              value={item.applicationArea}
+                              onChange={e => updateItem(idx, 'applicationArea', e.target.value)}
+                            />
+                          )}
+                        </td>
+                        <td className="border-r border-black p-2 text-xs font-bold text-center italic uppercase">
+                          {viewState === 'view' ? item.orderPlacedBy : (
+                            <input 
+                              type="text" 
+                              className="w-full bg-transparent border-none p-0 focus:ring-0 text-center font-bold italic text-xs uppercase"
+                              value={item.orderPlacedBy}
+                              onChange={e => updateItem(idx, 'orderPlacedBy', e.target.value)}
+                            />
+                          )}
+                        </td>
+                        <td className="border-r border-black p-2 text-xs font-bold text-center italic uppercase">
+                          {viewState === 'view' ? item.oldMaterialStatus : (
+                            <input 
+                              type="text" 
+                              className="w-full bg-transparent border-none p-0 focus:ring-0 text-center font-bold italic text-xs uppercase"
+                              value={item.oldMaterialStatus}
+                              onChange={e => updateItem(idx, 'oldMaterialStatus', e.target.value)}
+                            />
+                          )}
+                        </td>
+                        {viewState !== 'view' && (
+                          <td className="p-2 text-center no-print">
+                            <button onClick={() => removeItem(idx)} className="text-rose-400 hover:text-rose-600 transition-colors">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        )}
                       </tr>
                     ))}
-                    {Array.from({ length: Math.max(0, 10 - selectedIndent.items.length) }).map((_, i) => (
+                    {Array.from({ length: Math.max(0, 10 - (viewState === 'view' ? selectedIndent?.items.length || 0 : newIndent.items.length)) }).map((_, i) => (
                       <tr key={`filler-${i}`} className="border-b border-black last:border-b-0 h-10">
                         <td className="border-r border-black p-2"></td>
                         <td className="border-r border-black p-2"></td>
@@ -648,7 +873,8 @@ const IndentDashboard: React.FC = () => {
                         <td className="border-r border-black p-2"></td>
                         <td className="border-r border-black p-2"></td>
                         <td className="border-r border-black p-2"></td>
-                        <td className="p-2"></td>
+                        <td className="border-r border-black p-2"></td>
+                        {viewState !== 'view' && <td className="no-print"></td>}
                       </tr>
                     ))}
                   </tbody>
@@ -671,247 +897,12 @@ const IndentDashboard: React.FC = () => {
                 </div>
               </div>
 
-              {selectedIndent.rejection_remarks && (
+              {viewState === 'view' && selectedIndent?.rejection_remarks && (
                 <div className="mt-12 p-4 bg-rose-50 border-2 border-rose-200 rounded-lg text-rose-800 italic">
                   <p className="text-[9px] font-black uppercase mb-1 not-italic tracking-widest">Office Rejection Note:</p>
                   "{selectedIndent.rejection_remarks}"
                 </div>
               )}
-            </div>
-          </div>
-        ) : (viewState === 'create' || viewState === 'edit') ? (
-          <div className="p-4 sm:p-8 lg:p-12 animate-in slide-in-from-right-4 duration-300">
-            <div className="max-w-5xl mx-auto space-y-8">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight uppercase">
-                    {viewState === 'edit' ? `Edit Indent #${newIndent.indent_no}` : 'New Indent Request'}
-                  </h2>
-                  <p className="text-sm text-slate-400 dark:text-slate-500 font-semibold mt-1">
-                    {viewState === 'edit' ? 'Update the details below to resubmit the indent' : 'Fill the details or use Vision AI to extract from a physical order book'}
-                  </p>
-                </div>
-                <button 
-                  onClick={() => setViewState('idle')}
-                  className="p-3 bg-white dark:bg-slate-900 text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 rounded-2xl border border-slate-200 dark:border-slate-800 transition-all cursor-pointer"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm grid grid-cols-1 md:grid-cols-6 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Indent Number</label>
-                  <input 
-                    type="text"
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border-none rounded-lg text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-indigo-500/30 transition-all"
-                    value={newIndent.indent_no}
-                    onChange={e => setNewIndent({...newIndent, indent_no: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Indent Date</label>
-                  <input 
-                    type="date"
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border-none rounded-lg text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-indigo-500/30 transition-all"
-                    value={newIndent.date}
-                    onChange={e => setNewIndent({...newIndent, date: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Plant Name</label>
-                  <input 
-                    type="text"
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border-none rounded-lg text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-indigo-500/30 transition-all"
-                    placeholder="Plant name..."
-                    value={newIndent.plant_name}
-                    onChange={e => setNewIndent({...newIndent, plant_name: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Dept / Purpose</label>
-                  <input 
-                    type="text"
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border-none rounded-lg text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-indigo-500/30 transition-all"
-                    placeholder="e.g. Electrical Dept"
-                    value={newIndent.department}
-                    onChange={e => setNewIndent({...newIndent, department: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Order Placed By</label>
-                  <input 
-                    type="text"
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border-none rounded-lg text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-indigo-500/30 transition-all"
-                    placeholder="Name..."
-                    value={newIndent.order_placed_by}
-                    onChange={e => setNewIndent({...newIndent, order_placed_by: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Order Passed By</label>
-                  <input 
-                    type="text"
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border-none rounded-lg text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-indigo-500/30 transition-all"
-                    placeholder="Name..."
-                    value={newIndent.order_passed_by}
-                    onChange={e => setNewIndent({...newIndent, order_passed_by: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              {viewState === 'create' && (
-                <div className="flex flex-wrap gap-4 items-center">
-                  <label className="flex items-center gap-2.5 px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer shadow-lg shadow-indigo-600/20 active:scale-95 group">
-                    {isExtracting ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImageIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />}
-                    {isExtracting ? "AI Working..." : "Scan physical Order Slip"}
-                    <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={isExtracting} />
-                  </label>
-                  <div className="h-10 w-px bg-slate-200 dark:bg-slate-800 mx-2" />
-                  <button 
-                    onClick={addItem}
-                    className="flex items-center gap-2.5 px-6 py-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer active:scale-95 shadow-sm"
-                  >
-                    <Plus className="w-5 h-5" /> Add Row Manually
-                  </button>
-                </div>
-              )}
-              {viewState === 'edit' && (
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={addItem}
-                    className="flex items-center gap-2.5 px-6 py-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-all cursor-pointer active:scale-95 shadow-sm"
-                  >
-                    <Plus className="w-5 h-5" /> Add New Row
-                  </button>
-                </div>
-              )}
-
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden overflow-x-auto custom-scrollbar">
-                <table className="w-full border-collapse min-w-[1000px]">
-                  <thead>
-                    <tr className="bg-slate-50 dark:bg-slate-950/50 border-b border-slate-100 dark:border-slate-800">
-                      <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 w-12 text-center">#</th>
-                      <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 text-left">Description</th>
-                      <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 w-24 text-center">Qty</th>
-                      <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 w-24 text-center">UOM</th>
-                      <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 text-left">App. Area</th>
-                      <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 text-left">Req By</th>
-                      <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 text-left">Old Mat. Status</th>
-                      <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-slate-400 w-12"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                    {newIndent.items.map((item, idx) => (
-                      <tr key={idx} className="group hover:bg-slate-50/50 dark:hover:bg-slate-950/50 transition-colors">
-                        <td className="px-4 py-2 text-center text-[10px] font-black text-slate-400">{idx + 1}</td>
-                        <td className="px-4 py-2">
-                          <textarea 
-                            rows={1}
-                            className="w-full bg-transparent border-none text-[11px] font-bold text-slate-900 dark:text-slate-100 uppercase focus:ring-0 resize-none min-h-[1.5rem] py-1 no-scrollbar overflow-hidden"
-                            placeholder="Enter item description..."
-                            value={item.itemName}
-                            onChange={e => {
-                               updateItem(idx, 'itemName', e.target.value);
-                               // Auto-expand height
-                               e.target.style.height = 'inherit';
-                               e.target.style.height = `${e.target.scrollHeight}px`;
-                            }}
-                            onFocus={e => {
-                               e.target.style.height = 'inherit';
-                               e.target.style.height = `${e.target.scrollHeight}px`;
-                            }}
-                          />
-                        </td>
-                        <td className="px-4 py-2">
-                          <input 
-                            type="text" 
-                            className="w-full bg-transparent border-none text-[11px] font-bold text-center text-slate-900 dark:text-slate-100 focus:ring-0"
-                            placeholder="0"
-                            value={item.qty}
-                            onChange={e => updateItem(idx, 'qty', e.target.value)}
-                          />
-                        </td>
-                        <td className="px-4 py-2">
-                          <input 
-                            type="text" 
-                            className="w-full bg-transparent border-none text-[11px] font-bold text-center text-slate-900 dark:text-slate-100 uppercase focus:ring-0"
-                            placeholder="NOS"
-                            value={item.uom}
-                            onChange={e => updateItem(idx, 'uom', e.target.value)}
-                          />
-                        </td>
-                        <td className="px-4 py-2">
-                          <input 
-                            type="text" 
-                            className="w-full bg-transparent border-none text-[11px] font-bold text-slate-900 dark:text-slate-100 uppercase focus:ring-0"
-                            placeholder="Area..."
-                            value={item.applicationArea}
-                            onChange={e => updateItem(idx, 'applicationArea', e.target.value)}
-                          />
-                        </td>
-                        <td className="px-4 py-2">
-                          <input 
-                            type="text" 
-                            className="w-full bg-transparent border-none text-[11px] font-bold text-slate-900 dark:text-slate-100 uppercase focus:ring-0"
-                            placeholder="Name..."
-                            value={item.orderPlacedBy}
-                            onChange={e => updateItem(idx, 'orderPlacedBy', e.target.value)}
-                          />
-                        </td>
-                        <td className="px-4 py-2">
-                          <input 
-                            type="text" 
-                            className="w-full bg-transparent border-none text-[11px] font-bold text-slate-900 dark:text-slate-100 uppercase focus:ring-0"
-                            placeholder="Status..."
-                            value={item.oldMaterialStatus}
-                            onChange={e => updateItem(idx, 'oldMaterialStatus', e.target.value)}
-                          />
-                        </td>
-                        <td className="px-4 py-2 text-center">
-                          <button onClick={() => removeItem(idx)} className="p-1 text-slate-300 hover:text-rose-600 transition-colors cursor-pointer">
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    {newIndent.items.length === 0 && (
-                      <tr>
-                        <td colSpan={8} className="py-20 text-center">
-                          <div className="max-w-xs mx-auto space-y-2 opacity-50">
-                            <Plus className="w-8 h-8 mx-auto text-slate-300" />
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">List is empty. Use the toolbar above to add items.</p>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-4">
-                <div className="flex items-center gap-3">
-                   <div className="px-4 py-2 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mr-2">Count:</span>
-                      <span className="text-sm font-black text-slate-900 dark:text-slate-100">{newIndent.items.length} Items</span>
-                   </div>
-                </div>
-                <div className="flex gap-4 w-full sm:w-auto">
-                  <button 
-                    onClick={() => setViewState('idle')}
-                    className="flex-1 sm:flex-none px-10 py-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-all cursor-pointer"
-                  >
-                    Discard
-                  </button>
-                  <button 
-                    onClick={handleSaveIndent}
-                    disabled={newIndent.items.length === 0 || isExtracting}
-                    className="flex-1 sm:flex-none px-12 py-3.5 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-black dark:hover:bg-white transition-all shadow-xl active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
-                  >
-                    {viewState === 'edit' ? 'Update Indent Request' : 'Submit Indent Request'} <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         ) : null}
