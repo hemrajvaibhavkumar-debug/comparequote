@@ -360,6 +360,11 @@ const IndentDashboard: React.FC = () => {
             height: auto !important;
             overflow: visible !important;
           }
+          /* Reset nested containers for print */
+          div {
+            overflow: visible !important;
+            height: auto !important;
+          }
           /* Hide all UI elements */
           .no-print, .glass-navbar, .fixed, button, .ambient-glow {
             display: none !important;
@@ -371,6 +376,7 @@ const IndentDashboard: React.FC = () => {
             display: block !important;
             visibility: visible !important;
             width: 100% !important;
+            max-width: none !important;
             margin: 0 !important;
             padding: 0 !important;
             box-shadow: none !important;
@@ -383,9 +389,21 @@ const IndentDashboard: React.FC = () => {
             border-color: black !important;
             background-color: transparent !important;
           }
-          /* Special case for table borders */
+          /* Force table overflow container to be visible */
+          .print-paper .overflow-x-auto {
+            overflow: visible !important;
+          }
+          /* Force table to fit within page width */
+          .print-paper table {
+            min-width: 100% !important;
+            width: 100% !important;
+            table-layout: auto !important;
+          }
+          /* Special case for table borders and word wrapping */
           .print-paper table, .print-paper td, .print-paper th {
             border: 1px solid black !important;
+            word-break: break-word !important;
+            white-space: normal !important;
           }
           /* Force colors for Chrome/Safari */
           * {
