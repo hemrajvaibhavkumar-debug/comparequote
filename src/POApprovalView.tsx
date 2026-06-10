@@ -516,24 +516,24 @@ export default function POApprovalView() {
       <div className="ambient-glow ambient-blue -bottom-40 -left-40" />
 
       {/* Glass navigation header */}
-      <div className="glass-navbar px-6 py-4 sticky top-16 z-40 shadow-sm print-hidden">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-6">
+      <div className="glass-navbar sticky top-0 z-[45] shadow-sm print-hidden">
+        <div className="max-w-5xl mx-auto px-4 sm:px-8 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-4">
             <button 
               onClick={() => navigate(hasHubAccess ? '/purchase-head' : '/saved-pos')} 
-              className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 font-semibold group transition-all duration-200 bg-white dark:bg-slate-900 hover:bg-slate-100/80 dark:hover:bg-slate-800 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm text-sm cursor-pointer"
+              className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 font-semibold group transition-all duration-200 bg-white dark:bg-slate-900 hover:bg-slate-100/80 dark:hover:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm text-xs cursor-pointer"
             >
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to List
+              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" /> Back to List
             </button>
-            <div className="h-6 w-px bg-slate-200 dark:bg-slate-800"></div>
-            <div className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] font-sans">
+            <div className="h-5 w-px bg-slate-200 dark:bg-slate-800"></div>
+            <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] font-sans">
                Approver Hub / PO #{po.po_no}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto p-4 sm:p-8 relative z-10" ref={printRef}>
+      <div className="max-w-5xl mx-auto px-4 pb-4 pt-2 sm:px-8 sm:pb-8 sm:pt-2 relative z-0" ref={printRef}>
         {/* Document Preview Frame */}
         <div 
           className={`bg-white dark:bg-white relative mb-8 min-h-[800px] transition-all duration-300 ${

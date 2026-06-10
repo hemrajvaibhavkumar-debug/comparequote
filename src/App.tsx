@@ -247,7 +247,7 @@ function AppContent() {
         </nav>
       )}
 
-      <main className="relative z-10">
+      <main className="relative">
         <Suspense fallback={<LoadingFallback />}>
           <Routes>
             <Route path="/login" element={<Login />} />

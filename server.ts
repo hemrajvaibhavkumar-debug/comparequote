@@ -844,7 +844,7 @@ async function startServer() {
         };
       }
 
-      const [pos, total, stats, creators] = await Promise.all([
+      const [pos, total, stats, pendingCount, approvedCount, creatorsList] = await Promise.all([
         prisma.purchaseOrder.findMany({
           where,
           orderBy: { updated_at: "desc" },
@@ -875,18 +875,14 @@ async function startServer() {
           }
         }),
         // Fetch specific counts for statuses within the current filter
-        prisma.$transaction([
-          prisma.purchaseOrder.count({ where: { ...where, status: { in: ['PENDING', 'PENDING_L2'] } } }),
-          prisma.purchaseOrder.count({ where: { ...where, status: 'APPROVED' } }),
-          prisma.purchaseOrder.findMany({
-            where: { created_by_name: { not: null } },
-            select: { created_by_name: true },
-            distinct: ['created_by_name']
-          })
-        ])
+        prisma.purchaseOrder.count({ where: { ...where, status: { in: ['PENDING', 'PENDING_L2'] } } }),
+        prisma.purchaseOrder.count({ where: { ...where, status: 'APPROVED' } }),
+        prisma.purchaseOrder.findMany({
+          where: { created_by_name: { not: null } },
+          select: { created_by_name: true },
+          distinct: ['created_by_name']
+        })
       ]);
-
-      const [pendingCount, approvedCount, creatorsList] = creators;
 
       const parsedPos = pos.map(po => ({
         ...po,
