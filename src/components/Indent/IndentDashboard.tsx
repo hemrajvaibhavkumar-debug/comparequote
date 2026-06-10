@@ -21,7 +21,8 @@ import {
   Printer,
   X,
   Link2,
-  Link2Off
+  Link2Off,
+  Copy
 } from 'lucide-react';
 
 const LinkToggle = ({ isLinked, onToggle, className = "" }: { isLinked: boolean, onToggle: () => void, className?: string }) => (
@@ -342,7 +343,52 @@ const IndentDashboard: React.FC = () => {
       order_passed_by: '',
       is_urgent: false
     });
-    setSelectedIndent(null);
+  };
+
+  const handleCopyForExcel = () => {
+    if (!selectedIndent) return;
+
+    const formatDateForExcel = (dateStr: string | Date | undefined) => {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '';
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${day}-${month}-${year}`;
+    };
+
+    const rows = selectedIndent.items.map((item, idx) => {
+      const formattedDate = formatDateForExcel(selectedIndent.date);
+      const site = selectedIndent.plant_name || '';
+      const uniqueId = ''; // Blank as requested
+      const indentNo = selectedIndent.indent_no || '';
+      const itemNo = idx + 1;
+      const itemDesc = item.itemName || '';
+      const uom = item.uom || '';
+      const qty = item.qty || '';
+
+      return [
+        formattedDate,
+        site,
+        uniqueId,
+        indentNo,
+        itemNo,
+        itemDesc,
+        uom,
+        qty
+      ].join('\t');
+    });
+
+    const tsvContent = rows.join('\n');
+
+    navigator.clipboard.writeText(tsvContent)
+      .then(() => {
+        showToast("Copied items to clipboard for Excel!", "success");
+      })
+      .catch(() => {
+        showToast("Failed to copy items to clipboard", "error");
+      });
   };
 
   return (
@@ -638,6 +684,13 @@ const IndentDashboard: React.FC = () => {
                         </button>
                       </>
                     )}
+                    <button 
+                      onClick={handleCopyForExcel}
+                      className="p-2.5 text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
+                      title="Copy for Excel"
+                    >
+                      <Copy className="w-5 h-5" />
+                    </button>
                     <button 
                       onClick={() => window.print()}
                       className="p-2.5 text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors cursor-pointer"
