@@ -320,7 +320,7 @@ async function startServer() {
                 "totalAmount": 0,
                 "deliveryPeriod": "",
                 "readyStock": "",
-                "gstStatus": "18% Extra", // "18% Extra", "5% Extra", or "Inclusive"
+                "gstStatus": "18% Extra", // "18% Extra", "5% Extra", "0.1% Extra", or "Inclusive"
                 "extra": "",
                 "quoteDate": ""
               }
@@ -688,7 +688,7 @@ async function startServer() {
       - UOM: Unit of measure (e.g., NOS, PCS, KG, Mtr, FT). Default to "NOS" if unclear.
       - Rate: Unit price as a number.
       - Discount: Percentage as a number (e.g., 5 for 5%). Default to 0.
-      - Tax: Valid values: "GST @18%", "GST @5%", "Nil". Default to "GST @18%".
+      - Tax: Valid values: "GST @18%", "GST @5%", "GST @0.1%", "Nil". Default to "GST @18%".
       - Return ONLY valid JSON. No conversational text.
       - If multiple items are found, extract all of them.
       - If a field is missing, use defaults specified above.`;

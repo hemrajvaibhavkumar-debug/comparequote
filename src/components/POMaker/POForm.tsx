@@ -140,10 +140,10 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
       let taxPercent = 0;
       const taxStr = String(item.tax || '');
       if (taxStr.includes('@')) {
-        const match = taxStr.match(/@(\d+)%/);
+        const match = taxStr.match(/@(\d+(\.\d+)?)%/);
         if (match) taxPercent = parseFloat(match[1]);
       } else if (taxStr.includes('%')) {
-        const match = taxStr.match(/(\d+)%/);
+        const match = taxStr.match(/(\d+(\.\d+)?)%/);
         if (match) taxPercent = parseFloat(match[1]);
       }
       
@@ -717,6 +717,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                   >
                     <option value="GST @18%">18%</option>
                     <option value="GST @5%">5%</option>
+                    <option value="GST @0.1%">0.1%</option>
                     <option value="Nil">Nil</option>
                   </select>
                 </div>
@@ -784,6 +785,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               <option value="">Select Tax</option>
               <option value="GST @18%">18%</option>
               <option value="GST @5%">5%</option>
+              <option value="GST @0.1%">0.1%</option>
               <option value="Extra">Extra</option>
               <option value="Inclusive">Inclusive</option>
             </select>
@@ -823,6 +825,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                 disabled={isReadOnly}
               >
                 <option value="">Select IGST</option>
+                <option value="0.1%">0.1%</option>
                 <option value="5%">5%</option>
                 <option value="18%">18%</option>
                 <option value="LUT">LUT</option>
@@ -1039,6 +1042,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               >
                 <option value="GST @18%">18% GST</option>
                 <option value="GST @5%">5% GST</option>
+                <option value="GST @0.1%">0.1% GST</option>
                 <option value="Nil">Nil GST</option>
               </select>
               <input 

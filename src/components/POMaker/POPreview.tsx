@@ -492,7 +492,7 @@ const POPreview = React.memo<POPreviewProps>(({ po, setPo, settings, actions, is
                 <td className="border border-black p-1 text-right">
                   {(() => {
                     const taxStr = terms.freight_tax || 'GST @18%';
-                    const taxMatch = taxStr.match(/(\d+)%/);
+                    const taxMatch = taxStr.match(/(\d+(\.\d+)?)%/);
                     const taxPercent = taxMatch ? parseFloat(taxMatch[1]) : 18;
                     return Number(terms.freight_amount * (taxPercent / 100)).toLocaleString(undefined, {minimumFractionDigits: 2});
                   })()}
@@ -505,7 +505,7 @@ const POPreview = React.memo<POPreviewProps>(({ po, setPo, settings, actions, is
             <td className="border border-black p-1.5 text-right text-[10px]">
               ₹{(() => {
                 const taxStr = terms.freight_tax || 'GST @18%';
-                const taxMatch = taxStr.match(/(\d+)%/);
+                const taxMatch = taxStr.match(/(\d+(\.\d+)?)%/);
                 const taxPercent = taxMatch ? parseFloat(taxMatch[1]) : 18;
                 const fAmount = Number(terms.freight_amount) || 0;
                 const fTax = fAmount * (taxPercent / 100);
