@@ -105,6 +105,15 @@ async function startServer() {
         });
         console.log("[Auth] SuperAdmin account seeded: username 'admin'");
       }
+
+      // 3. Seed Default Executives
+      const gourav = await prisma.executive.findUnique({ where: { name: 'Gourav Indra' } });
+      if (!gourav) {
+        await prisma.executive.create({
+          data: { name: 'Gourav Indra', designation: 'Purchase Executive' }
+        });
+        console.log("[Auth] Default executive seeded: Gourav Indra");
+      }
     } catch (e: any) {
       console.error("[Auth] Seeder attempt failed:", e.message);
       if (e.meta) console.error("[Auth] Error meta:", JSON.stringify(e.meta, null, 2));

@@ -412,7 +412,8 @@ const POMaker: React.FC = () => {
               <option value="Souritra Ghoshal">Souritra Ghoshal</option>
               <option value="Rupak Mukherjee">Rupak Mukherjee</option>
               <option value="Soumen Karmakar">Soumen Karmakar</option>
-            </select>
+              <option value="Gourav Indra">Gourav Indra</option>
+              </select>
           </div>
           <select 
             className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
