@@ -30,6 +30,7 @@ export interface VendorQuote {
   readyStock: string;
   packingAndForwarding: string;
   freight: string;
+  freightAmount?: number | string;
   gstStatus: string; // "Inclusive", "Exclusive", "18% Extra", or "5% Extra"
   extra: string;
   quoteDate?: string;

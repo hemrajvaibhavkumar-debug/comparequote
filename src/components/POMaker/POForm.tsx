@@ -1033,7 +1033,16 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                 <option value="Extra">Extra</option>
                 <option value="Including">Including</option>
                 <option value="Nil">Nil</option>
+                <option value="CUSTOM">Custom...</option>
               </select>
+              <input 
+                type="text"
+                className="mt-1 flex-1 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50"
+                value={po.terms.freight || ''}
+                onChange={e => setPo({...po, terms: { ...po.terms, freight: e.target.value }})}
+                placeholder="e.g. Extra, Nil"
+                disabled={isReadOnly}
+              />
               <select 
                 className="mt-1 w-1/4 border border-slate-200 dark:border-slate-800 rounded-xl px-2 py-2 bg-white dark:bg-slate-950 text-xs text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer disabled:opacity-50"
                 value={po.terms.freight_tax || 'GST @18%'}

@@ -154,7 +154,9 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
   };
 
   const calculateVendorGrandTotal = (vendorName: string) => {
-    return calculateVendorTotal(vendorName) + calculateVendorTax(vendorName);
+    const firstQuote = items[0]?.vendorQuotes?.find(q => q.vendorName === vendorName);
+    const freightAmt = parseFloat(firstQuote?.freightAmount as any) || 0;
+    return calculateVendorTotal(vendorName) + calculateVendorTax(vendorName) + freightAmt;
   };
 
   const updateVendorName = (oldName: string, newName: string) => {
@@ -236,7 +238,7 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
       
       let currentQuote = qIndex >= 0 ? { ...quotes[qIndex] } : {
         vendorName, make: '', mrp: '', discount: '', netRate: '', totalAmount: '',
-        deliveryPeriod: '', readyStock: '', packingAndForwarding: 'NILL', freight: 'NILL', gstStatus: '18% Extra', extra: ''
+        deliveryPeriod: '', readyStock: '', packingAndForwarding: 'NILL', freight: 'NILL', freightAmount: '', gstStatus: '18% Extra', extra: ''
       } as any;
 
       currentQuote[field] = value;
@@ -359,8 +361,8 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
         description: '', uom: '', qty: '',
         previousPrice: { vendor: '', rate: '', date: '' },
         vendorQuotes: prev.vendors.map((v: string) => ({
-          vendorName: v, make: '', mrp: '', discount: '', netRate: '', totalAmount: '', deliveryPeriod: '', readyStock: '', packingAndForwarding: 'NILL', freight: 'NILL', gstStatus: '18% Extra', extra: '',
-          quoteDate: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
+        vendorName: v, make: '', mrp: '', discount: '', netRate: '', totalAmount: '', deliveryPeriod: '', readyStock: '', packingAndForwarding: 'NILL', freight: 'NILL', freightAmount: '', gstStatus: '18% Extra', extra: '',
+        quoteDate: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
         }))
       });
       return { ...prev, items: newItems };
@@ -907,6 +909,29 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
              <td className="print-hidden border-black border"></td>
           </tr>
 
+          <tr className="bg-white">
+             <td colSpan={hasWeight ? 9 : 8} className="border-none"></td>
+             {vendors.map((v, i) => {
+               const firstQuote = data.items[0]?.vendorQuotes?.find(q => q.vendorName === v);
+               return (
+                <React.Fragment key={i}>
+                  <td colSpan={2} className="border border-black p-1 italic text-right font-bold uppercase pr-2 text-black" style={{ fontSize: `${Math.max(fontSize - 2, 8)}px` }}>FREIGHT CHARGES</td>
+                  <td colSpan={3} className="border border-black p-0">
+                    <input 
+                      type="text"
+                      value={firstQuote?.freightAmount || ''} 
+                      onChange={e => updateQuote(0, v, 'freightAmount', e.target.value)} 
+                      className="text-center font-bold text-black" 
+                      style={{ fontSize: `${fontSize}px` }} 
+                      readOnly={readOnly}
+                      placeholder="0.00"
+                    />
+                  </td>
+                </React.Fragment>
+               )
+             })}
+             <td className="print-hidden border-black border"></td>
+          </tr>
           <tr className="bg-white text-black">
              <td colSpan={hasWeight ? 9 : 8} className="border border-black text-center font-bold uppercase tracking-[0.3em] text-black" style={{ fontSize: `${Math.max(fontSize - 2, 8)}px` }}></td>
              {vendors.map((v, i) => (
@@ -925,7 +950,7 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
                 <React.Fragment key={i}>
                   <td colSpan={2} className="border border-black p-1 italic text-right font-bold uppercase pr-2 text-black" style={{ fontSize: `${Math.max(fontSize - 2, 8)}px` }}>DELIVERY</td>
                   <td colSpan={3} className="border border-black p-0">
-                    <AutoExpandingTextarea value={firstQuote?.deliveryPeriod || ''} onChange={val => updateQuote(0, v, 'deliveryPeriod', val)} className="text-center font-bold uppercase text-black" style={{ fontSize: `${fontSize}px` }} readOnly={readOnly} rows={1}/>
+                    <AutoExpandingTextarea value={firstQuote?.deliveryPeriod || ''} onChange={val => updateQuote(0, v, 'deliveryPeriod', val)} className="text-center font-bold text-black" style={{ fontSize: `${fontSize}px` }} readOnly={readOnly} rows={1}/>
                   </td>
                 </React.Fragment>
                )
@@ -940,16 +965,14 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
                 <React.Fragment key={i}>
                   <td colSpan={2} className="border border-black p-1 italic text-right font-bold uppercase pr-2 text-black" style={{ fontSize: `${Math.max(fontSize - 2, 8)}px` }}>FREIGHT</td>
                   <td colSpan={3} className="border border-black p-0">
-                    <select 
+                    <AutoExpandingTextarea 
                       value={firstQuote?.freight || 'NILL'} 
-                      onChange={e => updateQuote(0, v, 'freight', e.target.value)} 
-                      className="text-center font-bold uppercase cursor-pointer text-black"
-                      style={{ fontSize: `${fontSize}px` }}
-                      disabled={readOnly}
-                    >
-                      <option value="NILL">NILL</option>
-                      <option value="Extra">Extra</option>
-                    </select>
+                      onChange={val => updateQuote(0, v, 'freight', val)} 
+                      className="text-center font-bold text-black" 
+                      style={{ fontSize: `${fontSize}px` }} 
+                      readOnly={readOnly} 
+                      rows={1}
+                    />
                   </td>
                 </React.Fragment>
                )
@@ -964,16 +987,14 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
                 <React.Fragment key={i}>
                   <td colSpan={2} className="border border-black p-1 italic text-right font-bold uppercase pr-2 text-black" style={{ fontSize: `${Math.max(fontSize - 2, 8)}px` }}>P & F</td>
                   <td colSpan={3} className="border border-black p-0">
-                    <select 
+                    <AutoExpandingTextarea 
                       value={firstQuote?.packingAndForwarding || 'NILL'} 
-                      onChange={e => updateQuote(0, v, 'packingAndForwarding', e.target.value)} 
-                      className="text-center font-bold uppercase cursor-pointer text-black"
-                      style={{ fontSize: `${fontSize}px` }}
-                      disabled={readOnly}
-                    >
-                      <option value="NILL">NILL</option>
-                      <option value="Extra">Extra</option>
-                    </select>
+                      onChange={val => updateQuote(0, v, 'packingAndForwarding', val)} 
+                      className="text-center font-bold text-black" 
+                      style={{ fontSize: `${fontSize}px` }} 
+                      readOnly={readOnly} 
+                      rows={1}
+                    />
                   </td>
                 </React.Fragment>
                )
@@ -988,7 +1009,7 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
                 <React.Fragment key={i}>
                   <td colSpan={2} className="border border-black p-1 italic text-right font-bold uppercase pr-2 text-black" style={{ fontSize: `${Math.max(fontSize - 2, 8)}px` }}>STOCK</td>
                   <td colSpan={3} className="border border-black p-0">
-                    <AutoExpandingTextarea value={firstQuote?.readyStock || ''} onChange={val => updateQuote(0, v, 'readyStock', val)} className="text-center font-bold uppercase text-black" style={{ fontSize: `${fontSize}px` }} readOnly={readOnly} rows={1}/>
+                    <AutoExpandingTextarea value={firstQuote?.readyStock || ''} onChange={val => updateQuote(0, v, 'readyStock', val)} className="text-center font-bold text-black" style={{ fontSize: `${fontSize}px` }} readOnly={readOnly} rows={1}/>
                   </td>
                 </React.Fragment>
                )
@@ -1012,7 +1033,9 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
                     >
                       <option value="Exclusive">Exclusive (18%)</option>
                       <option value="18% Extra">18% Extra</option>
+                      <option value="12% Extra">12% Extra</option>
                       <option value="5% Extra">5% Extra</option>
+                      <option value="28% Extra">28% Extra</option>
                       <option value="Inclusive">Inclusive</option>
                     </select>
                   </td>
@@ -1029,7 +1052,7 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
                 <React.Fragment key={i}>
                   <td colSpan={2} className="border border-black p-1 italic text-right font-bold uppercase pr-2 text-black" style={{ fontSize: `${Math.max(fontSize - 2, 8)}px` }}>OTHER EXTRA</td>
                   <td colSpan={3} className="border border-black p-0">
-                    <AutoExpandingTextarea value={firstQuote?.extra || ''} onChange={val => updateQuote(0, v, 'extra', val)} className="text-center font-bold uppercase text-black" style={{ fontSize: `${fontSize}px` }} readOnly={readOnly} rows={1}/>
+                    <AutoExpandingTextarea value={firstQuote?.extra || ''} onChange={val => updateQuote(0, v, 'extra', val)} className="text-center font-bold text-black" style={{ fontSize: `${fontSize}px` }} readOnly={readOnly} rows={1}/>
                   </td>
                 </React.Fragment>
                )
