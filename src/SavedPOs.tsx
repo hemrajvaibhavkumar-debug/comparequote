@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { PurchaseOrder, InternalComment } from './types';
-import { FileText, Eye, Edit, Trash2, Search, ArrowLeft, ShieldCheck, CheckCircle, XCircle, Clock, Filter, ChevronRight, IndianRupee, StickyNote } from 'lucide-react';
+import { FileText, Eye, Edit, Trash2, Search, ArrowLeft, ShieldCheck, CheckCircle, XCircle, Clock, Filter, ChevronRight, IndianRupee, StickyNote, RotateCcw } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import { useApiCache, usePOs } from './context/ApiCacheContext';
 import CommentsModal from './components/CommentsModal';
@@ -126,6 +126,13 @@ const SavedPOs: React.FC = () => {
           <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-full border border-slate-900 dark:border-slate-100 shadow-sm">
             <XCircle className="w-3.5 h-3.5" />
             <span className="text-[10px] font-black uppercase tracking-wider">Rejected</span>
+          </div>
+        );
+      case 'REVISION_REQUIRED':
+        return (
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 rounded-full border border-rose-200 dark:border-rose-800 shadow-sm">
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span className="text-[10px] font-black uppercase tracking-wider">Revision Required</span>
           </div>
         );
       default:

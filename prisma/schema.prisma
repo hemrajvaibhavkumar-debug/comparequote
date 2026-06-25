@@ -141,3 +141,13 @@ model Indent {
 
   @@index([status, updated_at(sort: Desc)])
 }
+
+model ItAudit {
+  id                    Int      @id @default(autoincrement())
+  employee_name         String
+  department            String
+  designation           String
+  sheets                Json     // Array of ItAuditSheet objects
+  created_at            DateTime @default(now())
+}
+

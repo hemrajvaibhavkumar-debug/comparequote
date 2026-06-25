@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PurchaseOrder, TermsTemplate, POItem, VendorMaster } from '../../types';
-import { Plus, Trash2, ClipboardPaste, Loader2, RotateCcw } from 'lucide-react';
+import { Plus, Trash2, ClipboardPaste, Loader2, RotateCcw, Search } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 interface POFormProps {
@@ -10,6 +10,7 @@ interface POFormProps {
   vendors: VendorMaster[];
   comparisons: any[];
   onGeneratePONo: () => void;
+  onRefreshVendors?: () => Promise<void>;
 }
 
 const CONTACT_OPTIONS = [
@@ -22,7 +23,7 @@ const CONTACT_OPTIONS = [
   "+91 90461 41874 - Arpita"
 ];
 
-const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparisons, onGeneratePONo }) => {
+const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparisons, onGeneratePONo, onRefreshVendors }) => {
   const { user } = useAuth();
   const canEditApproved = user?.role === 'SUPERADMIN' || user?.permissions.includes('EDIT_APPROVED_PO');
   const isReadOnly = po.status === 'APPROVED' && !canEditApproved;
@@ -32,6 +33,81 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
   const [showBulkPaste, setShowBulkPaste] = useState(false);
   const [showIgst, setShowIgst] = useState(!!po.terms?.igst);
   const [importModal, setImportModal] = useState<{ isOpen: boolean; vendors: string[]; compData: any } | null>(null);
+
+  // Searchable Vendor Master states
+  const [vendorSearchTerm, setVendorSearchTerm] = useState('');
+  const [showVendorDropdown, setShowVendorDropdown] = useState(false);
+
+  // Add Vendor Modal states
+  const [isAddVendorOpen, setIsAddVendorOpen] = useState(false);
+  const [isSavingVendor, setIsSavingVendor] = useState(false);
+  const [newVendorData, setNewVendorData] = useState({
+    name: '',
+    address: '',
+    state: '',
+    gstin: '',
+    mobile_no: '',
+    email: ''
+  });
+
+  // UOM Options list
+  const [uomOptions, setUomOptions] = useState<string[]>(() => {
+    const saved = localStorage.getItem('po_uom_options');
+    return saved ? JSON.parse(saved) : ['FT', 'KG', 'Mtr', 'PCS', 'NOS', 'PAIR'];
+  });
+
+  // Close search dropdown on click outside
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.vendor-search-container')) {
+        setShowVendorDropdown(false);
+      }
+    };
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, []);
+
+  const filteredVendors = vendors.filter(v => 
+    v.name.toLowerCase().includes(vendorSearchTerm.toLowerCase())
+  );
+
+  const handleAddVendorSubmit = async () => {
+    if (!newVendorData.name.trim()) return;
+    setIsSavingVendor(true);
+    try {
+      const res = await apiFetch('/api/settings/vendors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newVendorData.name.trim(),
+          address: newVendorData.address.trim(),
+          state: newVendorData.state.trim().toUpperCase(),
+          gstin: newVendorData.gstin.trim().toUpperCase(),
+          mobile_no: newVendorData.mobile_no.trim(),
+          email: newVendorData.email.trim()
+        })
+      });
+
+      if (res.ok) {
+        if (onRefreshVendors) {
+          await onRefreshVendors();
+        }
+        handleVendorSelect(newVendorData.name.trim());
+        setVendorSearchTerm(newVendorData.name.trim());
+        setIsAddVendorOpen(false);
+        setNewVendorData({ name: '', address: '', state: '', gstin: '', mobile_no: '', email: '' });
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to add vendor");
+      }
+    } catch (e: any) {
+      console.error(e);
+      alert("Error adding vendor: " + e.message);
+    } finally {
+      setIsSavingVendor(false);
+    }
+  };
 
   useEffect(() => {
     if (po.terms?.igst) {
@@ -455,17 +531,64 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
       <section className="glass-card p-6 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 gap-3">
           <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 font-sans tracking-wide uppercase">Vendor Details</h2>
-          <div className="flex flex-wrap gap-2">
-             <select 
-               className="flex-1 sm:flex-none text-xs bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 outline-none text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer disabled:opacity-50"
-               onChange={e => handleVendorSelect(e.target.value)}
-               defaultValue=""
+          <div className="flex flex-wrap gap-2 items-center">
+             {/* Searchable Vendor Master Dropdown */}
+             <div className="relative flex-1 sm:flex-none vendor-search-container z-50">
+               <input
+                 type="text"
+                 placeholder="Search Master Vendor..."
+                 disabled={isReadOnly}
+                 className="w-full sm:w-60 text-xs bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 pl-8 outline-none text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 disabled:opacity-50 shadow-xs"
+                 value={vendorSearchTerm}
+                 onChange={e => {
+                   setVendorSearchTerm(e.target.value);
+                   setShowVendorDropdown(true);
+                 }}
+                 onFocus={() => setShowVendorDropdown(true)}
+               />
+               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+               {showVendorDropdown && (
+                 <div className="absolute left-0 sm:right-0 mt-1 w-full sm:w-72 max-h-60 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg z-[100] custom-scrollbar">
+                   <div 
+                     className="px-3 py-2 text-xs text-rose-500 hover:bg-slate-55 dark:hover:bg-slate-800 font-bold cursor-pointer border-b border-slate-100 dark:border-slate-800"
+                     onClick={() => {
+                       handleVendorSelect('custom');
+                       setVendorSearchTerm('');
+                       setShowVendorDropdown(false);
+                     }}
+                   >
+                     -- CUSTOM / NEW --
+                   </div>
+                   {filteredVendors.map(v => (
+                     <div
+                       key={v.name}
+                       className="px-3 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer font-bold transition-colors"
+                       onClick={() => {
+                         handleVendorSelect(v.name);
+                         setVendorSearchTerm(v.name);
+                         setShowVendorDropdown(false);
+                       }}
+                     >
+                       {v.name}
+                     </div>
+                   ))}
+                   {filteredVendors.length === 0 && (
+                     <div className="px-3 py-2 text-xs text-slate-400 italic">No vendors found</div>
+                   )}
+                 </div>
+               )}
+             </div>
+
+             {/* Add New Vendor Button */}
+             <button
+               type="button"
                disabled={isReadOnly}
+               onClick={() => setIsAddVendorOpen(true)}
+               className="p-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-400 rounded-xl border border-indigo-200/60 dark:border-indigo-800/40 text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
+               title="Add New Vendor to Database"
              >
-               <option value="" disabled>Select from Master</option>
-               <option value="custom">-- CUSTOM / NEW --</option>
-               {vendors.map(v => <option key={v.name} value={v.name}>{v.name}</option>)}
-             </select>
+               <Plus className="w-3.5 h-3.5" /> Vendor
+             </button>
 
              <select 
                className="flex-1 sm:flex-none text-xs bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/30 rounded-xl px-3 py-2 outline-none text-indigo-700 dark:text-indigo-400 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer disabled:opacity-50"
@@ -676,15 +799,28 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                   <select 
                     className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1.5 text-xs bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer disabled:opacity-50"
                     value={item.uom || 'NOS'}
-                    onChange={e => updateItem(index, 'uom', e.target.value)}
+                    onChange={e => {
+                      if (e.target.value === 'ADD_NEW_UOM') {
+                        const newUom = prompt("Enter new Unit of Measure (e.g. SETS, LTR, BOX):");
+                        if (newUom && newUom.trim()) {
+                          const formatted = newUom.trim().toUpperCase();
+                          if (!uomOptions.includes(formatted)) {
+                            const updated = [...uomOptions, formatted];
+                            setUomOptions(updated);
+                            localStorage.setItem('po_uom_options', JSON.stringify(updated));
+                          }
+                          updateItem(index, 'uom', formatted);
+                        }
+                      } else {
+                        updateItem(index, 'uom', e.target.value);
+                      }
+                    }}
                     disabled={isReadOnly}
                   >
-                    <option value="FT">FT</option>
-                    <option value="KG">KG</option>
-                    <option value="Mtr">Mtr</option>
-                    <option value="PCS">PCS</option>
-                    <option value="NOS">NOS</option>
-                    <option value="PAIR">PAIR</option>
+                    {uomOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                    <option value="ADD_NEW_UOM">+ Add Custom UOM...</option>
                   </select>
                 </div>
                 <div className="col-span-3 md:col-span-3">
@@ -1076,7 +1212,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                     ...po,
                     terms: {
                       ...po.terms,
-                      warranties: [...currentWarranties, { years: '', description: '' }]
+                      warranties: [...currentWarranties, { years: '', unit: 'years', description: '' }]
                     }
                   });
                 }}
@@ -1089,16 +1225,25 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             
             {/* Primary/Default Warranty */}
             <div className="flex gap-2 items-center">
-              <div className="relative w-32 shrink-0">
+              <div className="relative flex-1 md:flex-none md:w-44 flex gap-1">
                 <input 
-                  type="number"
-                  className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 pr-12 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-bold disabled:opacity-50"
+                  type={po.terms.warranty_unit === 'custom' ? 'text' : 'number'}
+                  className="w-2/3 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-bold disabled:opacity-50"
                   value={po.terms.warranty || ''}
                   onChange={e => setPo({...po, terms: { ...po.terms, warranty: e.target.value }})}
-                  placeholder="0"
+                  placeholder={po.terms.warranty_unit === 'custom' ? 'e.g. 18 Months' : '0'}
                   disabled={isReadOnly}
                 />
-                <span className="absolute right-3 top-2.5 text-[9px] font-bold text-slate-400 uppercase tracking-widest">Year(s)</span>
+                <select
+                  className="w-1/3 border border-slate-200 dark:border-slate-800 rounded-xl px-1 py-2 text-[10px] bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer disabled:opacity-50"
+                  value={po.terms.warranty_unit || 'years'}
+                  onChange={e => setPo({...po, terms: { ...po.terms, warranty_unit: e.target.value as any }})}
+                  disabled={isReadOnly}
+                >
+                  <option value="years">Years</option>
+                  <option value="months">Months</option>
+                  <option value="custom">Custom</option>
+                </select>
               </div>
               <input 
                 type="text"
@@ -1113,20 +1258,33 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
             {/* Additional Warranties */}
             {po.terms.warranties && po.terms.warranties.map((w, idx) => (
               <div key={idx} className="flex gap-2 items-center">
-                <div className="relative w-32 shrink-0">
+                <div className="relative flex-1 md:flex-none md:w-44 flex gap-1">
                   <input 
-                    type="number"
-                    className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 pr-12 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-bold disabled:opacity-50"
+                    type={w.unit === 'custom' ? 'text' : 'number'}
+                    className="w-2/3 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-bold disabled:opacity-50"
                     value={w.years || ''}
                     onChange={e => {
                       const updated = [...(po.terms.warranties || [])];
                       updated[idx] = { ...updated[idx], years: e.target.value };
                       setPo({ ...po, terms: { ...po.terms, warranties: updated } });
                     }}
-                    placeholder="0"
+                    placeholder={w.unit === 'custom' ? 'e.g. 18 Months' : '0'}
                     disabled={isReadOnly}
                   />
-                  <span className="absolute right-3 top-2.5 text-[9px] font-bold text-slate-400 uppercase tracking-widest">Year(s)</span>
+                  <select
+                    className="w-1/3 border border-slate-200 dark:border-slate-800 rounded-xl px-1 py-2 text-[10px] bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer disabled:opacity-50"
+                    value={w.unit || 'years'}
+                    onChange={e => {
+                      const updated = [...(po.terms.warranties || [])];
+                      updated[idx] = { ...updated[idx], unit: e.target.value };
+                      setPo({ ...po, terms: { ...po.terms, warranties: updated } });
+                    }}
+                    disabled={isReadOnly}
+                  >
+                    <option value="years">Years</option>
+                    <option value="months">Months</option>
+                    <option value="custom">Custom</option>
+                  </select>
                 </div>
                 <input 
                   type="text"
@@ -1293,6 +1451,101 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                 className="px-6 py-2 text-xs font-black text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 uppercase tracking-widest cursor-pointer"
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add New Vendor Modal */}
+      {isAddVendorOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-lg font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight">Add New Vendor</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Register a new vendor in the Master list.</p>
+            </div>
+            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Vendor Name *</label>
+                <input 
+                  type="text"
+                  required
+                  value={newVendorData.name}
+                  onChange={e => setNewVendorData({...newVendorData, name: e.target.value})}
+                  placeholder="e.g. R.K. TRADERS"
+                  className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Address</label>
+                <textarea 
+                  value={newVendorData.address}
+                  onChange={e => setNewVendorData({...newVendorData, address: e.target.value})}
+                  placeholder="Full Address"
+                  rows={2}
+                  className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 resize-none"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">GSTIN</label>
+                  <input 
+                    type="text"
+                    value={newVendorData.gstin}
+                    onChange={e => setNewVendorData({...newVendorData, gstin: e.target.value})}
+                    placeholder="15-digit GSTIN"
+                    className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 uppercase"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">State</label>
+                  <input 
+                    type="text"
+                    value={newVendorData.state}
+                    onChange={e => setNewVendorData({...newVendorData, state: e.target.value})}
+                    placeholder="West Bengal"
+                    className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 uppercase"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Phone</label>
+                  <input 
+                    type="text"
+                    value={newVendorData.mobile_no}
+                    onChange={e => setNewVendorData({...newVendorData, mobile_no: e.target.value})}
+                    placeholder="9876543210"
+                    className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Email</label>
+                  <input 
+                    type="email"
+                    value={newVendorData.email}
+                    onChange={e => setNewVendorData({...newVendorData, email: e.target.value})}
+                    placeholder="vendor@mail.com"
+                    className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/30 flex justify-end gap-2">
+              <button 
+                type="button"
+                onClick={() => setIsAddVendorOpen(false)}
+                className="px-4 py-2 text-xs font-black text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 uppercase tracking-widest cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                type="button"
+                onClick={handleAddVendorSubmit}
+                disabled={isSavingVendor || !newVendorData.name.trim()}
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-md disabled:opacity-50 cursor-pointer"
+              >
+                {isSavingVendor ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                Save Vendor
               </button>
             </div>
           </div>

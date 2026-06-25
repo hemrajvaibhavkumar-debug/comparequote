@@ -184,8 +184,9 @@ export interface PurchaseOrder {
     freight_amount?: number;
     freight_tax?: string; // e.g. "GST @18%", "GST @5%", "Nil"
     warranty?: string | number;
+    warranty_unit?: 'years' | 'months' | 'custom' | string;
     warranty_description?: string;
-    warranties?: { years: string | number; description: string }[];
+    warranties?: { years: string | number; unit?: 'years' | 'months' | 'custom' | string; description: string }[];
     igst?: string;
     delivery: string;
     contact_no?: string;
@@ -204,3 +205,30 @@ export interface PurchaseOrder {
   pdf_base64?: string;
   internal_comments?: InternalComment[];
 }
+
+export interface ItAuditColumn {
+  columnName: string;
+  crudActions: string[];
+  notes?: string;
+}
+
+export interface ItAuditSheet {
+  sheet_name: string;
+  google_sheet_link: string;
+  purpose: string;
+  frequency: string;
+  role: string[];
+  process_supported: string;
+  time_spent: string;
+  columns: ItAuditColumn[];
+}
+
+export interface ItAuditSubmission {
+  id?: number;
+  employee_name: string;
+  department: string;
+  designation: string;
+  sheets: ItAuditSheet[];
+  created_at?: string;
+}
+

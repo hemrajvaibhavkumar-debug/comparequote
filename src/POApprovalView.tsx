@@ -446,6 +446,15 @@ export default function POApprovalView() {
           <RotateCcw className={`w-3.5 h-3.5 ${submitting ? 'animate-spin' : ''}`} /> Regenerate Snapshot
         </button>
       )}
+      {isApproved && canApproveL2 && (
+        <button 
+          onClick={() => handleStatusUpdate('REVISION_REQUIRED' as any)}
+          disabled={submitting}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-[10px] uppercase tracking-widest bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 cursor-pointer disabled:opacity-50"
+        >
+          <RotateCcw className="w-3.5 h-3.5" /> Unapprove & Send for Revision
+        </button>
+      )}
       <button 
         onClick={handlePrint}
         className="flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-[10px] uppercase tracking-widest bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-sm transition-all duration-200 cursor-pointer"

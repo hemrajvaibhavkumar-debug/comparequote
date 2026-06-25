@@ -27,6 +27,7 @@ const SavedPOs = lazy(() => import('./SavedPOs').then(m => ({ default: m.default
 const PurchaseHeadDashboard = lazy(() => import('./PurchaseHeadDashboard').then(m => ({ default: m.default })));
 const POApprovalView = lazy(() => import('./POApprovalView').then(m => ({ default: m.default })));
 const IndentDashboard = lazy(() => import('./components/Indent/IndentDashboard').then(m => ({ default: m.default })));
+const ItAuditForm = lazy(() => import('./components/ItAudit/ItAuditForm').then(m => ({ default: m.default })));
 
 const LoadingFallback = () => (
   <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
@@ -120,6 +121,9 @@ function AppContent() {
                       <ShieldCheck className="w-4 h-4" /> Approval Hub
                     </Link>
                   )}
+                   <Link to="/it-audit" className={navLinkStyle('/it-audit')}>
+                    <ClipboardList className="w-4 h-4 text-orange-500" /> IT Audit
+                  </Link>
                   <Link to="/settings" className={navLinkStyle('/settings')}>
                     <SettingsIcon className="w-4 h-4" /> Settings
                   </Link>
@@ -220,6 +224,17 @@ function AppContent() {
                 <ClipboardList className="w-4 h-4 text-teal-500" /> Indents
               </Link>
               <Link 
+                to="/it-audit" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+                  isActive('/it-audit')
+                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+              >
+                <ClipboardList className="w-4 h-4 text-orange-500" /> IT Audit
+              </Link>
+              <Link 
                 to="/settings" 
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
@@ -257,6 +272,7 @@ function AppContent() {
             <Route path="/po-maker" element={<ProtectedRoute><POMaker /></ProtectedRoute>} />
             <Route path="/saved-pos" element={<ProtectedRoute><SavedPOs /></ProtectedRoute>} />
             <Route path="/indents" element={<ProtectedRoute><IndentDashboard /></ProtectedRoute>} />
+            <Route path="/it-audit" element={<ProtectedRoute><ItAuditForm /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><POSettings /></ProtectedRoute>} />
             <Route path="/purchase-head" element={<ProtectedRoute permission="VIEW_APPROVAL_HUB"><PurchaseHeadDashboard /></ProtectedRoute>} />
             <Route path="/approve-po/:id" element={<ProtectedRoute permission="VIEW_APPROVAL_HUB"><POApprovalView /></ProtectedRoute>} />

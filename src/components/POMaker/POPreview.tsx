@@ -53,12 +53,26 @@ const TermsAndNotes = ({ po }: { po: PurchaseOrder }) => {
           <span className="uppercase text-[9px]">Freight ::</span> <span className="uppercase">{terms.freight} {terms.freight_amount ? `- ₹${Number(terms.freight_amount).toLocaleString()}` : ''}</span>
           {terms.warranty && (
             <>
-              <span className="uppercase text-[9px]">Warranty ::</span> <span className="uppercase">{terms.warranty} YEAR(S) {terms.warranty_description && ` ${terms.warranty_description}`}</span>
+              <span className="uppercase text-[9px]">Warranty ::</span>{' '}
+              <span className="uppercase">
+                {terms.warranty_unit === 'custom'
+                  ? terms.warranty
+                  : `${terms.warranty} ${terms.warranty_unit === 'months' ? 'MONTH(S)' : 'YEAR(S)'}`
+                }
+                {terms.warranty_description && ` ${terms.warranty_description}`}
+              </span>
             </>
           )}
           {terms.warranties && terms.warranties.map((w, idx) => (
             <React.Fragment key={idx}>
-              <span className="uppercase text-[9px]">Warranty ::</span> <span className="uppercase">{w.years} YEAR(S) {w.description && ` ${w.description}`}</span>
+              <span className="uppercase text-[9px]">Warranty ::</span>{' '}
+              <span className="uppercase">
+                {w.unit === 'custom'
+                  ? w.years
+                  : `${w.years} ${w.unit === 'months' ? 'MONTH(S)' : 'YEAR(S)'}`
+                }
+                {w.description && ` ${w.description}`}
+              </span>
             </React.Fragment>
           ))}
           <span className="uppercase text-[9px]">Delivery Period ::</span> <span className="uppercase">{terms.delivery}</span>

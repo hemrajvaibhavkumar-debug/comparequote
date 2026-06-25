@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import POForm from './POForm';
 import POPreview from './POPreview';
 import { PurchaseOrder, CompanySettings, TermsTemplate, VendorMaster } from '../../types';
-import { Save, ArrowLeft, ShieldCheck, Loader2 } from 'lucide-react';
+import { Save, ArrowLeft, ShieldCheck, Loader2, RotateCcw } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useApiCache } from '../../context/ApiCacheContext';
@@ -144,8 +144,8 @@ const POMaker: React.FC = () => {
       }
       if (res.ok) {
         const data = await res.json();
-        if (data.status === 'APPROVED' && !canEditApproved) {
-           showToast("This PO is already approved and cannot be modified without special permissions.", "error");
+        if (data.status === 'APPROVED') {
+           showToast("This PO is already approved. To modify it, an L2 user must first 'Unapprove & Send for Revision' from the Approval Hub.", "error");
            navigate('/saved-pos');
            return;
         }
@@ -182,6 +182,11 @@ const POMaker: React.FC = () => {
     } catch (e) {
       console.error("Error fetching vendors", e);
     }
+  };
+
+  const refreshVendors = async () => {
+    invalidateVendors();
+    await fetchVendors();
   };
 
   const fetchComparisons = async () => {
@@ -426,14 +431,14 @@ const POMaker: React.FC = () => {
             <option value="radhashyam">Radhashyam Industries</option>
           </select>
 
-          {(po.status !== 'APPROVED' || canEditApproved) ? (
+          {po.status !== 'APPROVED' ? (
             <button 
               onClick={handleSave}
               disabled={isGenerating}
-              className={`flex items-center gap-2 ${po.status === 'APPROVED' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white px-4 py-2 rounded-xl transition font-semibold text-xs shadow-sm disabled:opacity-50 hover:-translate-y-0.5 transform transition-all duration-200 cursor-pointer`}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl transition font-semibold text-xs shadow-sm disabled:opacity-50 hover:-translate-y-0.5 transform transition-all duration-200 cursor-pointer"
             >
               {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-              {isGenerating ? 'Saving...' : (po.status === 'APPROVED' ? 'Update Approved PO' : 'Save to Database')}
+              {isGenerating ? 'Saving...' : 'Save to Database'}
             </button>
           ) : (
             <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 px-4 py-2 rounded-xl border border-emerald-200/60 dark:border-emerald-800/60 font-bold text-[10px] uppercase tracking-widest">
@@ -470,6 +475,22 @@ const POMaker: React.FC = () => {
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative z-10">
         {/* Left Pane - Form */}
         <div className={`w-full lg:w-1/2 overflow-y-auto p-4 sm:p-6 bg-slate-50 dark:bg-slate-950 border-r border-slate-200/80 dark:border-slate-800 custom-scrollbar ${activeTab === 'edit' ? 'block' : 'hidden lg:block'}`}>
+          {po.status === 'REVISION_REQUIRED' && (
+            <div className="mb-6 p-4 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="p-2 bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl">
+                <RotateCcw className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-black text-rose-800 dark:text-rose-300 uppercase tracking-tight">Revision Required</h4>
+                <p className="text-xs text-rose-600 dark:text-rose-400 font-bold mt-0.5 leading-relaxed italic">
+                  "{po.rejection_remarks || 'This PO has been unapproved and requires revision.'}"
+                </p>
+                <p className="text-[10px] text-rose-500 dark:text-rose-500 font-bold mt-2 uppercase tracking-widest">
+                  Note: Upon saving, the PO number will be automatically updated with a revision suffix (e.g., /R1).
+                </p>
+              </div>
+            </div>
+          )}
           <POForm 
             po={po} 
             setPo={setPo} 
@@ -477,6 +498,7 @@ const POMaker: React.FC = () => {
             vendors={vendors} 
             comparisons={comparisons}
             onGeneratePONo={() => generatePONo(po.version || 'hemraj_rice')} 
+            onRefreshVendors={refreshVendors}
           />
         </div>
 

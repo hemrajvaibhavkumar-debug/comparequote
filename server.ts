@@ -996,18 +996,42 @@ async function startServer() {
   app.put("/api/po/:id", authenticateToken, requirePermission("ACCESS_PO_MAKER"), async (req, res) => {
     try {
       // Remove id from body to avoid primary key update attempt
-      const { id, created_at, status, approved_by, approved_at, rejection_remarks, ...data } = req.body;
+      const { id, created_at, status: newStatus, approved_by, approved_at, rejection_remarks, ...data } = req.body;
       if (data.date) data.date = new Date(data.date);
       
+      const currentPO = await prisma.purchaseOrder.findUnique({ where: { id: Number(req.params.id) } });
+      if (!currentPO) return res.status(404).json({ error: "PO not found" });
+
+      if (currentPO.status === 'APPROVED') {
+        return res.status(403).json({ error: "Cannot modify an approved PO. Please unapprove it first to send for revision." });
+      }
+
+      let finalPoNo = data.po_no || currentPO.po_no;
+
+      // Handle revision logic if current status is REVISION_REQUIRED
+      if (currentPO.status === 'REVISION_REQUIRED') {
+        const revisionRegex = /\/R(\d+)$/;
+        const match = finalPoNo.match(revisionRegex);
+        if (match) {
+          const nextRev = parseInt(match[1]) + 1;
+          finalPoNo = finalPoNo.replace(revisionRegex, `/R${nextRev}`);
+        } else {
+          finalPoNo = `${finalPoNo}/R1`;
+        }
+      }
+
       // Force status back to PENDING when edited, and clear previous approval/rejection details
       const po = await prisma.purchaseOrder.update({
         where: { id: Number(req.params.id) },
         data: {
           ...data,
+          po_no: finalPoNo,
           status: 'PENDING',
           approved_by: null,
           approved_at: null,
-          rejection_remarks: null
+          rejection_remarks: null,
+          l1_approved_by: null,
+          l1_approved_at: null
         }
       });
       dbCache.clearPattern("po:");
@@ -1129,9 +1153,9 @@ async function startServer() {
         if (!hasL1 && !hasL2) {
           return res.status(403).json({ error: "Permission denied: APPROVE_PO_L1" });
         }
-      } else if (status === 'REJECTED') {
+      } else if (status === 'REJECTED' || status === 'REVISION_REQUIRED') {
         if (!hasL1 && !hasL2) {
-          return res.status(403).json({ error: "Permission denied: APPROVE_PO_L1 or APPROVE_PO" });
+          return res.status(403).json({ error: "Permission denied" });
         }
       } else {
         if (!hasL1 && !hasL2) {
@@ -1154,6 +1178,12 @@ async function startServer() {
         updateData.rejection_remarks = remarks || 'No reason provided';
         updateData.approved_by = null;
         updateData.approved_at = null;
+      } else if (status === 'REVISION_REQUIRED') {
+        updateData.rejection_remarks = remarks || 'Revision Required';
+        updateData.approved_by = null;
+        updateData.approved_at = null;
+        updateData.l1_approved_by = null;
+        updateData.l1_approved_at = null;
       }
       
       const po = await prisma.purchaseOrder.update({
@@ -1334,6 +1364,51 @@ async function startServer() {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to delete indent" });
+    }
+  });
+
+  // --- IT Audit API ---
+
+  app.post("/api/it-audits", authenticateToken, async (req, res) => {
+    try {
+      const data = req.body;
+      console.log("[Backend] Saving IT Audit for:", data.employee_name);
+      const submission = await prisma.itAudit.create({
+        data: {
+          employee_name: data.employee_name,
+          department: data.department,
+          designation: data.designation,
+          sheets: data.sheets,
+        }
+      });
+      res.json(submission);
+    } catch (error: any) {
+      console.error("[Backend] IT Audit Save Error:", error);
+      res.status(500).json({ error: "Failed to save IT audit", details: error.message });
+    }
+  });
+
+  app.get("/api/it-audits", authenticateToken, async (req, res) => {
+    try {
+      const submissions = await prisma.itAudit.findMany({
+        orderBy: { created_at: "desc" }
+      });
+      res.json(submissions);
+    } catch (error) {
+      console.error("[Backend] IT Audit Fetch Error:", error);
+      res.status(500).json({ error: "Failed to fetch IT audits" });
+    }
+  });
+
+  app.delete("/api/it-audits/:id", authenticateToken, async (req, res) => {
+    try {
+      await prisma.itAudit.delete({
+        where: { id: Number(req.params.id) }
+      });
+      res.json({ success: true });
+    } catch (error) {
+      console.error("[Backend] IT Audit Delete Error:", error);
+      res.status(500).json({ error: "Failed to delete IT audit" });
     }
   });
 
