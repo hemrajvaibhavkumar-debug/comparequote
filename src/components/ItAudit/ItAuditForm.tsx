@@ -872,7 +872,7 @@ const ItAuditForm: React.FC = () => {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Purpose of the Sheet *</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">purpose of the sheet</label>
                     <textarea
                       rows={3}
                       value={activeSheet.purpose}
