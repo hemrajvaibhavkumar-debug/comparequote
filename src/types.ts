@@ -221,6 +221,7 @@ export interface ItAuditSheet {
   process_supported: string;
   time_spent: string;
   columns: ItAuditColumn[];
+  extra_notes?: string;
 }
 
 export interface ItAuditSubmission {
