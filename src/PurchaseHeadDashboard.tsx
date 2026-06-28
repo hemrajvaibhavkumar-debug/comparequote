@@ -339,14 +339,6 @@ export default function PurchaseHeadDashboard() {
                 {poStatus === 'APPROVED' ? 'Final PDF' : poStatus === 'REJECTED' ? 'Rejected' : 'Review'}
                 <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
-              {(poStatus === 'APPROVED' && canEditApproved) && (
-                 <Link 
-                  to={`/po-maker?edit=${po.id}`}
-                  className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 uppercase tracking-widest border border-indigo-200 dark:border-indigo-800 px-3 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all"
-                >
-                  Edit Approved
-                </Link>
-              )}
             </div>
           )}
         </div>
