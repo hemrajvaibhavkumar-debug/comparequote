@@ -132,6 +132,12 @@ const POMaker: React.FC = () => {
   }, [po.version, po.po_no, canAccess, editId]);
 
   const canEditApproved = user?.role === 'SUPERADMIN' || user?.permissions.includes('EDIT_APPROVED_PO');
+  const isReadOnly = 
+    po.status === 'APPROVED' || 
+    (po.status === 'REVISION_REQUIRED' && po.unapproved_by && (
+      !canEditApproved || 
+      !(po.unapproved_by.toLowerCase() === 'rohit' || po.unapproved_by.toLowerCase() === 'rohit aggarwal')
+    ));
 
   const fetchPO = async (id: string) => {
     try {
@@ -431,7 +437,7 @@ const POMaker: React.FC = () => {
                 sub_company: val === 'radhashyam' ? 'RSIPL' : undefined
               }));
             }}
-            disabled={po.status === 'APPROVED'}
+            disabled={po.status === 'APPROVED' || isReadOnly}
           >
             <option value="hemraj_rice">Hemraj Rice Mill</option>
             <option value="hemraj_ind">Hemraj Industries</option>
@@ -445,7 +451,7 @@ const POMaker: React.FC = () => {
                 className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
                 value={po.sub_company || 'RSIPL'}
                 onChange={e => setPo(prev => ({...prev, sub_company: e.target.value as any}))}
-                disabled={po.status === 'APPROVED'}
+                disabled={po.status === 'APPROVED' || isReadOnly}
               >
                 <option value="RSIPL">RSIPL</option>
                 <option value="Sunagrow">Sunagrow</option>
@@ -454,7 +460,11 @@ const POMaker: React.FC = () => {
             </div>
           )}
 
-          {po.status !== 'APPROVED' ? (
+          {isReadOnly ? (
+            <div className="flex items-center gap-2 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 px-4 py-2 rounded-xl border border-rose-200/60 dark:border-rose-800/60 font-bold text-[10px] uppercase tracking-widest shadow-xs">
+              <ShieldCheck className="w-3.5 h-3.5" /> Locked (Read-Only)
+            </div>
+          ) : po.status !== 'APPROVED' ? (
             <button 
               onClick={handleSave}
               disabled={isGenerating}

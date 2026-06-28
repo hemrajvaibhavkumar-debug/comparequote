@@ -26,7 +26,12 @@ const CONTACT_OPTIONS = [
 const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparisons, onGeneratePONo, onRefreshVendors }) => {
   const { user } = useAuth();
   const canEditApproved = user?.role === 'SUPERADMIN' || user?.permissions.includes('EDIT_APPROVED_PO');
-  const isReadOnly = po.status === 'APPROVED' && !canEditApproved;
+  const isReadOnly = 
+    po.status === 'APPROVED' || 
+    (po.status === 'REVISION_REQUIRED' && po.unapproved_by && (
+      !canEditApproved || 
+      !(po.unapproved_by.toLowerCase() === 'rohit' || po.unapproved_by.toLowerCase() === 'rohit aggarwal')
+    ));
 
   const [bulkText, setBulkText] = useState('');
   const [isExtracting, setIsExtracting] = useState(false);

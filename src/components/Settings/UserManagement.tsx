@@ -21,7 +21,7 @@ const ALL_PERMISSIONS = [
   { key: "APPROVE_PO_L1", label: "PO Approval (L1)", description: "Initial review and Level 1 approval of POs" },
   { key: "APPROVE_INDENT", label: "Approve Indents", description: "Review and approve purchase indents" },
   { key: "ADD_INTERNAL_COMMENTS", label: "Internal Comments", description: "Add and view internal notes/comments on documents" },
-  { key: "EDIT_APPROVED_PO", label: "Edit Approved POs", description: "Make corrections to already approved purchase orders" },
+  { key: "EDIT_APPROVED_PO", label: "Edit Approved PO when unapproved by Rohit Aggarwal", description: "Make corrections to approved purchase orders after they are unapproved by Rohit Aggarwal" },
   { key: "MANAGE_SETTINGS", label: "Company Settings", description: "Manage company info, terms, and vendors" },
   { key: "MANAGE_USERS", label: "User Management", description: "Create and manage other user accounts" },
 ];

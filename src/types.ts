@@ -167,6 +167,7 @@ export interface PurchaseOrder {
   vendor_name: string;
   version?: 'hemraj_ind' | 'hemraj_rice' | 'radhashyam';
   sub_company?: 'RSIPL' | 'Sunagrow' | 'Ricefield' | string;
+  unapproved_by?: string;
   vendor_details?: {
     address: string;
     gstin: string;

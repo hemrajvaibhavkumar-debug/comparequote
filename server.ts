@@ -1000,6 +1000,7 @@ async function startServer() {
 
   app.put("/api/po/:id", authenticateToken, requirePermission("ACCESS_PO_MAKER"), async (req, res) => {
     try {
+      const user = (req as any).user;
       // Remove id from body to avoid primary key update attempt
       const { id, created_at, status: newStatus, approved_by, approved_at, rejection_remarks, ...data } = req.body;
       if (data.date) data.date = new Date(data.date);
@@ -1009,6 +1010,18 @@ async function startServer() {
 
       if (currentPO.status === 'APPROVED') {
         return res.status(403).json({ error: "Cannot modify an approved PO. Please unapprove it first to send for revision." });
+      }
+
+      if (currentPO.unapproved_by) {
+        const hasEditApproved = user.role === 'SUPERADMIN' || (user.permissions || []).includes('EDIT_APPROVED_PO');
+        if (!hasEditApproved) {
+          return res.status(403).json({ error: "Permission denied: EDIT_APPROVED_PO required to edit previously approved purchase orders." });
+        }
+        const unapprovedBy = currentPO.unapproved_by.toLowerCase();
+        const isRohit = unapprovedBy === 'rohit' || unapprovedBy === 'rohit aggarwal';
+        if (!isRohit) {
+          return res.status(403).json({ error: `Permission denied: This PO was unapproved by '${currentPO.unapproved_by}'. It can only be edited if it was unapproved by Rohit Aggarwal.` });
+        }
       }
 
       let finalPoNo = data.po_no || currentPO.po_no;
@@ -1036,7 +1049,8 @@ async function startServer() {
           approved_at: null,
           rejection_remarks: null,
           l1_approved_by: null,
-          l1_approved_at: null
+          l1_approved_at: null,
+          unapproved_by: null
         }
       });
       dbCache.clearPattern("po:");
@@ -1147,6 +1161,9 @@ async function startServer() {
       const { status, remarks, pdf_base64, l1_approved_by, approved_by } = req.body;
       const user = (req as any).user;
       
+      const currentPO = await prisma.purchaseOrder.findUnique({ where: { id: Number(req.params.id) } });
+      if (!currentPO) return res.status(404).json({ error: "PO not found" });
+
       const hasL1 = user.role === 'SUPERADMIN' || (user.permissions || []).includes('APPROVE_PO_L1');
       const hasL2 = user.role === 'SUPERADMIN' || (user.permissions || []).includes('APPROVE_PO');
 
@@ -1175,6 +1192,7 @@ async function startServer() {
         updateData.approved_by = approved_by || user.username;
         updateData.approved_at = new Date();
         updateData.rejection_remarks = null; // Clear remarks if re-approved
+        updateData.unapproved_by = null;
       } else if (status === 'PENDING_L2') {
         updateData.l1_approved_by = l1_approved_by || user.username;
         updateData.l1_approved_at = new Date();
@@ -1189,6 +1207,9 @@ async function startServer() {
         updateData.approved_at = null;
         updateData.l1_approved_by = null;
         updateData.l1_approved_at = null;
+        if (currentPO.status === 'APPROVED') {
+          updateData.unapproved_by = user.username;
+        }
       }
       
       const po = await prisma.purchaseOrder.update({

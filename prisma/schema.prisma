@@ -87,6 +87,7 @@ model PurchaseOrder {
   vendor_name       String
   version           String? // hemraj_ind, hemraj_rice, radhashyam
   sub_company       String? // RSIPL, Sunagrow, Ricefield
+  unapproved_by     String?
   vendor_details    Json? // Address, GSTIN, Mail, Ph
   items             Json // List of items
   terms             Json? // Snapshot of terms used
