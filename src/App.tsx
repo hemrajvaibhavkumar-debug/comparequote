@@ -77,8 +77,8 @@ function AppContent() {
     const active = customActive !== undefined ? customActive : isActive(path);
     return `relative px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-200 flex items-center gap-1.5 border hover:scale-[1.02] active:scale-[0.98] ${
       active
-        ? `bg-slate-100/80 dark:bg-slate-800/85 text-slate-900 dark:text-slate-100 border-slate-200/80 dark:border-slate-700/80 shadow-xs`
-        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50/50 dark:hover:bg-slate-900/40 border-transparent'
+        ? `bg-slate-100/80 dark:bg-slate-800/85 text-slate-950 dark:text-white border-slate-250 dark:border-slate-700/80 shadow-xs font-black`
+        : 'text-slate-700 dark:text-slate-350 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50/50 dark:hover:bg-slate-900/40 border-transparent font-black'
     }`;
   };
 
