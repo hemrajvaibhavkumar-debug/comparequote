@@ -75,10 +75,10 @@ function AppContent() {
 
   const navLinkStyle = (path: string, colorClass = 'slate', customActive?: boolean) => {
     const active = customActive !== undefined ? customActive : isActive(path);
-    return `px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-1.5 border ${
+    return `relative px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-200 flex items-center gap-1.5 border hover:scale-[1.02] active:scale-[0.98] ${
       active
-        ? `bg-slate-100/80 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 border-slate-200 dark:border-slate-700 shadow-sm`
-        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800 border-transparent'
+        ? `bg-slate-100/80 dark:bg-slate-800/85 text-slate-900 dark:text-slate-100 border-slate-200/80 dark:border-slate-700/80 shadow-xs`
+        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50/50 dark:hover:bg-slate-900/40 border-transparent'
     }`;
   };
 
@@ -88,7 +88,7 @@ function AppContent() {
         <nav className="glass-navbar sticky top-0 z-50 transition-standard">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-4">
                 <Link to="/" className="flex items-center gap-2.5 font-bold text-xl tracking-tight text-slate-900 dark:text-slate-100 hover:opacity-90 transition-opacity">
                   <span className="w-9 h-9 rounded-xl bg-slate-900 dark:bg-slate-100 flex items-center justify-center text-white dark:text-slate-900 shadow-md shadow-slate-200 dark:shadow-none">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2.5"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>
@@ -96,55 +96,70 @@ function AppContent() {
                   <span className="bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent font-black tracking-tight">QuoteCompare</span>
                 </Link>
                 
-                <div className="hidden sm:flex space-x-1.5 ml-4 items-center">
+                <div className="hidden lg:flex space-x-1 ml-4 items-center">
                   <Link to="/indents" className={navLinkStyle('/indents')}>
-                    <ClipboardList className="w-4 h-4" /> Indents
+                    <ClipboardList className="w-3.5 h-3.5 text-sky-500" /> Indents
                   </Link>
                   <Link to="/" className={navLinkStyle('/')}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mr-0.5"><rect width="18" height="18" x="3" y="3" rx="2.5"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M12 3v18"/></svg> Compare
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mr-0.5 text-emerald-500"><rect width="18" height="18" x="3" y="3" rx="2.5"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M12 3v18"/></svg> Compare
                   </Link>
                   <Link to="/saved" className={navLinkStyle('/saved', 'slate', isActive('/saved') && !isActive('/saved-pos'))}>
-                    <Database className="w-4 h-4" /> Saved Tables
+                    <Database className="w-3.5 h-3.5 text-indigo-500" /> Saved Tables
                   </Link>
                   
-                  <div className="h-5 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
+                  <div className="h-5 w-px bg-slate-200 dark:bg-slate-800 mx-2"></div>
                   
                   <Link to="/po-maker" className={navLinkStyle('/po-maker')}>
-                    <FileText className="w-4 h-4" /> PO Maker
+                    <FileText className="w-3.5 h-3.5 text-violet-500" /> PO Maker
                   </Link>
                   <Link to="/saved-pos" className={navLinkStyle('/saved-pos')}>
-                    <Database className="w-4 h-4" /> Saved POs
+                    <Database className="w-3.5 h-3.5 text-purple-500" /> Saved POs
                   </Link>
                   
                   {(user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO') || user?.permissions.includes('APPROVE_PO_L1') || user?.permissions.includes('VIEW_APPROVAL_HUB')) && (
                     <Link to="/purchase-head" className={navLinkStyle('/purchase-head')}>
-                      <ShieldCheck className="w-4 h-4" /> Approval Hub
+                      <ShieldCheck className="w-3.5 h-3.5 text-rose-500" /> Approval Hub
                     </Link>
                   )}
-                   <Link to="/it-audit" className={navLinkStyle('/it-audit')}>
-                    <ClipboardList className="w-4 h-4 text-orange-500" /> IT Audit
+                  {/* Hide IT Audit for now
+                  <Link to="/it-audit" className={navLinkStyle('/it-audit')}>
+                    <ClipboardList className="w-3.5 h-3.5 text-orange-500" /> IT Audit
                   </Link>
+                  */}
                   <Link to="/settings" className={navLinkStyle('/settings')}>
-                    <SettingsIcon className="w-4 h-4" /> Settings
+                    <SettingsIcon className="w-3.5 h-3.5 text-slate-500" /> Settings
                   </Link>
                 </div>
               </div>
               
-              {/* Desktop Menu Buttons */}
-              <div className="hidden sm:flex items-center gap-3">
+              {/* Desktop Menu Buttons & Profile */}
+              <div className="hidden lg:flex items-center gap-3">
+                 <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100/60 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800/60 rounded-xl">
+                   <div className="w-6 h-6 rounded-lg bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-center justify-center font-black text-[11px] border border-orange-200/40">
+                     {user?.username?.charAt(0).toUpperCase() || 'U'}
+                   </div>
+                   <div className="flex flex-col text-left">
+                     <span className="text-[9px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 leading-none">
+                       {user?.username || 'User'}
+                     </span>
+                     <span className="text-[7.5px] font-bold text-slate-400 dark:text-slate-500 tracking-tight leading-none mt-0.5">
+                       {user?.role || 'EMPLOYEE'}
+                     </span>
+                   </div>
+                 </div>
                  <button 
                    onClick={logout}
-                   className="px-4 py-1.5 rounded-xl text-[10px] font-black text-slate-600 dark:text-slate-400 hover:text-white hover:bg-slate-900 dark:hover:bg-slate-100 dark:hover:text-slate-900 border border-slate-200 dark:border-slate-700 hover:border-slate-900 dark:hover:border-slate-100 transition-all duration-200 uppercase tracking-wider cursor-pointer shadow-xs hover:shadow-sm"
+                   className="px-3.5 py-1.5 rounded-xl text-[9px] font-black text-rose-500 bg-rose-50/50 hover:bg-rose-100 dark:bg-rose-950/20 dark:hover:bg-rose-900/45 border border-rose-200/50 dark:border-rose-900/50 transition-all duration-200 uppercase tracking-widest cursor-pointer shadow-xs active:scale-95"
                  >
                    Logout
                  </button>
               </div>
 
               {/* Mobile Hamburger Button */}
-              <div className="flex sm:hidden items-center gap-2">
+              <div className="flex lg:hidden items-center gap-2">
                  <button
                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                   className="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer"
+                   className="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition-all cursor-pointer"
                  >
                    {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                  </button>
@@ -154,18 +169,34 @@ function AppContent() {
 
           {/* Mobile Collapsible Menu */}
           {isMobileMenuOpen && (
-            <div className="sm:hidden border-t border-slate-100 dark:border-slate-800/80 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 py-3 space-y-1.5 shadow-lg relative z-50 animate-in slide-in-from-top duration-200">
-              {(user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO') || user?.permissions.includes('VIEW_APPROVAL_HUB')) && (
+            <div className="lg:hidden border-t border-slate-100 dark:border-slate-800/80 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 py-3 space-y-1.5 shadow-lg relative z-50 animate-in slide-in-from-top duration-200">
+              
+              {/* Mobile User Info Info Block */}
+              <div className="flex items-center gap-3 px-3 py-2 border-b border-slate-100 dark:border-slate-800/60 pb-3 mb-2">
+                <div className="w-8 h-8 rounded-xl bg-orange-500/10 text-orange-600 flex items-center justify-center font-black text-sm border border-orange-200/40">
+                  {user?.username?.charAt(0).toUpperCase() || 'U'}
+                </div>
+                <div className="flex flex-col text-left">
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                    {user?.username || 'User'}
+                  </span>
+                  <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 tracking-tight mt-0.5">
+                    {user?.role || 'EMPLOYEE'}
+                  </span>
+                </div>
+              </div>
+
+              {(user?.role === 'SUPERADMIN' || user?.permissions.includes('APPROVE_PO') || user?.permissions.includes('APPROVE_PO_L1') || user?.permissions.includes('VIEW_APPROVAL_HUB')) && (
                 <Link 
                   to="/purchase-head" 
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
                     isActive('/purchase-head')
                       ? 'bg-slate-100 dark:bg-slate-800 text-slate-950 dark:text-white border border-slate-200 dark:border-slate-700'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-55 dark:hover:bg-slate-800'
                   }`}
                 >
-                  <ShieldCheck className="w-4 h-4" /> Approval Hub
+                  <ShieldCheck className="w-4 h-4 text-rose-500" /> Approval Hub
                 </Link>
               )}
               <Link 
@@ -174,10 +205,10 @@ function AppContent() {
                 className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
                   isActive('/') && !isActive('/saved') && !isActive('/saved-pos') && !isActive('/po-maker') && !isActive('/indents') && !isActive('/settings') && !isActive('/purchase-head')
                     ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-55 dark:hover:bg-slate-800'
                 }`}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mr-0.5"><rect width="18" height="18" x="3" y="3" rx="2.5"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M12 3v18"/></svg> Compare
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mr-0.5 text-emerald-500"><rect width="18" height="18" x="3" y="3" rx="2.5"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M12 3v18"/></svg> Compare
               </Link>
               <Link 
                 to="/saved" 
@@ -185,7 +216,7 @@ function AppContent() {
                 className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
                   isActive('/saved') && !isActive('/saved-pos')
                     ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-55 dark:hover:bg-slate-800'
                 }`}
               >
                 <Database className="w-4 h-4 text-indigo-500" /> Saved Tables
@@ -196,10 +227,10 @@ function AppContent() {
                 className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
                   isActive('/po-maker')
                     ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-55 dark:hover:bg-slate-800'
                 }`}
               >
-                <FileText className="w-4 h-4 text-indigo-500" /> PO Maker
+                <FileText className="w-4 h-4 text-violet-500" /> PO Maker
               </Link>
               <Link 
                 to="/saved-pos" 
@@ -207,10 +238,10 @@ function AppContent() {
                 className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
                   isActive('/saved-pos')
                     ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-55 dark:hover:bg-slate-800'
                 }`}
               >
-                <Database className="w-4 h-4 text-emerald-500" /> Saved POs
+                <Database className="w-4 h-4 text-purple-500" /> Saved POs
               </Link>
               <Link 
                 to="/indents" 
@@ -218,29 +249,31 @@ function AppContent() {
                 className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
                   isActive('/indents')
                     ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-55 dark:hover:bg-slate-800'
                 }`}
               >
-                <ClipboardList className="w-4 h-4 text-teal-500" /> Indents
+                <ClipboardList className="w-4 h-4 text-sky-500" /> Indents
               </Link>
+              {/* Hide IT Audit for now
               <Link 
                 to="/it-audit" 
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
                   isActive('/it-audit')
                     ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-55 dark:hover:bg-slate-800'
                 }`}
               >
                 <ClipboardList className="w-4 h-4 text-orange-500" /> IT Audit
               </Link>
+              */}
               <Link 
                 to="/settings" 
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
                   isActive('/settings')
                     ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-55 dark:hover:bg-slate-800'
                 }`}
               >
                 <SettingsIcon className="w-4 h-4 text-slate-500" /> Settings
@@ -252,7 +285,7 @@ function AppContent() {
                     logout();
                     setIsMobileMenuOpen(false);
                   }}
-                  className="w-full text-center px-4 py-2.5 rounded-xl text-[10px] font-black text-rose-500 bg-rose-50 dark:bg-rose-950/20 hover:bg-rose-100 transition-all uppercase tracking-wider cursor-pointer"
+                  className="w-full text-center px-4 py-2.5 rounded-xl text-[10px] font-black text-rose-500 bg-rose-50 dark:bg-rose-950/20 hover:bg-rose-100 transition-all uppercase tracking-widest border border-rose-200/50 dark:border-rose-900/50 cursor-pointer"
                 >
                   Logout
                 </button>

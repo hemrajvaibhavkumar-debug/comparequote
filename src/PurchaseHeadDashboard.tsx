@@ -21,6 +21,7 @@ export default function PurchaseHeadDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('PENDING');
   const [companyFilter, setCompanyFilter] = useState('ALL');
+  const [subCompanyFilter, setSubCompanyFilter] = useState('ALL');
   const [dateFilter, setDateFilter] = useState('ALL');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
@@ -41,12 +42,13 @@ export default function PurchaseHeadDashboard() {
 
   useEffect(() => {
     fetchPOs(1);
-  }, [searchTerm, statusFilter, companyFilter, dateFilter, customStartDate, customEndDate, creatorFilter, minAmount, maxAmount, classificationFilter]);
+  }, [searchTerm, statusFilter, companyFilter, subCompanyFilter, dateFilter, customStartDate, customEndDate, creatorFilter, minAmount, maxAmount, classificationFilter]);
 
   const fetchPOs = async (pageNum = 1) => {
     try {
       setLoading(true);
-      const params = new URLSearchParams({
+      
+      const queryObj: any = {
         page: pageNum.toString(),
         limit: '24',
         status: statusFilter,
@@ -59,7 +61,13 @@ export default function PurchaseHeadDashboard() {
         startDate: customStartDate,
         endDate: customEndDate,
         classification: classificationFilter
-      });
+      };
+
+      if (companyFilter === 'radhashyam' && subCompanyFilter !== 'ALL') {
+        queryObj.subCompany = subCompanyFilter;
+      }
+
+      const params = new URLSearchParams(queryObj);
 
       const res = await fetch(`/api/po/dashboard?${params.toString()}`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -251,7 +259,7 @@ export default function PurchaseHeadDashboard() {
               po.version === 'hemraj_ind' ? 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800' :
               'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
             }`}>
-              {po.version === 'hemraj_rice' ? 'Rice Mill' : po.version === 'hemraj_ind' ? 'Industries' : 'Radhashyam'}
+              {po.version === 'hemraj_rice' ? 'Rice Mill' : po.version === 'hemraj_ind' ? 'Industries' : `Radhashyam${po.sub_company ? ` - ${po.sub_company}` : ''}`}
             </span>
             <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded border ${
               poTypeDisplay === 'Capital'
@@ -422,7 +430,11 @@ export default function PurchaseHeadDashboard() {
                 <label className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">Company / Unit</label>
                 <select 
                   value={companyFilter}
-                  onChange={e => { setCompanyFilter(e.target.value); setPage(1); }}
+                  onChange={e => { 
+                    setCompanyFilter(e.target.value); 
+                    setSubCompanyFilter('ALL'); 
+                    setPage(1); 
+                  }}
                   className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
                 >
                   <option value="ALL">All Units</option>
@@ -431,6 +443,23 @@ export default function PurchaseHeadDashboard() {
                   <option value="radhashyam">Radhashyam Industries</option>
                 </select>
               </div>
+
+              {/* Sub Company Filter */}
+              {companyFilter === 'radhashyam' && (
+                <div className="space-y-2 animate-in fade-in duration-200">
+                  <label className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">Radhashyam Unit</label>
+                  <select 
+                    value={subCompanyFilter}
+                    onChange={e => { setSubCompanyFilter(e.target.value); setPage(1); }}
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-850 dark:text-slate-100 focus:outline-none cursor-pointer"
+                  >
+                    <option value="ALL">All Plants (Radhashyam)</option>
+                    <option value="RSIPL">RSIPL</option>
+                    <option value="Sunagrow">Sunagrow</option>
+                    <option value="Ricefield">Ricefield</option>
+                  </select>
+                </div>
+              )}
 
               {/* Timeframe Filter */}
               <div className="space-y-2">

@@ -627,6 +627,11 @@ const POPreview = React.memo<POPreviewProps>(({ po, setPo, settings, actions, is
                       <div className="border border-black p-2 rounded shadow-[1px_1px_0px_black] whitespace-nowrap">
                         <p className="font-bold text-black uppercase whitespace-nowrap">PO NO :: <span className="font-black text-sm whitespace-nowrap">{po.po_no || 'HI_2026-27_00'}</span></p>
                       </div>
+                      {po.version === 'radhashyam' && po.sub_company && (
+                        <div className="border border-black p-2 rounded shadow-[1px_1px_0px_black] bg-[#fffbf0] whitespace-nowrap">
+                          <p className="font-bold text-black uppercase whitespace-nowrap">PLANT / UNIT : <span className="font-black text-sm text-[#8B0000] whitespace-nowrap">{po.sub_company}</span></p>
+                        </div>
+                      )}
                       <div className="border border-black p-2 rounded shadow-[1px_1px_0px_black] whitespace-nowrap">
                         <p className="font-bold text-black uppercase whitespace-nowrap">Date : <span className="font-black text-sm whitespace-nowrap">{formatDate(po.date)}</span></p>
                       </div>

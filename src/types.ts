@@ -166,6 +166,7 @@ export interface PurchaseOrder {
   quote_ref_type?: 'MAIL' | 'WHATSAPP' | string;
   vendor_name: string;
   version?: 'hemraj_ind' | 'hemraj_rice' | 'radhashyam';
+  sub_company?: 'RSIPL' | 'Sunagrow' | 'Ricefield' | string;
   vendor_details?: {
     address: string;
     gstin: string;

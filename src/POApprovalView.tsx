@@ -536,7 +536,7 @@ export default function POApprovalView() {
             </button>
             <div className="h-5 w-px bg-slate-200 dark:bg-slate-800"></div>
             <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] font-sans">
-               Approver Hub / PO #{po.po_no}
+               Approver Hub / PO #{po.po_no} {po.version === 'radhashyam' && po.sub_company ? `(${po.sub_company})` : ''}
             </div>
           </div>
         </div>

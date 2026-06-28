@@ -778,6 +778,7 @@ async function startServer() {
         status, 
         search, 
         version, 
+        subCompany,
         creator, 
         minAmount, 
         maxAmount, 
@@ -786,12 +787,12 @@ async function startServer() {
         endDate,
         classification 
       } = req.query;
-
+ 
       const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
       const take = parseInt(limit as string);
-
+ 
       const where: any = {};
-
+ 
       if (status && status !== 'ALL') {
         if (status === 'PENDING') {
           where.status = { in: ['PENDING', 'PENDING_L2'] };
@@ -799,16 +800,19 @@ async function startServer() {
           where.status = status;
         }
       }
-
+ 
       if (search) {
         where.OR = [
           { po_no: { contains: search as string, mode: 'insensitive' } },
           { vendor_name: { contains: search as string, mode: 'insensitive' } }
         ];
       }
-
+ 
       if (version && version !== 'ALL') {
         where.version = version;
+        if (version === 'radhashyam' && subCompany && subCompany !== 'ALL') {
+          where.sub_company = subCompany;
+        }
       }
 
       if (creator && creator !== 'ALL') {
@@ -865,6 +869,7 @@ async function startServer() {
             date: true,
             vendor_name: true,
             version: true,
+            sub_company: true,
             total_amount: true,
             created_by_name: true,
             status: true,
