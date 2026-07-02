@@ -76,12 +76,13 @@ function AppContent() {
 
   const navLinkStyle = (path: string, colorClass = 'slate', customActive?: boolean) => {
     const active = customActive !== undefined ? customActive : isActive(path);
-    return `relative px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-200 flex items-center gap-1.5 border hover:scale-[1.02] active:scale-[0.98] ${
+    return `relative px-3 py-1.5 rounded-xl text-[11.5px] font-bold uppercase tracking-wider transition-all duration-200 flex items-center gap-1.5 border hover:scale-[1.02] active:scale-[0.98] ${
       active
-        ? `bg-slate-100/80 dark:bg-slate-800/85 text-slate-950 dark:text-white border-slate-250 dark:border-slate-700/80 shadow-xs font-black`
-        : 'text-slate-700 dark:text-slate-350 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50/50 dark:hover:bg-slate-900/40 border-transparent font-black'
+        ? `bg-slate-100/80 dark:bg-slate-800/85 text-slate-950 dark:text-white border-slate-250 dark:border-slate-700/80 shadow-xs font-bold`
+        : 'text-slate-700 dark:text-slate-350 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50/50 dark:hover:bg-slate-900/40 border-transparent font-semibold'
     }`;
   };
+
 
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 antialiased transition-colors duration-300">
@@ -143,17 +144,17 @@ function AppContent() {
                      {user?.username?.charAt(0).toUpperCase() || 'U'}
                    </div>
                    <div className="flex flex-col text-left">
-                     <span className="text-[9px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 leading-none">
+                     <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 leading-none">
                        {user?.username || 'User'}
                      </span>
-                     <span className="text-[7.5px] font-bold text-slate-400 dark:text-slate-500 tracking-tight leading-none mt-0.5">
+                     <span className="text-[9.5px] font-semibold text-slate-400 dark:text-slate-500 tracking-tight leading-none mt-0.5">
                        {user?.role || 'EMPLOYEE'}
                      </span>
                    </div>
                  </div>
                  <button 
                    onClick={logout}
-                   className="px-3.5 py-1.5 rounded-xl text-[9px] font-black text-rose-500 bg-rose-50/50 hover:bg-rose-100 dark:bg-rose-950/20 dark:hover:bg-rose-900/45 border border-rose-200/50 dark:border-rose-900/50 transition-all duration-200 uppercase tracking-widest cursor-pointer shadow-xs active:scale-95"
+                   className="px-3.5 py-1.5 rounded-xl text-[11px] font-bold text-rose-500 bg-rose-50/50 hover:bg-rose-100 dark:bg-rose-950/20 dark:hover:bg-rose-900/45 border border-rose-200/50 dark:border-rose-900/50 transition-all duration-200 uppercase tracking-widest cursor-pointer shadow-xs active:scale-95"
                  >
                    Logout
                  </button>
@@ -181,10 +182,10 @@ function AppContent() {
                   {user?.username?.charAt(0).toUpperCase() || 'U'}
                 </div>
                 <div className="flex flex-col text-left">
-                  <span className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
                     {user?.username || 'User'}
                   </span>
-                  <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 tracking-tight mt-0.5">
+                  <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 tracking-tight mt-0.5">
                     {user?.role || 'EMPLOYEE'}
                   </span>
                 </div>
@@ -300,7 +301,7 @@ function AppContent() {
                     logout();
                     setIsMobileMenuOpen(false);
                   }}
-                  className="w-full text-center px-4 py-2.5 rounded-xl text-[10px] font-black text-rose-500 bg-rose-50 dark:bg-rose-950/20 hover:bg-rose-100 transition-all uppercase tracking-widest border border-rose-200/50 dark:border-rose-900/50 cursor-pointer"
+                  className="w-full text-center px-4 py-2.5 rounded-xl text-[11.5px] font-bold text-rose-500 bg-rose-50 dark:bg-rose-950/20 hover:bg-rose-100 transition-all uppercase tracking-widest border border-rose-200/50 dark:border-rose-900/50 cursor-pointer"
                 >
                   Logout
                 </button>

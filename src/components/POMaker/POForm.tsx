@@ -195,6 +195,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
 
   const removeItem = (index: number) => {
     if (isReadOnly) return;
+    if (!window.confirm("Are you sure you want to remove this item?")) return;
     setPo(prev => {
       const newItems = prev.items.filter((_, i) => i !== index);
       // Re-calculate SNs
@@ -619,7 +620,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
               <input 
                 type="text"
                 list="vendor-list"
-                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-black focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 uppercase disabled:opacity-50"
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white dark:bg-slate-950 uppercase disabled:opacity-50"
                 value={po.vendor_name || ''}
                 onChange={e => {
                   const val = e.target.value;
@@ -781,7 +782,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                     disabled={isReadOnly}
                   />
                 </div>
-                <div className="col-span-6 md:col-span-2">
+                <div className="col-span-4 md:col-span-2">
                   <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Make</label>
                   <input 
                     type="text"
@@ -791,7 +792,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                     disabled={isReadOnly}
                   />
                 </div>
-                <div className="col-span-3 md:col-span-2">
+                <div className="col-span-4 md:col-span-2">
                   <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Qty</label>
                   <input 
                     type="number"
@@ -801,7 +802,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                     disabled={isReadOnly}
                   />
                 </div>
-                <div className="col-span-3 md:col-span-2">
+                <div className="col-span-4 md:col-span-2">
                   <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">UOM</label>
                   <select 
                     className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1.5 text-xs bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer disabled:opacity-50"
@@ -830,7 +831,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                     <option value="ADD_NEW_UOM">+ Add Custom UOM...</option>
                   </select>
                 </div>
-                <div className="col-span-3 md:col-span-3">
+                <div className="col-span-6 md:col-span-3">
                   <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Rate</label>
                   <input 
                     type="number"
@@ -840,7 +841,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                     disabled={isReadOnly}
                   />
                 </div>
-                <div className="col-span-3 md:col-span-3">
+                <div className="col-span-6 md:col-span-3">
                   <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Dis%</label>
                   <input 
                     type="number"
@@ -851,7 +852,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                     disabled={isReadOnly}
                   />
                 </div>
-                <div className="col-span-3 md:col-span-3">
+                <div className="col-span-6 md:col-span-3">
                   <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Tax</label>
                   <select 
                     className="w-full border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1.5 text-xs bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer disabled:opacity-50"
@@ -865,7 +866,7 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                     <option value="Nil">Nil</option>
                   </select>
                 </div>
-                <div className="col-span-3 md:col-span-3">
+                <div className="col-span-6 md:col-span-3">
                   <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Amount</label>
                   <input 
                     type="number"

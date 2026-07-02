@@ -306,6 +306,7 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
 
   const removeItem = (itemIndex: number) => {
     if (readOnly) return;
+    if (!window.confirm("Are you sure you want to delete this item row?")) return;
     setData((prev: any) => {
       const newItems = [...prev.items];
       const deletedItem = newItems[itemIndex];
@@ -445,10 +446,24 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
             border-collapse: collapse;
             width: 100%;
             table-layout: auto;
+            border: 1px solid var(--border-main) !important;
           }
 
           .dark .comp-table {
             color: #f8fafc !important;
+          }
+
+          .comp-table th, .comp-table td {
+            border: 1.2px solid var(--border-main) !important;
+            vertical-align: top;
+          }
+
+          .comp-table tr:hover td {
+            background-color: var(--color-zinc-100) !important;
+          }
+
+          .dark .comp-table tr:hover td {
+            background-color: var(--color-zinc-900) !important;
           }
           
           .vertical-text {
@@ -473,17 +488,22 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
             background: transparent;
             border: none;
             width: 100%;
-            padding: 4px 2px;
+            padding: 4px 6px;
             outline: none;
-            transition: background-color 0.2s;
+            transition: all 0.15s ease-in-out;
+            vertical-align: top;
           }
 
-          .comp-table input:focus, .comp-table textarea:focus {
-            background-color: rgba(0,0,0,0.03);
+          .comp-table input:focus, .comp-table textarea:focus, .comp-table select:focus {
+            background-color: rgba(14, 165, 233, 0.04) !important;
+            outline: 1.5px solid #0ea5e9 !important;
+            outline-offset: -1.5px;
           }
 
-          .dark .comp-table input:focus, .dark .comp-table textarea:focus {
-            background-color: rgba(255,255,255,0.05);
+          .dark .comp-table input:focus, .dark .comp-table textarea:focus, .dark .comp-table select:focus {
+            background-color: rgba(14, 165, 233, 0.08) !important;
+            outline: 1.5px solid #38bdf8 !important;
+            outline-offset: -1.5px;
           }
 
           .comp-table th {

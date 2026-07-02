@@ -89,7 +89,7 @@ const Login: React.FC = () => {
           </div>
 
           {error && (
-            <p className="text-black dark:text-white text-xs font-black text-center bg-slate-100 dark:bg-slate-800 border border-slate-900/10 dark:border-slate-100/10 py-2.5 rounded-xl">
+            <p className="text-rose-600 dark:text-rose-450 text-xs font-bold text-center bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/50 py-2.5 rounded-xl">
               {error}
             </p>
           )}

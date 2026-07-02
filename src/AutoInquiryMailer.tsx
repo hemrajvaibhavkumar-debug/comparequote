@@ -151,6 +151,7 @@ const AutoInquiryMailer: React.FC = () => {
   };
 
   const handleRemoveItem = (id: string) => {
+    if (!window.confirm("Are you sure you want to remove this item?")) return;
     if (items.length === 1) {
       setItems([{ id: '1', description: '', qty: '', uom: 'Nos', make: '' }]);
       return;
@@ -630,7 +631,7 @@ const AutoInquiryMailer: React.FC = () => {
         <div className="max-w-6xl mx-auto px-8 py-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-pink-600 rounded-2xl shadow-lg shadow-pink-600/20 text-white">
+              <div className="p-2.5 bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-600/20 text-white">
                 <Mail className="w-5 h-5" />
               </div>
               <div>
@@ -669,179 +670,169 @@ const AutoInquiryMailer: React.FC = () => {
               <Users className="w-4 h-4 text-pink-500" /> Inquiry Parameters
             </h2>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-              {/* Employee name selector */}
-              <div className="space-y-1.5 text-left">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Employee Name</label>
-                <select
-                  value={employeeName}
-                  onChange={e => handleEmployeeChange(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-880 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200 cursor-pointer"
-                  required
-                >
-                  <option value="">-- Select Employee --</option>
-                  {EMPLOYEES.map(emp => (
-                    <option key={emp} value={emp}>{emp}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Employee Phone Selector */}
-              <div className="space-y-1.5 text-left">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Employee Phone</label>
-                <select
-                  value={selectedEmployeePhone}
-                  onChange={e => handlePhoneSelectChange(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-880 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200 cursor-pointer"
-                  required
-                >
-                  <option value="">-- Select Phone --</option>
-                  {employeeName && EMPLOYEE_PHONES[employeeName] && (
-                    <option value={EMPLOYEE_PHONES[employeeName]}>{EMPLOYEE_PHONES[employeeName]} (Default)</option>
-                  )}
-                  <option value="__CUSTOM_PHONE__">+ Enter Custom Phone...</option>
-                </select>
-              </div>
-
-              {isCustomPhone && (
-                <div className="space-y-1.5 text-left animate-in fade-in duration-200">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Custom Phone *</label>
-                  <input
-                    type="text"
-                    value={customEmployeePhone}
-                    onChange={e => setCustomEmployeePhone(e.target.value)}
-                    className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-880 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200"
-                    placeholder="e.g. +91 9046176169"
-                    required={isCustomPhone}
-                  />
-                </div>
-              )}
-
-              {/* Vendor Selector */}
-              <div className="space-y-1.5 text-left">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Target Vendor</label>
-                <select
-                  value={selectedVendorName}
-                  onChange={e => handleVendorSelectChange(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200 cursor-pointer"
-                  required
-                  disabled={fetchingVendors}
-                >
-                  {fetchingVendors ? (
-                    <option value="">Loading Vendors...</option>
-                  ) : (
-                    <>
-                      <option value="">-- Select Vendor --</option>
-                      <option value="__NEW_VENDOR__">+ Add Custom Vendor...</option>
-                      {vendors.map(v => (
-                        <option key={v.name} value={v.name}>{v.name}</option>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              {/* Preparer Details Group */}
+              <div className="lg:col-span-5 space-y-3.5 border-b lg:border-b-0 lg:border-r border-slate-200/60 dark:border-slate-800/60 pb-6 lg:pb-0 lg:pr-8">
+                <h3 className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest text-left">Preparer Details</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Employee name selector */}
+                  <div className="space-y-1.5 text-left">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Employee Name</label>
+                    <select
+                      value={employeeName}
+                      onChange={e => handleEmployeeChange(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-880 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200 cursor-pointer"
+                      required
+                    >
+                      <option value="">-- Select Employee --</option>
+                      {EMPLOYEES.map(emp => (
+                        <option key={emp} value={emp}>{emp}</option>
                       ))}
-                    </>
+                    </select>
+                  </div>
+
+                  {/* Employee Phone Selector */}
+                  <div className="space-y-1.5 text-left">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Employee Phone</label>
+                    <select
+                      value={selectedEmployeePhone}
+                      onChange={e => handlePhoneSelectChange(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-880 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200 cursor-pointer"
+                      required
+                    >
+                      <option value="">-- Select Phone --</option>
+                      {employeeName && EMPLOYEE_PHONES[employeeName] && (
+                        <option value={EMPLOYEE_PHONES[employeeName]}>{EMPLOYEE_PHONES[employeeName]} (Default)</option>
+                      )}
+                      <option value="__CUSTOM_PHONE__">+ Enter Custom Phone...</option>
+                    </select>
+                  </div>
+
+                  {isCustomPhone && (
+                    <div className="col-span-1 sm:col-span-2 space-y-1.5 text-left animate-in fade-in duration-200">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Custom Phone *</label>
+                      <input
+                        type="text"
+                        value={customEmployeePhone}
+                        onChange={e => setCustomEmployeePhone(e.target.value)}
+                        className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-880 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
+                        placeholder="e.g. +91 9046176169"
+                        required={isCustomPhone}
+                      />
+                    </div>
                   )}
-                </select>
+                </div>
               </div>
 
-              {/* Company Selector */}
-              <div className="space-y-1.5 text-left">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Company</label>
-                <select
-                  value={company}
-                  onChange={e => handleCompanyChange(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200 cursor-pointer"
-                  required
-                >
-                  <option value="HRM">Hemraj Rice Mill</option>
-                  <option value="HIPL">Hemraj Industries</option>
-                  <option value="RSIPL">Radhashyam Industries</option>
-                </select>
-              </div>
+              {/* RFQ Parameters Group */}
+              <div className="lg:col-span-7 space-y-3.5 lg:pl-4">
+                <h3 className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest text-left">RFQ Parameters</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Vendor Selector */}
+                  <div className="space-y-1.5 text-left">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Target Vendor</label>
+                    <select
+                      value={selectedVendorName}
+                      onChange={e => handleVendorSelectChange(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200 cursor-pointer"
+                      required
+                      disabled={fetchingVendors}
+                    >
+                      {fetchingVendors ? (
+                        <option value="">Loading Vendors...</option>
+                      ) : (
+                        <>
+                          <option value="">-- Select Vendor --</option>
+                          <option value="__NEW_VENDOR__">+ Add Custom Vendor...</option>
+                          {vendors.map(v => (
+                            <option key={v.name} value={v.name}>{v.name}</option>
+                          ))}
+                        </>
+                      )}
+                    </select>
+                  </div>
 
-              {/* Plant Selector */}
-              <div className="space-y-1.5 text-left">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Plant</label>
-                <select
-                  value={plant}
-                  onChange={e => setPlant(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200 cursor-pointer disabled:bg-slate-100 dark:disabled:bg-slate-900 disabled:text-slate-400 disabled:cursor-not-allowed"
-                  disabled={company !== 'radhashyam'}
-                  required={company === 'radhashyam'}
-                >
-                  {company === 'radhashyam' ? (
-                    <>
-                      <option value="RSIPL">RSIPL</option>
-                      <option value="Sunagrow">Sunagrow</option>
-                      <option value="Ricefield">Ricefield</option>
-                    </>
-                  ) : (
-                    <option value="">N/A (Not Radhashyam)</option>
-                  )}
-                </select>
+                  {/* Company Selector */}
+                  <div className="space-y-1.5 text-left">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Company</label>
+                    <select
+                      value={company}
+                      onChange={e => handleCompanyChange(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200 cursor-pointer"
+                      required
+                    >
+                      <option value="HRM">Hemraj Rice Mill</option>
+                      <option value="HIPL">Hemraj Industries</option>
+                      <option value="RSIPL">Radhashyam Industries</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
 
             {isCustomVendor && (
               <div className="mt-6 pt-6 border-t border-slate-200/60 dark:border-slate-800/60 space-y-4">
-                <h3 className="text-[10px] font-black text-pink-600 dark:text-pink-400 uppercase tracking-widest text-left">Custom Vendor Details</h3>
+                <h3 className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest text-left">Custom Vendor Details</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   <div className="space-y-1.5 text-left">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Vendor Name *</label>
+                    <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Vendor Name *</label>
                     <input
                       type="text"
                       value={customVendorName}
                       onChange={e => setCustomVendorName(e.target.value)}
-                      className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200"
+                      className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
                       placeholder="e.g. Acme Corporation"
                       required={isCustomVendor}
                     />
                   </div>
                   <div className="space-y-1.5 text-left">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Vendor Email *</label>
+                    <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Vendor Email *</label>
                     <input
                       type="email"
                       value={customVendorEmail}
                       onChange={e => setCustomVendorEmail(e.target.value)}
-                      className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200"
+                      className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
                       placeholder="vendor@example.com"
                       required={isCustomVendor}
                     />
                   </div>
                   <div className="space-y-1.5 text-left">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Mobile Number</label>
+                    <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Mobile Number</label>
                     <input
                       type="text"
                       value={customVendorMobile}
                       onChange={e => setCustomVendorMobile(e.target.value)}
-                      className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200"
+                      className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
                       placeholder="+91 9876543210"
                     />
                   </div>
                   <div className="space-y-1.5 text-left">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">GSTIN</label>
+                    <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">GSTIN</label>
                     <input
                       type="text"
                       value={customVendorGstin}
                       onChange={e => setCustomVendorGstin(e.target.value)}
-                      className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200"
+                      className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
                       placeholder="19AAAAA0000A1Z5"
                     />
                   </div>
                   <div className="space-y-1.5 text-left">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">State</label>
+                    <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">State</label>
                     <input
                       type="text"
                       value={customVendorState}
                       onChange={e => setCustomVendorState(e.target.value)}
-                      className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200"
+                      className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
                       placeholder="West Bengal"
                     />
                   </div>
                   <div className="space-y-1.5 text-left">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Vendor Address</label>
+                    <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Vendor Address</label>
                     <input
                       type="text"
                       value={customVendorAddress}
                       onChange={e => setCustomVendorAddress(e.target.value)}
-                      className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200"
+                      className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
                       placeholder="123 Street Name, City"
                     />
                   </div>
@@ -854,12 +845,12 @@ const AutoInquiryMailer: React.FC = () => {
           <div className="glass-card p-6 rounded-[2rem] shadow-sm border border-slate-200/80 dark:border-slate-800">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2 text-left">
-                <ClipboardList className="w-4 h-4 text-pink-500" /> Inquiry Items list
+                <ClipboardList className="w-4 h-4 text-indigo-500" /> Inquiry Items list
               </h2>
               <button
                 type="button"
                 onClick={handleAddItem}
-                className="flex items-center gap-1 bg-pink-600 hover:bg-pink-700 text-white px-3 py-1.5 rounded-lg font-bold text-[9px] uppercase tracking-widest transition-all duration-200 shadow-md shadow-pink-600/10 cursor-pointer"
+                className="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg font-bold text-[9px] uppercase tracking-widest transition-all duration-200 shadow-md shadow-indigo-600/10 cursor-pointer"
               >
                 <Plus className="w-3 h-3" /> Add Item
               </button>
@@ -889,7 +880,7 @@ const AutoInquiryMailer: React.FC = () => {
                           value={item.description}
                           onChange={e => handleUpdateItem(item.id, 'description', e.target.value)}
                           rows={1}
-                          className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200 resize-none min-h-[36px]"
+                          className="w-full px-2 py-1 bg-transparent border-b border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 focus:bg-indigo-50/20 dark:focus:bg-indigo-950/25 transition-all duration-150 resize-none min-h-[34px]"
                           placeholder="e.g. MS Pipe 3 inch class C"
                           required
                         />
@@ -901,7 +892,7 @@ const AutoInquiryMailer: React.FC = () => {
                           onChange={e => handleUpdateItem(item.id, 'qty', e.target.value)}
                           min="0.001"
                           step="any"
-                          className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200"
+                          className="w-full px-2 py-1 bg-transparent border-b border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 focus:bg-indigo-50/20 dark:focus:bg-indigo-950/25 transition-all duration-150"
                           placeholder="0"
                           required
                         />
@@ -910,7 +901,7 @@ const AutoInquiryMailer: React.FC = () => {
                         <select
                           value={item.uom}
                           onChange={e => handleUpdateItem(item.id, 'uom', e.target.value)}
-                          className="w-full px-2 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200 cursor-pointer"
+                          className="w-full px-1.5 py-1 bg-transparent border-b border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 focus:bg-indigo-50/20 dark:focus:bg-indigo-950/25 transition-all duration-150 cursor-pointer"
                         >
                           {UOM_OPTIONS.map(opt => (
                             <option key={opt} value={opt}>{opt}</option>
@@ -922,7 +913,7 @@ const AutoInquiryMailer: React.FC = () => {
                           type="text"
                           value={item.make}
                           onChange={e => handleUpdateItem(item.id, 'make', e.target.value)}
-                          className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200"
+                          className="w-full px-2 py-1 bg-transparent border-b border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500 focus:bg-indigo-50/20 dark:focus:bg-indigo-950/25 transition-all duration-150"
                           placeholder="Tata, Jindal, etc."
                         />
                       </td>
@@ -964,7 +955,7 @@ const AutoInquiryMailer: React.FC = () => {
             <button
               type="submit"
               disabled={loading || fetchingVendors}
-              className="flex items-center justify-center gap-2 px-8 py-3.5 bg-pink-600 hover:bg-pink-700 disabled:bg-slate-350 dark:disabled:bg-slate-800 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-200 hover:-translate-y-0.5 transform shadow-lg shadow-pink-600/10 cursor-pointer disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+              className="flex items-center justify-center gap-2 px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-350 dark:disabled:bg-slate-800 text-white rounded-2xl font-bold text-xs uppercase tracking-widest transition-all duration-200 hover:-translate-y-0.5 transform shadow-lg shadow-indigo-600/10 cursor-pointer disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
             >
               {loading ? (
                 <>
