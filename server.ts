@@ -663,6 +663,50 @@ async function startServer() {
     }
   });
 
+  // Quotation Inquiry Mailer
+  app.post("/api/inquiry/send", authenticateToken, async (req, res) => {
+    try {
+      const { employeeName, vendor, company, plant, items, excelBase64, fileName } = req.body;
+      const inquiryWebhookUrl = process.env.INQUIRY_WEBHOOK_URL;
+
+      if (!inquiryWebhookUrl) {
+        return res.status(500).json({ error: "Inquiry Webhook URL not configured in .env" });
+      }
+
+      if (!employeeName || !vendor || !items || !Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ error: "Missing required inquiry data (employeeName, vendor, or items)" });
+      }
+
+      console.log(`[n8n] Triggering Inquiry Webhook to ${inquiryWebhookUrl} for employee ${employeeName}, vendor ${vendor.name || 'unknown'}, company ${company || 'none'} (with Excel: ${!!excelBase64})...`);
+
+      const response = await fetch(inquiryWebhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employeeName,
+          vendor,
+          company,
+          plant,
+          items,
+          excelBase64,
+          fileName
+        })
+      });
+
+      if (response.ok) {
+        res.json({ success: true });
+      } else {
+        const errorText = await response.text();
+        console.error("[n8n] Inquiry Webhook response error:", errorText);
+        res.status(response.status).json({ error: errorText || "Inquiry Webhook call failed" });
+      }
+    } catch (err: any) {
+      console.error("[Backend] Inquiry Send Error:", err);
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
+
   // Bulk Item Extraction using Groq
   app.post("/api/extract-po-items", authenticateToken, async (req, res) => {
     try {

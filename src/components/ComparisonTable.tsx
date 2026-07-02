@@ -728,6 +728,7 @@ export const ComparisonTable = React.memo<ComparisonTableProps>(({ data, setData
                   )}
                 </div>
                 <div className="resizer print-hidden" onMouseDown={startResizing} />
+                <div className="resizer-h print-hidden" onMouseDown={startResizingHeight} />
               </th>
             ))}
             <th rowSpan={2} className="print-hidden border border-black p-1 uppercase w-8 text-black" style={{ fontSize: `${fontSize - 1}px` }}>Act</th>
