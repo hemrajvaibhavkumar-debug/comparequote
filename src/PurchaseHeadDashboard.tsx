@@ -63,7 +63,7 @@ export default function PurchaseHeadDashboard() {
         classification: classificationFilter
       };
 
-      if (companyFilter === 'radhashyam' && subCompanyFilter !== 'ALL') {
+      if ((companyFilter === 'radhashyam' || companyFilter === 'hemraj_ind') && subCompanyFilter !== 'ALL') {
         queryObj.subCompany = subCompanyFilter;
       }
 
@@ -259,12 +259,14 @@ export default function PurchaseHeadDashboard() {
               po.version === 'hemraj_ind' ? 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800' :
               'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
             }`}>
-              {po.version === 'hemraj_rice' ? 'Rice Mill' : po.version === 'hemraj_ind' ? 'Industries' : `Radhashyam${po.sub_company ? ` - ${po.sub_company}` : ''}`}
+              {po.version === 'hemraj_rice' ? 'Rice Mill' : po.version === 'hemraj_ind' ? `Industries${po.sub_company ? ` - ${po.sub_company}` : ''}` : `Radhashyam${po.sub_company ? ` - ${po.sub_company}` : ''}`}
             </span>
             <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded border ${
-              poTypeDisplay === 'Capital'
-                ? 'bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800'
-                : 'bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-800'
+              poTypeDisplay === 'Capital' ? 'bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800' :
+              poTypeDisplay === 'Consumables' ? 'bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-800' :
+              poTypeDisplay === 'packing item' ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800' :
+              poTypeDisplay === 'production item' ? 'bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800' :
+              'bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800'
             }`}>
               {poTypeDisplay}
             </span>
@@ -453,6 +455,23 @@ export default function PurchaseHeadDashboard() {
                 </div>
               )}
 
+              {companyFilter === 'hemraj_ind' && (
+                <div className="space-y-2 animate-in fade-in duration-200">
+                  <label className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">Hemraj Industries Unit</label>
+                  <select 
+                    value={subCompanyFilter}
+                    onChange={e => { setSubCompanyFilter(e.target.value); setPage(1); }}
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-850 dark:text-slate-100 focus:outline-none cursor-pointer"
+                  >
+                    <option value="ALL">All Plants (Hemraj Ind)</option>
+                    <option value="Solvent">Solvent</option>
+                    <option value="Refinery">Refinery</option>
+                    <option value="Mega">Mega</option>
+                    <option value="Power Plant">Power Plant</option>
+                  </select>
+                </div>
+              )}
+
               {/* Timeframe Filter */}
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">Time Period</label>
@@ -486,6 +505,9 @@ export default function PurchaseHeadDashboard() {
                   <option value="ALL">All Types</option>
                   <option value="Consumables">Consumables</option>
                   <option value="Capital">Capital</option>
+                  <option value="packing item">Packing Item</option>
+                  <option value="production item">Production Item</option>
+                  <option value="export item">Export Item</option>
                 </select>
               </div>
 

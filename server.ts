@@ -666,7 +666,7 @@ async function startServer() {
   // Quotation Inquiry Mailer
   app.post("/api/inquiry/send", authenticateToken, async (req, res) => {
     try {
-      const { employeeName, vendor, company, plant, items, excelBase64, fileName } = req.body;
+      const { employeeName, employeePhone, vendor, company, plant, items, htmlContent } = req.body;
       const inquiryWebhookUrl = process.env.INQUIRY_WEBHOOK_URL;
 
       if (!inquiryWebhookUrl) {
@@ -677,19 +677,21 @@ async function startServer() {
         return res.status(400).json({ error: "Missing required inquiry data (employeeName, vendor, or items)" });
       }
 
-      console.log(`[n8n] Triggering Inquiry Webhook to ${inquiryWebhookUrl} for employee ${employeeName}, vendor ${vendor.name || 'unknown'}, company ${company || 'none'} (with Excel: ${!!excelBase64})...`);
+      console.log(`[n8n] Triggering Inquiry Webhook to ${inquiryWebhookUrl} for employee ${employeeName} (${employeePhone || 'no phone'}), vendor ${vendor.name || 'unknown'}, company ${company || 'none'} (with HTML: ${!!htmlContent})...`);
 
       const response = await fetch(inquiryWebhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           employeeName,
+          employeePhone,
+          empPhone: employeePhone,
+          employee_phone: employeePhone,
           vendor,
           company,
           plant,
           items,
-          excelBase64,
-          fileName
+          htmlContent
         })
       });
 
@@ -854,7 +856,7 @@ async function startServer() {
  
       if (version && version !== 'ALL') {
         where.version = version;
-        if (version === 'radhashyam' && subCompany && subCompany !== 'ALL') {
+        if ((version === 'radhashyam' || version === 'hemraj_ind') && subCompany && subCompany !== 'ALL') {
           where.sub_company = subCompany;
         }
       }

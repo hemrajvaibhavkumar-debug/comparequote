@@ -31,6 +31,15 @@ const EMPLOYEES = [
   "Gourav Indra"
 ];
 
+const EMPLOYEE_PHONES: Record<string, string> = {
+  "Rakesh Pal": "+919046176169",
+  "Gourav Indra": "+919046176169",
+  "Souritra Ghoshal": "+919046240020",
+  "Debasish Samanta": "+919046240020",
+  "Soumen Karmakar": "+919046240020",
+
+};
+
 const UOM_OPTIONS = [
   "Nos",
   "Sets",
@@ -44,7 +53,7 @@ const UOM_OPTIONS = [
 
 const AutoInquiryMailer: React.FC = () => {
   const { token } = useAuth();
-  const { fetchVendors } = useApiCache();
+  const { fetchVendors, invalidateVendors } = useApiCache();
 
   // State
   const [employeeName, setEmployeeName] = useState('');
@@ -58,6 +67,57 @@ const AutoInquiryMailer: React.FC = () => {
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [company, setCompany] = useState('hemraj_rice');
   const [plant, setPlant] = useState('');
+
+  // Custom Vendor states
+  const [isCustomVendor, setIsCustomVendor] = useState(false);
+  const [customVendorName, setCustomVendorName] = useState('');
+  const [customVendorEmail, setCustomVendorEmail] = useState('');
+  const [customVendorMobile, setCustomVendorMobile] = useState('');
+  const [customVendorAddress, setCustomVendorAddress] = useState('');
+  const [customVendorState, setCustomVendorState] = useState('');
+  const [customVendorGstin, setCustomVendorGstin] = useState('');
+
+  // Custom Employee Phone states
+  const [selectedEmployeePhone, setSelectedEmployeePhone] = useState('');
+  const [isCustomPhone, setIsCustomPhone] = useState(false);
+  const [customEmployeePhone, setCustomEmployeePhone] = useState('');
+
+  const handleEmployeeChange = (val: string) => {
+    setEmployeeName(val);
+    const defaultPhone = EMPLOYEE_PHONES[val] || '';
+    if (defaultPhone) {
+      setSelectedEmployeePhone(defaultPhone);
+      setIsCustomPhone(false);
+    } else {
+      setSelectedEmployeePhone('');
+      setIsCustomPhone(false);
+    }
+  };
+
+  const handlePhoneSelectChange = (val: string) => {
+    setSelectedEmployeePhone(val);
+    if (val === '__CUSTOM_PHONE__') {
+      setIsCustomPhone(true);
+      setCustomEmployeePhone('');
+    } else {
+      setIsCustomPhone(false);
+    }
+  };
+
+  const handleVendorSelectChange = (val: string) => {
+    setSelectedVendorName(val);
+    if (val === '__NEW_VENDOR__') {
+      setIsCustomVendor(true);
+      setCustomVendorName('');
+      setCustomVendorEmail('');
+      setCustomVendorMobile('');
+      setCustomVendorAddress('');
+      setCustomVendorState('');
+      setCustomVendorGstin('');
+    } else {
+      setIsCustomVendor(false);
+    }
+  };
 
   const handleCompanyChange = (val: string) => {
     setCompany(val);
@@ -111,6 +171,10 @@ const AutoInquiryMailer: React.FC = () => {
     if (window.confirm("Are you sure you want to reset the form?")) {
       setEmployeeName('');
       setSelectedVendorName('');
+      setIsCustomVendor(false);
+      setSelectedEmployeePhone('');
+      setIsCustomPhone(false);
+      setCustomEmployeePhone('');
       setCompany('hemraj_rice');
       setPlant('');
       setItems([{ id: '1', description: '', qty: '', uom: 'Nos', make: '' }]);
@@ -185,10 +249,10 @@ const AutoInquiryMailer: React.FC = () => {
     ) => {
       ws.mergeCells(rangeStr);
       const [start, end] = rangeStr.split(':');
-      const startCol = ws.getCell(start).col;
-      const startRow = ws.getCell(start).row;
-      const endCol = ws.getCell(end).col;
-      const endRow = ws.getCell(end).row;
+      const startCol = Number(ws.getCell(start).col);
+      const startRow = Number(ws.getCell(start).row);
+      const endCol = Number(ws.getCell(end).col);
+      const endRow = Number(ws.getCell(end).row);
 
       for (let r = startRow; r <= endRow; r++) {
         for (let c = startCol; c <= endCol; c++) {
@@ -339,8 +403,11 @@ const AutoInquiryMailer: React.FC = () => {
 
   // Download Excel File Trigger
   const handleDownloadExcel = async () => {
-    if (!selectedVendorName) {
-      alert("Please select a vendor first to generate the inquiry Excel sheet.");
+    const activeVendorName = isCustomVendor ? customVendorName : selectedVendorName;
+    const activeVendorAddress = isCustomVendor ? customVendorAddress : (vendors.find(v => v.name === selectedVendorName)?.address || '');
+
+    if (!activeVendorName) {
+      alert("Please select or enter a vendor first to generate the inquiry Excel.");
       return;
     }
     
@@ -349,12 +416,9 @@ const AutoInquiryMailer: React.FC = () => {
       alert("Please make sure all items have a description and a valid quantity before downloading the Excel.");
       return;
     }
-
-    const selectedVendor = vendors.find(v => v.name === selectedVendorName);
-    const vendorAddress = selectedVendor?.address || '';
     
     try {
-      const workbook = generateExcelWorkbook(selectedVendorName, vendorAddress, items);
+      const workbook = generateExcelWorkbook(activeVendorName, activeVendorAddress, items);
       const buffer = await workbook.xlsx.writeBuffer();
       const fileName = `RFQ_Inquiry_${selectedVendorName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
       saveAs(new Blob([buffer]), fileName);
@@ -362,6 +426,78 @@ const AutoInquiryMailer: React.FC = () => {
       console.error("Failed to generate Excel:", err);
       alert("An error occurred while exporting Excel.");
     }
+  };
+
+  const generateFormattedHtml = (itemsList: InquiryItem[]) => {
+    let html = `<table style="border-collapse: collapse; width: 100%; font-family: Calibri, Arial, sans-serif; font-size: 14px; margin-bottom: 20px;">
+    <thead>
+      <tr style="background-color: #f2f2f2;">
+        <th style="border: 1px solid #000000; padding: 8px; font-weight: bold; text-align: center; width: 8%;">Sl. No.</th>
+        <th style="border: 1px solid #000000; padding: 8px; font-weight: bold; text-align: left; width: 45%;">Item Description</th>
+        <th style="border: 1px solid #000000; padding: 8px; font-weight: bold; text-align: center; width: 12%;">Qty</th>
+        <th style="border: 1px solid #000000; padding: 8px; font-weight: bold; text-align: center; width: 15%;">UOM</th>
+        <th style="border: 1px solid #000000; padding: 8px; font-weight: bold; text-align: left; width: 20%;">Make</th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+    itemsList.forEach((item, index) => {
+      html += `
+      <tr>
+        <td style="border: 1px solid #000000; padding: 8px; text-align: center;">${index + 1}</td>
+        <td style="border: 1px solid #000000; padding: 8px; text-align: left;">${item.description}</td>
+        <td style="border: 1px solid #000000; padding: 8px; text-align: center;">${item.qty}</td>
+        <td style="border: 1px solid #000000; padding: 8px; text-align: center;">${item.uom}</td>
+        <td style="border: 1px solid #000000; padding: 8px; text-align: left;">${item.make || ''}</td>
+      </tr>`;
+    });
+
+    html += `
+    </tbody>
+  </table>
+
+  <table style="border-collapse: collapse; width: 100%; font-family: Calibri, Arial, sans-serif; font-size: 14px;">
+    <tbody>
+      <tr>
+        <td style="border: 1px solid #9E9E9E; background-color: #8DB4E2; font-weight: bold; padding: 8px; width: 35%;">COMMERCIAL TERMS :</td>
+        <td style="border: 1px solid #9E9E9E; background-color: #C6E0B4; padding: 8px; width: 65%;"></td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid #9E9E9E; background-color: #8DB4E2; font-weight: bold; padding: 8px;">TAX :</td>
+        <td style="border: 1px solid #9E9E9E; background-color: #C6E0B4; padding: 8px;"></td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid #9E9E9E; background-color: #8DB4E2; font-weight: bold; padding: 8px;">FREIGHT :</td>
+        <td style="border: 1px solid #9E9E9E; background-color: #C6E0B4; padding: 8px;"></td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid #9E9E9E; background-color: #8DB4E2; font-weight: bold; padding: 8px;">PACKING & FORWARDING :</td>
+        <td style="border: 1px solid #9E9E9E; background-color: #C6E0B4; padding: 8px;"></td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid #9E9E9E; background-color: #8DB4E2; font-weight: bold; padding: 8px;">PAYMENT :</td>
+        <td style="border: 1px solid #9E9E9E; background-color: #C6E0B4; padding: 8px;"></td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid #9E9E9E; background-color: #8DB4E2; font-weight: bold; padding: 8px;">DELIVERY PERIOD :</td>
+        <td style="border: 1px solid #9E9E9E; background-color: #C6E0B4; padding: 8px;"></td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid #9E9E9E; background-color: #8DB4E2; font-weight: bold; padding: 8px;">DELIVERY FREE UPTO :</td>
+        <td style="border: 1px solid #9E9E9E; background-color: #C6E0B4; padding: 8px;"></td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid #9E9E9E; background-color: #8DB4E2; font-weight: bold; padding: 8px;">WARRANTY :</td>
+        <td style="border: 1px solid #9E9E9E; background-color: #C6E0B4; padding: 8px;"></td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid #9E9E9E; background-color: #8DB4E2; font-weight: bold; padding: 8px;">ANY SPECIAL REMARKS YOU WANT TO MENTION :</td>
+        <td style="border: 1px solid #9E9E9E; background-color: #C6E0B4; padding: 8px;"></td>
+      </tr>
+    </tbody>
+  </table>`;
+
+    return html;
   };
 
   const handleSend = async (e: React.FormEvent) => {
@@ -373,9 +509,25 @@ const AutoInquiryMailer: React.FC = () => {
       setStatusMessage({ type: 'error', text: 'Please select an Employee Name.' });
       return;
     }
+    const activePhone = isCustomPhone ? customEmployeePhone : selectedEmployeePhone;
+    if (!activePhone) {
+      setStatusMessage({ type: 'error', text: 'Please select or enter an Employee Phone Number.' });
+      return;
+    }
     if (!selectedVendorName) {
       setStatusMessage({ type: 'error', text: 'Please select a Vendor.' });
       return;
+    }
+
+    if (isCustomVendor) {
+      if (!customVendorName.trim()) {
+        setStatusMessage({ type: 'error', text: 'Please enter custom vendor name.' });
+        return;
+      }
+      if (!customVendorEmail.trim() || !customVendorEmail.includes('@')) {
+        setStatusMessage({ type: 'error', text: 'Please enter a valid vendor email.' });
+        return;
+      }
     }
 
     const invalidItems = items.filter(item => !item.description.trim() || !item.qty || parseFloat(item.qty.toString()) <= 0);
@@ -384,33 +536,51 @@ const AutoInquiryMailer: React.FC = () => {
       return;
     }
 
-    const selectedVendor = vendors.find(v => v.name === selectedVendorName);
-    const vendorAddress = selectedVendor?.address || '';
-
     setLoading(true);
     try {
-      // 1. Generate Formatted Excel Base64
-      let excelBase64 = '';
-      const fileName = `RFQ_Inquiry_${selectedVendorName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      let activeVendor: Vendor | undefined = undefined;
 
-      try {
-        const workbook = generateExcelWorkbook(selectedVendorName, vendorAddress, items);
-        const buffer = await workbook.xlsx.writeBuffer();
-        
-        // Chunked binary to base64 conversion
-        const bytes = new Uint8Array(buffer);
-        let binary = '';
-        const len = bytes.byteLength;
-        for (let i = 0; i < len; i += 1024) {
-          const chunk = bytes.subarray(i, Math.min(i + 1024, len));
-          binary += String.fromCharCode.apply(null, chunk as any);
+      if (isCustomVendor) {
+        // Save the new vendor in the database first
+        try {
+          const saveRes = await fetch('/api/settings/vendors', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              name: customVendorName.trim(),
+              address: customVendorAddress.trim() || undefined,
+              state: customVendorState.trim() || undefined,
+              gstin: customVendorGstin.trim() || undefined,
+              mobile_no: customVendorMobile.trim() || undefined,
+              email: customVendorEmail.trim() || undefined
+            })
+          });
+
+          if (!saveRes.ok) {
+            const errData = await saveRes.json();
+            throw new Error(errData.error || 'Failed to save vendor');
+          }
+
+          const savedVendor = await saveRes.json();
+          invalidateVendors();
+          activeVendor = savedVendor;
+        } catch (saveErr: any) {
+          console.error("Failed to register custom vendor:", saveErr);
+          setStatusMessage({ type: 'error', text: `Failed to save custom vendor: ${saveErr.message}` });
+          setLoading(false);
+          return;
         }
-        excelBase64 = window.btoa(binary);
-      } catch (excelErr) {
-        console.error("Failed to generate excel attachment:", excelErr);
+      } else {
+        activeVendor = vendors.find(v => v.name === selectedVendorName);
       }
 
-      // 2. Send request to proxy backend
+      // Generate Formatted HTML Content
+      const htmlContent = generateFormattedHtml(items);
+
+      // Send request to proxy backend (without excelBase64/fileName)
       const res = await fetch('/api/inquiry/send', {
         method: 'POST',
         headers: {
@@ -419,7 +589,8 @@ const AutoInquiryMailer: React.FC = () => {
         },
         body: JSON.stringify({
           employeeName,
-          vendor: selectedVendor,
+          employeePhone: activePhone,
+          vendor: activeVendor,
           company,
           plant: plant || undefined,
           items: items.map(({ description, qty, uom, make }) => ({
@@ -428,14 +599,13 @@ const AutoInquiryMailer: React.FC = () => {
             uom,
             make: make.trim() || undefined
           })),
-          excelBase64,
-          fileName
+          htmlContent
         })
       });
 
       const data = await res.json();
       if (res.ok) {
-        setStatusMessage({ type: 'success', text: 'Quotation inquiry mailer sent successfully via n8n with attached formatted Excel!' });
+        setStatusMessage({ type: 'success', text: 'Quotation inquiry mailer sent successfully via n8n with formatted HTML tables!' });
         // Clear items after success
         setItems([{ id: '1', description: '', qty: '', uom: 'Nos', make: '' }]);
       } else {
@@ -472,7 +642,7 @@ const AutoInquiryMailer: React.FC = () => {
               <button
                 type="button"
                 onClick={handleDownloadExcel}
-                disabled={!selectedVendorName || items.some(item => !item.description.trim() || !item.qty)}
+                disabled={(!selectedVendorName && !customVendorName) || items.some(item => !item.description.trim() || !item.qty)}
                 className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer disabled:cursor-not-allowed shadow-md shadow-emerald-600/10"
               >
                 <FileSpreadsheet className="w-3.5 h-3.5" /> Download RFQ Excel
@@ -499,14 +669,14 @@ const AutoInquiryMailer: React.FC = () => {
               <Users className="w-4 h-4 text-pink-500" /> Inquiry Parameters
             </h2>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
               {/* Employee name selector */}
               <div className="space-y-1.5 text-left">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Employee Name</label>
                 <select
                   value={employeeName}
-                  onChange={e => setEmployeeName(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200 cursor-pointer"
+                  onChange={e => handleEmployeeChange(e.target.value)}
+                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-880 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200 cursor-pointer"
                   required
                 >
                   <option value="">-- Select Employee --</option>
@@ -516,12 +686,43 @@ const AutoInquiryMailer: React.FC = () => {
                 </select>
               </div>
 
+              {/* Employee Phone Selector */}
+              <div className="space-y-1.5 text-left">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Employee Phone</label>
+                <select
+                  value={selectedEmployeePhone}
+                  onChange={e => handlePhoneSelectChange(e.target.value)}
+                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-880 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200 cursor-pointer"
+                  required
+                >
+                  <option value="">-- Select Phone --</option>
+                  {employeeName && EMPLOYEE_PHONES[employeeName] && (
+                    <option value={EMPLOYEE_PHONES[employeeName]}>{EMPLOYEE_PHONES[employeeName]} (Default)</option>
+                  )}
+                  <option value="__CUSTOM_PHONE__">+ Enter Custom Phone...</option>
+                </select>
+              </div>
+
+              {isCustomPhone && (
+                <div className="space-y-1.5 text-left animate-in fade-in duration-200">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Custom Phone *</label>
+                  <input
+                    type="text"
+                    value={customEmployeePhone}
+                    onChange={e => setCustomEmployeePhone(e.target.value)}
+                    className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-880 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200"
+                    placeholder="e.g. +91 9046176169"
+                    required={isCustomPhone}
+                  />
+                </div>
+              )}
+
               {/* Vendor Selector */}
               <div className="space-y-1.5 text-left">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Target Vendor</label>
                 <select
                   value={selectedVendorName}
-                  onChange={e => setSelectedVendorName(e.target.value)}
+                  onChange={e => handleVendorSelectChange(e.target.value)}
                   className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200 cursor-pointer"
                   required
                   disabled={fetchingVendors}
@@ -531,6 +732,7 @@ const AutoInquiryMailer: React.FC = () => {
                   ) : (
                     <>
                       <option value="">-- Select Vendor --</option>
+                      <option value="__NEW_VENDOR__">+ Add Custom Vendor...</option>
                       {vendors.map(v => (
                         <option key={v.name} value={v.name}>{v.name}</option>
                       ))}
@@ -548,9 +750,9 @@ const AutoInquiryMailer: React.FC = () => {
                   className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200 cursor-pointer"
                   required
                 >
-                  <option value="hemraj_rice">Hemraj Rice Mill</option>
-                  <option value="hemraj_ind">Hemraj Industries</option>
-                  <option value="radhashyam">Radhashyam Industries</option>
+                  <option value="HRM">Hemraj Rice Mill</option>
+                  <option value="HIPL">Hemraj Industries</option>
+                  <option value="RSIPL">Radhashyam Industries</option>
                 </select>
               </div>
 
@@ -576,6 +778,76 @@ const AutoInquiryMailer: React.FC = () => {
                 </select>
               </div>
             </div>
+
+            {isCustomVendor && (
+              <div className="mt-6 pt-6 border-t border-slate-200/60 dark:border-slate-800/60 space-y-4">
+                <h3 className="text-[10px] font-black text-pink-600 dark:text-pink-400 uppercase tracking-widest text-left">Custom Vendor Details</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="space-y-1.5 text-left">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Vendor Name *</label>
+                    <input
+                      type="text"
+                      value={customVendorName}
+                      onChange={e => setCustomVendorName(e.target.value)}
+                      className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200"
+                      placeholder="e.g. Acme Corporation"
+                      required={isCustomVendor}
+                    />
+                  </div>
+                  <div className="space-y-1.5 text-left">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Vendor Email *</label>
+                    <input
+                      type="email"
+                      value={customVendorEmail}
+                      onChange={e => setCustomVendorEmail(e.target.value)}
+                      className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200"
+                      placeholder="vendor@example.com"
+                      required={isCustomVendor}
+                    />
+                  </div>
+                  <div className="space-y-1.5 text-left">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Mobile Number</label>
+                    <input
+                      type="text"
+                      value={customVendorMobile}
+                      onChange={e => setCustomVendorMobile(e.target.value)}
+                      className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200"
+                      placeholder="+91 9876543210"
+                    />
+                  </div>
+                  <div className="space-y-1.5 text-left">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">GSTIN</label>
+                    <input
+                      type="text"
+                      value={customVendorGstin}
+                      onChange={e => setCustomVendorGstin(e.target.value)}
+                      className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200"
+                      placeholder="19AAAAA0000A1Z5"
+                    />
+                  </div>
+                  <div className="space-y-1.5 text-left">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">State</label>
+                    <input
+                      type="text"
+                      value={customVendorState}
+                      onChange={e => setCustomVendorState(e.target.value)}
+                      className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200"
+                      placeholder="West Bengal"
+                    />
+                  </div>
+                  <div className="space-y-1.5 text-left">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Vendor Address</label>
+                    <input
+                      type="text"
+                      value={customVendorAddress}
+                      onChange={e => setCustomVendorAddress(e.target.value)}
+                      className="w-full px-4 py-2 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all duration-200"
+                      placeholder="123 Street Name, City"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Items Section */}

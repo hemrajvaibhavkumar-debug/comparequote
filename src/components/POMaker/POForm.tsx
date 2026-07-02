@@ -16,7 +16,6 @@ interface POFormProps {
 const CONTACT_OPTIONS = [
   "+91 90462 40020 - soumen karmakar",
   "+91 90461 76169 - vivek",
-  "+91 90461 76169 - Gourav Indra",
   "+91 90461 76166 - amit",
   "+91 90461 76150 - sayanta da",
   "+91 62941 44047 - proloy da",
@@ -450,13 +449,16 @@ const POForm: React.FC<POFormProps> = ({ po, setPo, templates, vendors, comparis
                 ...po,
                 terms: {
                   ...po.terms,
-                  po_type: e.target.value as 'Capital' | 'Consumables'
+                  po_type: e.target.value
                 }
               })}
               disabled={isReadOnly}
             >
               <option value="Consumables">Consumables</option>
               <option value="Capital">Capital</option>
+              <option value="packing item">Packing Item</option>
+              <option value="production item">Production Item</option>
+              <option value="export item">Export Item</option>
             </select>
           </div>
         </div>
