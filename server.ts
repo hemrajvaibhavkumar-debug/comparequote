@@ -15,9 +15,16 @@ import { dbCache } from "./src/services/dbCache.ts";
 import OpenAI from "openai";
 import pdf from "pdf-extraction";
 
+const isProduction = process.env.NODE_ENV === "production";
+const hasSslParam = process.env.DATABASE_URL?.includes("sslmode=") || process.env.DATABASE_URL?.includes("ssl=");
+const isCloudDb = process.env.DATABASE_URL?.includes("neon.tech") || 
+                  process.env.DATABASE_URL?.includes("render.com") || 
+                  process.env.DATABASE_URL?.includes("supabase.co") || 
+                  process.env.DATABASE_URL?.includes("supabase.in");
+
 const pool = new pg.Pool({ 
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes("neon.tech") || process.env.DATABASE_URL?.includes("render.com") 
+  ssl: isCloudDb || hasSslParam || isProduction || process.env.DATABASE_SSL === "true"
     ? { rejectUnauthorized: false } 
     : false
 });
